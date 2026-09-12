@@ -2,7 +2,17 @@ from datetime import date
 from decimal import Decimal
 from uuid import UUID, uuid4
 
-from sqlalchemy import JSON, Boolean, Date, ForeignKey, Numeric, String, UniqueConstraint, Uuid
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Date,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+    UniqueConstraint,
+    Uuid,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from openmarket_api.persistence.base import Base
@@ -45,10 +55,16 @@ class FinancialStatementRecord(Base):
     __tablename__ = "financial_statement_items"
 
     id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
-    natural_key: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    natural_key: Mapped[str] = mapped_column(String(512), unique=True, index=True)
     company_id: Mapped[UUID] = mapped_column(
         Uuid(as_uuid=True), ForeignKey("companies.id", ondelete="CASCADE"), index=True
     )
+    filing_type: Mapped[str | None] = mapped_column(String(16), index=True)
+    filing_reference_date: Mapped[date | None] = mapped_column(Date, index=True)
+    filing_version: Mapped[int | None] = mapped_column(Integer)
+    exercise_order: Mapped[str | None] = mapped_column(String(32))
+    fixed_account: Mapped[bool | None] = mapped_column(Boolean)
+    statement_group: Mapped[str | None] = mapped_column(String(255))
     period_start: Mapped[date | None] = mapped_column(Date)
     period_end: Mapped[date] = mapped_column(Date, index=True)
     statement: Mapped[str] = mapped_column(String(32), index=True)
