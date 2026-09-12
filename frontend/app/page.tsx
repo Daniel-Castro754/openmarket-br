@@ -1,3 +1,5 @@
+import { AssetSearch } from "./asset-search";
+
 const pillars = [
   ["Dados rastreáveis", "Cada número deve carregar fonte, data de referência e política de uso."],
   ["Providers substituíveis", "B3, CVM e outras fontes entram por contratos; o domínio não depende delas."],
@@ -11,6 +13,7 @@ export default function Home() {
         <span className="eyebrow">OPEN SOURCE • BRASIL</span>
         <h1>OpenMarket BR</h1>
         <p>Uma base aberta para pesquisar, visualizar e analisar o mercado financeiro brasileiro.</p>
+        <AssetSearch />
       </header>
       <section className="grid">
         {pillars.map(([title, text]) => (
@@ -21,8 +24,8 @@ export default function Home() {
         ))}
       </section>
       <section className="status">
-        <strong>Fase 0</strong>
-        <span>Fundação da arquitetura e contratos de dados.</span>
+        <strong>Fase 1</strong>
+        <span>CVM + B3 + PostgreSQL + primeira página pública de ativo.</span>
       </section>
     </main>
   );
