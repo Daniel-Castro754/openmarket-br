@@ -103,7 +103,7 @@ export default async function ReportsPage({
   const hasFilters = Boolean(q || ticker || documentType);
 
   return (
-    <main className={styles.shell}>
+    <main className={`${styles.shell} ${styles.libraryShell}`}>
       <nav className={styles.topbar}>
         <Link href="/">← OpenMarket BR</Link>
         <span>Document Hub / Relatórios</span>
