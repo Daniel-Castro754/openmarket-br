@@ -50,6 +50,7 @@ class Quote(BaseModel):
 
 class FinancialStatementItem(BaseModel):
     company_id: UUID
+    period_start: date | None = None
     period_end: date
     statement: str
     account_code: str
