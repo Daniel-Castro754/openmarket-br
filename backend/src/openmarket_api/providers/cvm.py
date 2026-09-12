@@ -1,8 +1,8 @@
 import asyncio
 import csv
 import io
+from collections.abc import Sequence
 from time import monotonic
-from typing import Sequence
 
 import httpx
 
