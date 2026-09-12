@@ -9,30 +9,31 @@ export default async function AssetListsPage() {
 
   return (
     <main className={styles.page}>
-      <section className={styles.hero}>
-        <div>
-          <span className="eyebrow">LISTAS DE ATIVOS</span>
-          <h1>Encontre o que importa, sem tabela gigante.</h1>
-          <p>
-            Alterne entre listas prontas ou monte uma visão personalizada com os campos que você usa.
-            A proposta é manter alta densidade de informação sem transformar cada linha em um cartão.
-          </p>
-        </div>
-        <div className={styles.heroStats}>
-          <div>
-            <strong>{screener.total.toLocaleString("pt-BR")}</strong>
-            <span>ativos sincronizados</span>
+      <header className={styles.pageHeader}>
+        <div className={styles.pageTitle}>
+          <span className="eyebrow">SCREENER • LISTAS DE ATIVOS</span>
+          <div className={styles.titleRow}>
+            <h1>Listas de ativos</h1>
+            <span className={styles.universeBadge}>{screener.total.toLocaleString("pt-BR")} sincronizados</span>
           </div>
+          <p>Troque a visão, ordene indicadores ou monte sua própria combinação de colunas.</p>
+        </div>
+
+        <div className={styles.headerStats} aria-label="Resumo do screener">
           <div>
             <strong>6</strong>
-            <span>listas prontas</span>
+            <span>visões prontas</span>
           </div>
           <div>
             <strong>28</strong>
-            <span>campos selecionáveis</span>
+            <span>campos</span>
+          </div>
+          <div>
+            <strong>CVM</strong>
+            <span>fonte financeira</span>
           </div>
         </div>
-      </section>
+      </header>
 
       <AssetListTable rows={screener.rows} total={screener.total} />
     </main>
