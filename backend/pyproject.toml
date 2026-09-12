@@ -8,6 +8,7 @@ version = "0.1.0.dev0"
 description = "OpenMarket BR API and domain core"
 requires-python = ">=3.13"
 dependencies = [
+  "alembic>=1.14,<2",
   "fastapi>=0.141,<0.142",
   "httpx>=0.27,<1",
   "pydantic>=2.10,<3",
