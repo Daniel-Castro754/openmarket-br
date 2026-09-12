@@ -5,6 +5,7 @@ import { SiteHeader } from "../components/site-header";
 import "./styles.css";
 import "./derived.css";
 import "./design-system.css";
+import "./theme-bridge.css";
 import "./visual-overrides.css";
 
 export const metadata: Metadata = {
