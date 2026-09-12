@@ -10,7 +10,12 @@ from openmarket_api.domain.common import (
     RedistributionScope,
     SourceMetadata,
 )
-from openmarket_api.domain.entities import Company, FinancialStatementItem, Instrument, InstrumentType
+from openmarket_api.domain.entities import (
+    Company,
+    FinancialStatementItem,
+    Instrument,
+    InstrumentType,
+)
 from openmarket_api.persistence.base import Base
 from openmarket_api.persistence.models import (
     CompanyRecord,
