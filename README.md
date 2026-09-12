@@ -12,7 +12,7 @@ Plataforma open source brasileira para dados, pesquisa e visualização do merca
 
 ## Estado
 
-**Fase 1 – Market Core.** O projeto possui contratos de domínio/provider, ingestão cadastral e financeira da CVM, API, frontend mínimo, PostgreSQL, migrations Alembic, Docker Compose, testes e CI.
+**Fase 1 – Market Core.** O projeto possui providers oficiais CVM/B3, resolução de ticker para companhia, ingestão de DFP/ITR, PostgreSQL, migrations Alembic, read-model de ativos, API, frontend mínimo, Docker Compose, testes e CI.
 
 ## Stack
 
@@ -40,6 +40,31 @@ API: `http://localhost:8000`
 
 Health check: `GET /health`
 
+## Sincronizando um ativo
+
+O site público lê o banco local. A atualização de dados é feita separadamente pelo worker/CLI, para que uma visita à página não dispare downloads da B3 ou CVM.
+
+```bash
+cd backend
+python -m openmarket_api.cli sync-asset PETR4
+```
+
+Para limitar o histórico:
+
+```bash
+python -m openmarket_api.cli sync-asset PETR4 --start 2025-01-01 --end 2026-12-31
+```
+
+Depois da sincronização:
+
+```text
+GET /api/v1/assets/PETR4
+GET /api/v1/assets/PETR4/financials
+GET /api/v1/assets/PETR4/financials?statement=DRE&consolidated=true
+```
+
+`GET /api/v1/assets/{ticker}` é um read-model do PostgreSQL e não consulta provedores externos durante a requisição.
+
 ## Docker
 
 Suba PostgreSQL e API:
@@ -54,6 +79,12 @@ Aplique as migrations:
 docker compose run --rm api alembic upgrade head
 ```
 
+Sincronize um ativo dentro do container:
+
+```bash
+docker compose run --rm api python -m openmarket_api.cli sync-asset PETR4
+```
+
 Para criar uma nova migration durante o desenvolvimento:
 
 ```bash
@@ -63,7 +94,7 @@ alembic revision --autogenerate -m "descricao da mudanca"
 
 ## Persistência
 
-A camada `openmarket_api.persistence` é independente dos providers. A ingestão resolve dados externos no domínio e só depois os persiste. Companhias são reconciliadas por código CVM/CNPJ e fatos contábeis usam uma chave natural para tornar sincronizações repetidas idempotentes.
+A camada `openmarket_api.persistence` é independente dos providers. A ingestão resolve dados externos no domínio e só depois os persiste. Companhias são reconciliadas por código CVM/CNPJ, instrumentos por bolsa+ticker e fatos contábeis usam uma chave natural para tornar sincronizações repetidas idempotentes.
 
 ## Princípios
 
@@ -73,5 +104,6 @@ A camada `openmarket_api.persistence` é independente dos providers. A ingestão
 4. A aplicação pública nunca recebe dados pessoais do Personal Investor.
 5. `main` deve permanecer executável; mudanças entram por Pull Request.
 6. Ingestão e persistência permanecem desacopladas.
+7. Requisições públicas leem dados persistidos; sincronização de fontes externas ocorre fora do request path.
 
 Consulte `docs/architecture/overview.md`.

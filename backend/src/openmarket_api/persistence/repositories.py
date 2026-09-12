@@ -1,7 +1,8 @@
 from collections.abc import Iterable
+from datetime import date
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from openmarket_api.domain.entities import Company, FinancialStatementItem, Instrument
@@ -15,6 +16,9 @@ from openmarket_api.persistence.models import (
 class CompanyRepository:
     def __init__(self, session: Session) -> None:
         self.session = session
+
+    def get_by_id(self, company_id: UUID) -> CompanyRecord | None:
+        return self.session.get(CompanyRecord, company_id)
 
     def upsert(self, company: Company) -> CompanyRecord:
         record: CompanyRecord | None = None
@@ -52,15 +56,18 @@ class InstrumentRepository:
     def __init__(self, session: Session) -> None:
         self.session = session
 
+    def get_by_ticker(self, ticker: str, *, exchange: str = "B3") -> InstrumentRecord | None:
+        return self.session.scalar(
+            select(InstrumentRecord).where(
+                InstrumentRecord.exchange == exchange.upper(),
+                InstrumentRecord.ticker == ticker.upper(),
+            )
+        )
+
     def upsert(self, instrument: Instrument, *, company_id: UUID | None = None) -> InstrumentRecord:
         exchange = instrument.exchange.upper()
         ticker = instrument.ticker.upper()
-        record = self.session.scalar(
-            select(InstrumentRecord).where(
-                InstrumentRecord.exchange == exchange,
-                InstrumentRecord.ticker == ticker,
-            )
-        )
+        record = self.get_by_ticker(ticker, exchange=exchange)
         values = {
             "company_id": company_id,
             "ticker": ticker,
@@ -104,6 +111,52 @@ class FinancialStatementRepository:
                 item.currency,
             )
         )
+
+    def list_for_company(
+        self,
+        company_id: UUID,
+        *,
+        start: date | None = None,
+        end: date | None = None,
+        statement: str | None = None,
+        consolidated: bool | None = None,
+    ) -> list[FinancialStatementRecord]:
+        query = select(FinancialStatementRecord).where(
+            FinancialStatementRecord.company_id == company_id
+        )
+        if start is not None:
+            query = query.where(FinancialStatementRecord.period_end >= start)
+        if end is not None:
+            query = query.where(FinancialStatementRecord.period_end <= end)
+        if statement is not None:
+            query = query.where(FinancialStatementRecord.statement == statement.upper())
+        if consolidated is not None:
+            query = query.where(FinancialStatementRecord.consolidated == consolidated)
+        query = query.order_by(
+            FinancialStatementRecord.period_end.desc(),
+            FinancialStatementRecord.statement,
+            FinancialStatementRecord.account_code,
+        )
+        return list(self.session.scalars(query))
+
+    def summary_for_company(self, company_id: UUID) -> tuple[int, date | None, list[date]]:
+        item_count = self.session.scalar(
+            select(func.count()).where(FinancialStatementRecord.company_id == company_id)
+        )
+        latest_period = self.session.scalar(
+            select(func.max(FinancialStatementRecord.period_end)).where(
+                FinancialStatementRecord.company_id == company_id
+            )
+        )
+        periods = list(
+            self.session.scalars(
+                select(FinancialStatementRecord.period_end)
+                .where(FinancialStatementRecord.company_id == company_id)
+                .distinct()
+                .order_by(FinancialStatementRecord.period_end.desc())
+            )
+        )
+        return int(item_count or 0), latest_period, periods
 
     def upsert_many(
         self, items: Iterable[FinancialStatementItem], *, company_id: UUID
