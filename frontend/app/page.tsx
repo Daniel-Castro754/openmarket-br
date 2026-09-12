@@ -1,9 +1,11 @@
+import Link from "next/link";
+
 import { AssetSearch } from "./asset-search";
 
 const pillars = [
   ["Dados rastreáveis", "Cada número deve carregar fonte, data de referência e política de uso."],
   ["Providers substituíveis", "B3, CVM e outras fontes entram por contratos; o domínio não depende delas."],
-  ["Comunidade primeiro", "API, visualizador, screeners e ferramentas são construídos por Pull Requests."],
+  ["Document Hub", "Abra relatórios públicos, navegue por seções e acompanhe a proveniência antes da análise com IA."],
 ];
 
 export default function Home() {
@@ -20,12 +22,13 @@ export default function Home() {
           <article key={title}>
             <h2>{title}</h2>
             <p>{text}</p>
+            {title === "Document Hub" && <Link href="/relatorios">Abrir biblioteca →</Link>}
           </article>
         ))}
       </section>
       <section className="status">
-        <strong>Fase 1</strong>
-        <span>CVM + B3 + PostgreSQL + primeira página pública de ativo.</span>
+        <strong>Fase atual</strong>
+        <span>CVM + B3 + PostgreSQL + ativos + séries financeiras + Document Hub.</span>
       </section>
     </main>
   );
