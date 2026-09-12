@@ -8,6 +8,7 @@ import "./design-system.css";
 import "./theme-bridge.css";
 import "./visual-overrides.css";
 import "./shell-navigation.css";
+import "./home-dashboard.css";
 
 export const metadata: Metadata = {
   title: "OpenMarket BR",
