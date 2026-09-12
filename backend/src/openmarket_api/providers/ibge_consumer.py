@@ -16,9 +16,9 @@ from openmarket_api.domain.common import (
     SourceMetadata,
 )
 from openmarket_api.domain.insights import (
+    ConsumerInsightSnapshot,
     ConsumptionItem,
     ConsumptionProfile,
-    ConsumerInsightSnapshot,
     EconomicTrend,
     InsightPoint,
 )
@@ -241,7 +241,7 @@ class IBGEConsumerProvider:
             if not key.endswith("C"):
                 continue
             text = str(value)
-            if re.fullmatch(r"\d{6}", text):
+            if re.fullmatch(r"(?:19|20)\d{4}", text):
                 return text
         return None
 
@@ -295,7 +295,7 @@ class IBGEConsumerProvider:
     @classmethod
     def _sidra_source(cls, period: str) -> SourceMetadata:
         reference_date = None
-        if re.fullmatch(r"\d{6}", period):
+        if re.fullmatch(r"(?:19|20)\d{4}", period):
             year, month = int(period[:4]), int(period[4:])
             if 1 <= month <= 12:
                 reference_date = date(year, month, 1)
