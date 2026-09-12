@@ -3,10 +3,10 @@ from __future__ import annotations
 import csv
 import io
 import zipfile
-from datetime import date
+from collections.abc import Iterable, Sequence
+from datetime import UTC, date, datetime
 from decimal import Decimal, InvalidOperation
 from enum import StrEnum
-from typing import Iterable, Sequence
 
 import httpx
 
@@ -41,7 +41,7 @@ class CVMFinancialProvider(FinancialProvider):
         self._archive_cache: dict[tuple[CVMReportKind, int], bytes] = {}
 
     async def healthcheck(self) -> bool:
-        year = date.today().year
+        year = datetime.now(UTC).year
         url = self.archive_url(CVMReportKind.ITR, year)
         try:
             async with httpx.AsyncClient(timeout=10, follow_redirects=True) as client:
@@ -56,7 +56,7 @@ class CVMFinancialProvider(FinancialProvider):
         if not company.cvm_code:
             return []
 
-        today = date.today()
+        today = datetime.now(UTC).date()
         start = start or date(today.year - 5, 1, 1)
         end = end or today
         if start > end:
@@ -266,7 +266,9 @@ class CVMFinancialProvider(FinancialProvider):
 
     @staticmethod
     def _source_metadata(report_kind: CVMReportKind, reference_date: date) -> SourceMetadata:
-        dataset_url = CVM_DFP_DATASET_URL if report_kind == CVMReportKind.DFP else CVM_ITR_DATASET_URL
+        dataset_url = (
+            CVM_DFP_DATASET_URL if report_kind == CVMReportKind.DFP else CVM_ITR_DATASET_URL
+        )
         label = "DFP" if report_kind == CVMReportKind.DFP else "ITR"
         return SourceMetadata(
             provider="cvm-financial-statements",
