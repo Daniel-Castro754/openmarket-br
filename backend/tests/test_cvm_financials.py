@@ -4,8 +4,10 @@ from datetime import date
 from decimal import Decimal
 
 from openmarket_api.domain.entities import Company
-from openmarket_api.providers.cvm_financials import CVMFinancialProvider, CVMReportKind
-
+from openmarket_api.providers.cvm_financials import (
+    CVMFinancialProvider,
+    CVMReportKind,
+)
 
 CSV = """CD_CVM;DT_REFER;DT_INI_EXERC;DT_FIM_EXERC;MOEDA;ESCALA_MOEDA;CD_CONTA;DS_CONTA;VL_CONTA\n9512;2026-06-30;2026-01-01;2026-06-30;REAL;MIL;3.01;Receita de Venda de Bens e/ou Serviços;1234,5\n9512;2026-06-30;2026-04-01;2026-06-30;REAL;MIL;3.01;Receita de Venda de Bens e/ou Serviços;700,5\n9512;2026-06-30;2026-01-01;2026-06-30;REAL;MIL;3.11;Lucro/Prejuízo Consolidado do Período;100,25\n9999;2026-06-30;2026-01-01;2026-06-30;REAL;MIL;3.01;Outra Empresa;999\n"""
 
@@ -67,9 +69,7 @@ def test_deduplication_preserves_periods_with_same_end_date() -> None:
     )
 
     deduped = CVMFinancialProvider._deduplicate(items)
-    revenue_periods = {
-        item.period_start for item in deduped if item.account_code == "3.01"
-    }
+    revenue_periods = {item.period_start for item in deduped if item.account_code == "3.01"}
 
     assert revenue_periods == {date(2026, 1, 1), date(2026, 4, 1)}
 

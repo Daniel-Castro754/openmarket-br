@@ -1,4 +1,9 @@
-from openmarket_api.domain.common import DataLicense, DataQuality, RedistributionScope, SourceMetadata
+from openmarket_api.domain.common import (
+    DataLicense,
+    DataQuality,
+    RedistributionScope,
+    SourceMetadata,
+)
 from openmarket_api.domain.entities import Company, Instrument
 
 

@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query
 
@@ -12,8 +13,8 @@ router = APIRouter(prefix="/api/v1/financials", tags=["financials"])
 @router.get("/{cvm_code}", response_model=list[FinancialStatementItem])
 async def get_financial_statements(
     cvm_code: str,
-    start: date | None = Query(default=None),
-    end: date | None = Query(default=None),
+    start: Annotated[date | None, Query()] = None,
+    end: Annotated[date | None, Query()] = None,
 ) -> list[FinancialStatementItem]:
     company_provider = registry.get("cvm-company-registry")
     financial_provider = registry.get("cvm-financial-statements")
@@ -26,7 +27,11 @@ async def get_financial_statements(
     try:
         candidates = list(await company_provider.search_companies(cvm_code))
         company: Company | None = next(
-            (candidate for candidate in candidates if (candidate.cvm_code or "").lstrip("0") == cvm_code.lstrip("0")),
+            (
+                candidate
+                for candidate in candidates
+                if (candidate.cvm_code or "").lstrip("0") == cvm_code.lstrip("0")
+            ),
             None,
         )
         if company is None:

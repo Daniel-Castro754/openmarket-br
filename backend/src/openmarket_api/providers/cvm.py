@@ -1,8 +1,8 @@
 import asyncio
 import csv
 import io
+from collections.abc import Sequence
 from time import monotonic
-from typing import Sequence
 
 import httpx
 
@@ -14,7 +14,6 @@ from openmarket_api.domain.common import (
 )
 from openmarket_api.domain.entities import Company
 from openmarket_api.providers.contracts import CompanyProvider
-
 
 CVM_COMPANY_CSV_URL = "https://dados.cvm.gov.br/dados/CIA_ABERTA/CAD/DADOS/cad_cia_aberta.csv"
 CVM_COMPANY_DATASET_URL = "https://dados.cvm.gov.br/dataset/cia_aberta-cad"
