@@ -6,7 +6,11 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from openmarket_api.api.dependencies import get_db_session
-from openmarket_api.domain.analytics import FinancialMetric, FinancialSeries
+from openmarket_api.domain.analytics import (
+    FinancialMetric,
+    FinancialSeries,
+    SeriesFrequency,
+)
 from openmarket_api.domain.entities import Company, FinancialStatementItem, Instrument
 from openmarket_api.services.asset_read import AssetReadService
 from openmarket_api.services.financial_series import FinancialSeriesService
@@ -71,8 +75,13 @@ def get_asset_financial_series(
     ticker: str,
     metric: FinancialMetric,
     session: Annotated[Session, Depends(get_db_session)],
+    frequency: Annotated[SeriesFrequency, Query()] = SeriesFrequency.ANNUAL,
 ) -> FinancialSeries:
     try:
-        return FinancialSeriesService(session).get_annual_series(ticker, metric)
+        return FinancialSeriesService(session).get_series(
+            ticker,
+            metric,
+            frequency=frequency,
+        )
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
