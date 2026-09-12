@@ -7,11 +7,13 @@ from openmarket_api.persistence.database import get_session_factory
 from openmarket_api.providers.bootstrap import register_builtin_providers
 from openmarket_api.providers.contracts import (
     CompanyProvider,
+    DocumentProvider,
     FinancialProvider,
     InstrumentProvider,
 )
 from openmarket_api.providers.registry import registry
 from openmarket_api.services.asset_sync import AssetSyncService
+from openmarket_api.services.document_sync import DocumentSyncService
 
 logger = logging.getLogger("openmarket.cli")
 
@@ -31,6 +33,24 @@ def build_parser() -> argparse.ArgumentParser:
     sync.add_argument("ticker", help="B3 ticker, for example PETR4")
     sync.add_argument("--start", type=_date, default=None, help="First reference date (YYYY-MM-DD)")
     sync.add_argument("--end", type=_date, default=None, help="Last reference date (YYYY-MM-DD)")
+
+    sync_documents = subparsers.add_parser(
+        "sync-documents",
+        help="Synchronize CVM public-document metadata for one persisted B3 asset",
+    )
+    sync_documents.add_argument("ticker", help="B3 ticker, for example PETR4")
+    sync_documents.add_argument(
+        "--start",
+        type=_date,
+        default=None,
+        help="First delivery date (YYYY-MM-DD)",
+    )
+    sync_documents.add_argument(
+        "--end",
+        type=_date,
+        default=None,
+        help="Last delivery date (YYYY-MM-DD)",
+    )
     return parser
 
 
@@ -67,12 +87,36 @@ async def _sync_asset(ticker: str, *, start: date | None, end: date | None) -> i
     return 0
 
 
+async def _sync_documents(ticker: str, *, start: date | None, end: date | None) -> int:
+    register_builtin_providers()
+    document_provider = registry.get("cvm-ipe-documents")
+    if not isinstance(document_provider, DocumentProvider):
+        raise TypeError("CVM IPE document provider has an invalid type")
+
+    factory = get_session_factory()
+    with factory() as session:
+        result = await DocumentSyncService(
+            session=session,
+            document_provider=document_provider,
+        ).sync(ticker, start=start, end=end)
+
+    logger.info(
+        "synchronized documents ticker=%s cvm_code=%s documents=%s",
+        result.ticker,
+        result.cvm_code,
+        result.documents,
+    )
+    return 0
+
+
 def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     args = build_parser().parse_args()
 
     if args.command == "sync-asset":
         return asyncio.run(_sync_asset(args.ticker, start=args.start, end=args.end))
+    if args.command == "sync-documents":
+        return asyncio.run(_sync_documents(args.ticker, start=args.start, end=args.end))
     raise RuntimeError(f"unsupported command: {args.command}")
 
 

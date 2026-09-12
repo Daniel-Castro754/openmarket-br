@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from datetime import date
 
+from openmarket_api.domain.documents import PublicDocument
 from openmarket_api.domain.entities import Company, FinancialStatementItem, Instrument, Quote
 
 
@@ -44,4 +45,15 @@ class FinancialProvider(Provider):
     async def get_statements(
         self, company: Company, start: date | None = None, end: date | None = None
     ) -> Sequence[FinancialStatementItem]:
+        raise NotImplementedError
+
+
+class DocumentProvider(Provider):
+    @abstractmethod
+    async def get_documents(
+        self,
+        company: Company,
+        start: date | None = None,
+        end: date | None = None,
+    ) -> Sequence[PublicDocument]:
         raise NotImplementedError
