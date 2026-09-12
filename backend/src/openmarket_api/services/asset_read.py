@@ -131,6 +131,12 @@ class AssetReadService:
     def _financial(record: FinancialStatementRecord) -> FinancialStatementItem:
         return FinancialStatementItem(
             company_id=record.company_id,
+            filing_type=record.filing_type,
+            filing_reference_date=record.filing_reference_date,
+            filing_version=record.filing_version,
+            exercise_order=record.exercise_order,
+            fixed_account=record.fixed_account,
+            statement_group=record.statement_group,
             period_start=record.period_start,
             period_end=record.period_end,
             statement=record.statement,
