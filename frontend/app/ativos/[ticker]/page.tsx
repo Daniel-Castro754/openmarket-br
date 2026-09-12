@@ -6,16 +6,24 @@ import {
   getAsset,
   getFinancialSeries,
   type FinancialMetric,
+  type SeriesFrequency,
   type SourceMetadata,
 } from "../../../lib/api";
 
-const chartMetrics: FinancialMetric[] = [
+const fundamentalMetrics: FinancialMetric[] = [
   "revenue",
   "gross_profit",
   "operating_result",
   "net_income",
   "total_assets",
   "equity",
+];
+
+const analyticsMetrics: FinancialMetric[] = [
+  "gross_margin",
+  "operating_margin",
+  "net_margin",
+  "revenue_growth_yoy",
 ];
 
 function formatDate(value?: string | null) {
@@ -32,18 +40,32 @@ function sourceLabel(source?: SourceMetadata | null) {
   return `${source.source_name}${date}`;
 }
 
-export default async function AssetPage({ params }: { params: Promise<{ ticker: string }> }) {
-  const { ticker: rawTicker } = await params;
+export default async function AssetPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ ticker: string }>;
+  searchParams: Promise<{ view?: string | string[] }>;
+}) {
+  const [{ ticker: rawTicker }, query] = await Promise.all([params, searchParams]);
   const ticker = rawTicker.trim().toUpperCase();
+  const requestedView = Array.isArray(query.view) ? query.view[0] : query.view;
+  const frequency: SeriesFrequency = requestedView === "quarterly" ? "quarterly" : "annual";
   const asset = await getAsset(ticker);
 
   if (!asset) notFound();
 
-  const series = await Promise.all(
-    chartMetrics.map((metric) => getFinancialSeries(ticker, metric)),
-  );
+  const [fundamentalSeries, analyticsSeries] = await Promise.all([
+    Promise.all(
+      fundamentalMetrics.map((metric) => getFinancialSeries(ticker, metric, frequency)),
+    ),
+    Promise.all(
+      analyticsMetrics.map((metric) => getFinancialSeries(ticker, metric, frequency)),
+    ),
+  ]);
   const { instrument, company } = asset;
   const title = company?.trading_name || company?.legal_name || instrument.issuer_name || ticker;
+  const isQuarterly = frequency === "quarterly";
 
   return (
     <main className="asset-page">
@@ -127,19 +149,51 @@ export default async function AssetPage({ params }: { params: Promise<{ ticker: 
       </section>
 
       <section className="series-section">
-        <div className="section-heading">
+        <div className="section-heading series-section-heading">
           <div>
             <span className="eyebrow">DEMONSTRAÇÕES FINANCEIRAS</span>
-            <h2>Histórico anual</h2>
+            <h2>{isQuarterly ? "Histórico trimestral" : "Histórico anual"}</h2>
+          </div>
+          <div className="series-heading-side">
+            <div className="series-toggle" aria-label="Frequência das séries">
+              <Link className={!isQuarterly ? "active" : ""} href={`/ativos/${ticker}`}>
+                Anual
+              </Link>
+              <Link
+                className={isQuarterly ? "active" : ""}
+                href={`/ativos/${ticker}?view=quarterly`}
+              >
+                Trimestral
+              </Link>
+            </div>
+            <p>
+              {isQuarterly
+                ? "Fluxos usam apenas períodos isolados do ITR; acumulados de 6M/9M são descartados. O Q4 de fluxo ainda não é inferido por subtração."
+                : "DFP consolidada da CVM. Em reapresentações, a visualização usa a versão mais recente e preserva o histórico no banco."}
+            </p>
+          </div>
+        </div>
+        <div className="series-grid">
+          {fundamentalSeries.map((item) => (
+            <FinancialBarChart key={`${item.metric}-${frequency}`} series={item} />
+          ))}
+        </div>
+      </section>
+
+      <section className="series-section analytics-section">
+        <div className="section-heading">
+          <div>
+            <span className="eyebrow">ANÁLISE</span>
+            <h2>Margens e crescimento</h2>
           </div>
           <p>
-            DFP consolidada da CVM. Quando existe reapresentação, o gráfico usa a versão mais recente
-            e mantém as versões anteriores preservadas no banco.
+            Indicadores calculados sobre fatos oficiais da mesma versão CVM. Crescimento compara o
+            mesmo período do ano anterior para evitar confundir sazonalidade com evolução real.
           </p>
         </div>
         <div className="series-grid">
-          {series.map((item) => (
-            <FinancialBarChart key={item.metric} series={item} />
+          {analyticsSeries.map((item) => (
+            <FinancialBarChart key={`${item.metric}-${frequency}`} series={item} />
           ))}
         </div>
       </section>
@@ -147,10 +201,10 @@ export default async function AssetPage({ params }: { params: Promise<{ ticker: 
       <section className="panel roadmap-panel">
         <div>
           <span className="eyebrow">PRÓXIMO BLOCO</span>
-          <h2>Trimestres, margens e crescimento</h2>
+          <h2>Fechar o Q4 e ampliar indicadores</h2>
           <p>
-            As séries anuais já estão auditáveis. O próximo passo será separar corretamente trimestre
-            corrente de valores acumulados do ITR e, a partir disso, calcular margens e crescimento.
+            O próximo passo será derivar o quarto trimestre com proveniência explícita e avançar para
+            indicadores de endividamento e retorno apenas quando houver mapeamento contábil seguro.
           </p>
         </div>
         <span className="text-link">Em desenvolvimento</span>
