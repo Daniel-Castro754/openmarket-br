@@ -100,9 +100,15 @@ class FinancialStatementRepository:
     @staticmethod
     def natural_key(item: FinancialStatementItem, *, company_id: UUID) -> str:
         start = item.period_start.isoformat() if item.period_start else "-"
+        filing_date = item.filing_reference_date.isoformat() if item.filing_reference_date else "-"
+        version = str(item.filing_version) if item.filing_version is not None else "-"
         return "|".join(
             (
                 str(company_id),
+                item.filing_type or "-",
+                filing_date,
+                version,
+                item.exercise_order or "-",
                 start,
                 item.period_end.isoformat(),
                 item.statement,
@@ -133,6 +139,8 @@ class FinancialStatementRepository:
         if consolidated is not None:
             query = query.where(FinancialStatementRecord.consolidated == consolidated)
         query = query.order_by(
+            FinancialStatementRecord.filing_reference_date.desc(),
+            FinancialStatementRecord.filing_version.desc(),
             FinancialStatementRecord.period_end.desc(),
             FinancialStatementRecord.statement,
             FinancialStatementRecord.account_code,
@@ -171,6 +179,12 @@ class FinancialStatementRepository:
             )
             values = {
                 "company_id": company_id,
+                "filing_type": item.filing_type,
+                "filing_reference_date": item.filing_reference_date,
+                "filing_version": item.filing_version,
+                "exercise_order": item.exercise_order,
+                "fixed_account": item.fixed_account,
+                "statement_group": item.statement_group,
                 "period_start": item.period_start,
                 "period_end": item.period_end,
                 "statement": item.statement,
