@@ -2,7 +2,7 @@ from datetime import date
 from decimal import Decimal
 from enum import StrEnum
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from openmarket_api.domain.common import SourceMetadata
 
@@ -38,6 +38,9 @@ class FinancialSeriesPoint(BaseModel):
     filing_reference_date: date | None = None
     filing_version: int | None = None
     source: SourceMetadata
+    derived: bool = False
+    derivation: str | None = None
+    input_sources: list[SourceMetadata] = Field(default_factory=list)
 
 
 class FinancialSeries(BaseModel):
