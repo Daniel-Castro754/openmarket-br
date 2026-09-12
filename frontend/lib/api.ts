@@ -56,10 +56,16 @@ export type FinancialMetric =
   | "net_income"
   | "total_assets"
   | "equity"
+  | "cash"
+  | "short_term_debt"
+  | "long_term_debt"
+  | "gross_debt"
+  | "net_debt"
   | "gross_margin"
   | "operating_margin"
   | "net_margin"
-  | "revenue_growth_yoy";
+  | "revenue_growth_yoy"
+  | "roe";
 
 export type SeriesFrequency = "annual" | "quarterly";
 export type SeriesUnit = "currency" | "percent";
