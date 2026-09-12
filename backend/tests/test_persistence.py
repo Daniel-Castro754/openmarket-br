@@ -69,15 +69,15 @@ def test_financial_upsert_updates_same_natural_key() -> None:
             statement="DRE",
             account_code="3.01",
             account_name="Receita",
-            value=Decimal("1000000"),
+            value=Decimal(1000000),
             source=_source(),
         )
         repository = FinancialStatementRepository(session)
         repository.upsert_many([item], company_id=company_record.id)
-        item.value = Decimal("1200000")
+        item.value = Decimal(1200000)
         repository.upsert_many([item], company_id=company_record.id)
         session.commit()
 
         records = list(session.scalars(select(FinancialStatementRecord)))
         assert len(records) == 1
-        assert records[0].value == Decimal("1200000")
+        assert records[0].value == Decimal(1200000)
