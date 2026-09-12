@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     env: str = "development"
     database_url: str = "postgresql+psycopg://openmarket:openmarket@localhost:5432/openmarket"
     cors_origins: list[str] = ["http://localhost:3000"]
+    b3_bdi_base_url: str = "https://arquivos.b3.com.br/bdi"
+    request_timeout_seconds: float = 15.0
+    user_agent: str = "OpenMarketBR/0.1 (+https://github.com/Daniel-Castro754/openmarket-br)"
 
     @field_validator("cors_origins", mode="before")
     @classmethod
