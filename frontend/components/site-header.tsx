@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { SiteNavigation } from "./site-navigation";
 import { ThemeSwitcher } from "./theme-switcher";
 
 export function SiteHeader() {
@@ -14,20 +15,9 @@ export function SiteHeader() {
           </span>
         </Link>
 
-        <nav className="site-nav" aria-label="Navegação principal">
-          <Link href="/">Início</Link>
-          <Link href="/listas">Listas</Link>
-          <Link href="/#rankings">Rankings</Link>
-          <Link href="/ativos/PETR4">Ativos</Link>
-          <Link href="/comparar">Comparar</Link>
-          <Link href="/analises">Análises</Link>
-          <Link href="/macroeconomia">Macro</Link>
-          <Link href="/calculadoras">Calculadoras</Link>
-          <Link href="/relatorios">Relatórios</Link>
-        </nav>
+        <SiteNavigation />
 
         <div className="site-header-actions">
-          <span className="open-source-pill">Dados rastreáveis</span>
           <ThemeSwitcher />
           <Link className="header-cta" href="/relatorios">Document Hub</Link>
         </div>
