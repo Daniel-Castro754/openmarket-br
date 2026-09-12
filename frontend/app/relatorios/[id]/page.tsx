@@ -18,6 +18,12 @@ function pagesLabel(pageStart?: number | null, pageEnd?: number | null) {
   return `Páginas ${pageStart}–${pageEnd}`;
 }
 
+function processingLabel(status: string) {
+  if (status === "ready") return "Texto extraído";
+  if (status === "failed") return "Falha no processamento";
+  return "Metadados sincronizados";
+}
+
 export default async function ReportViewerPage({
   params,
 }: {
@@ -26,6 +32,9 @@ export default async function ReportViewerPage({
   const { id } = await params;
   const document = await getDocument(id);
   if (!document) notFound();
+
+  const hasOriginal = Boolean(document.source_url);
+  const hasExtractedText = document.sections.length > 0;
 
   return (
     <main className={styles.shell}>
@@ -38,7 +47,7 @@ export default async function ReportViewerPage({
         <div className={styles.badgeRow}>
           <span className={styles.badge}>{document.document_type}</span>
           {document.reference_period && <span className={styles.badge}>{document.reference_period}</span>}
-          <span className={styles.badge}>{document.processing_status}</span>
+          <span className={styles.badge}>{processingLabel(document.processing_status)}</span>
         </div>
         <h1>{document.title}</h1>
         <p>
@@ -48,19 +57,11 @@ export default async function ReportViewerPage({
 
       <section className={styles.viewerGrid}>
         <aside className={styles.sidebar}>
-          <span className={styles.eyebrow}>NAVEGAÇÃO</span>
-          <h2>Índice do documento</h2>
-          <div className={styles.sectionNav}>
-            {document.sections.map((section) => (
-              <a href={`#sec-${section.sequence}`} key={section.id}>
-                {section.heading ?? `Seção ${section.sequence}`} · {pagesLabel(section.page_start, section.page_end)}
-              </a>
-            ))}
-            {document.sections.length === 0 && (
-              <span className={styles.pageLabel}>Texto extraído ainda não disponível.</span>
-            )}
-          </div>
+          <span className={styles.eyebrow}>DOCUMENTO</span>
+          <h2>Informações</h2>
           <dl className={styles.metaList}>
+            <div><dt>Empresa</dt><dd>{document.company_name ?? "—"}</dd></div>
+            <div><dt>Ticker</dt><dd>{document.tickers.join(" / ") || "—"}</dd></div>
             <div><dt>Período</dt><dd>{document.reference_period ?? "—"}</dd></div>
             <div><dt>Publicado</dt><dd>{formatDate(document.published_at)}</dd></div>
             <div><dt>Páginas</dt><dd>{document.page_count ?? "—"}</dd></div>
@@ -68,49 +69,94 @@ export default async function ReportViewerPage({
           </dl>
           {document.source_url && (
             <a className={styles.originalLink} href={document.source_url} target="_blank" rel="noreferrer">
-              Abrir documento original ↗
+              Abrir original na CVM ↗
             </a>
           )}
+
+          {hasExtractedText ? (
+            <>
+              <span className={styles.eyebrowBlock}>SEÇÕES EXTRAÍDAS</span>
+              <div className={styles.sectionNav}>
+                {document.sections.map((section) => (
+                  <a href={`#sec-${section.sequence}`} key={section.id}>
+                    {section.heading ?? `Seção ${section.sequence}`} · {pagesLabel(section.page_start, section.page_end)}
+                  </a>
+                ))}
+              </div>
+            </>
+          ) : null}
         </aside>
 
         <article className={styles.documentPane}>
-          <span className={styles.eyebrow}>DOCUMENTO</span>
-          <h2>Conteúdo navegável</h2>
-          {document.sections.length === 0 ? (
-            <section className={styles.empty}>
-              Este documento ainda não possui texto extraído. Os metadados e o link da fonte continuam disponíveis.
-            </section>
+          <div className={styles.documentPaneHeader}>
+            <div>
+              <span className={styles.eyebrow}>VISUALIZAÇÃO</span>
+              <h2>Documento oficial</h2>
+            </div>
+            {document.source_url ? (
+              <a href={document.source_url} target="_blank" rel="noreferrer">
+                Abrir em nova aba ↗
+              </a>
+            ) : null}
+          </div>
+
+          {hasOriginal ? (
+            <div className={styles.pdfFrameWrap}>
+              <iframe
+                className={styles.pdfFrame}
+                src={document.source_url ?? undefined}
+                title={`Documento oficial: ${document.title}`}
+              />
+              <p className={styles.viewerFallback}>
+                Se o navegador bloquear a visualização incorporada, use “Abrir em nova aba” para acessar o documento oficial.
+              </p>
+            </div>
           ) : (
-            document.sections.map((section) => (
-              <section className={styles.documentSection} id={`sec-${section.sequence}`} key={section.id}>
-                <div className={styles.pageLabel}>{pagesLabel(section.page_start, section.page_end)}</div>
-                <h2>{section.heading ?? `Seção ${section.sequence}`}</h2>
-                <p>{section.text}</p>
-              </section>
-            ))
+            <section className={styles.empty}>
+              Este registro não possui link direto para o documento original.
+            </section>
           )}
+
+          {hasExtractedText ? (
+            <div className={styles.extractedContent}>
+              <span className={styles.eyebrow}>CONTEÚDO EXTRAÍDO</span>
+              {document.sections.map((section) => (
+                <section className={styles.documentSection} id={`sec-${section.sequence}`} key={section.id}>
+                  <div className={styles.pageLabel}>{pagesLabel(section.page_start, section.page_end)}</div>
+                  <h2>{section.heading ?? `Seção ${section.sequence}`}</h2>
+                  <p>{section.text}</p>
+                </section>
+              ))}
+            </div>
+          ) : null}
         </article>
 
         <aside className={styles.analysisPane}>
-          <span className={styles.eyebrow}>ANÁLISE</span>
-          <h2>Painel lateral</h2>
+          <span className={styles.eyebrow}>CONTEXTO</span>
+          <h2>Proveniência</h2>
           <div className={styles.analysisCard}>
-            <strong>Resumo executivo</strong>
-            <p>Entrará quando o analisador estruturado estiver conectado ao documento.</p>
+            <strong>Fonte oficial</strong>
+            <p>{document.source.source_name}</p>
           </div>
           <div className={styles.analysisCard}>
-            <strong>Métricas e tickers</strong>
-            <p>A próxima etapa extrairá métricas, empresas citadas, riscos, catalisadores e recomendações com citações.</p>
+            <strong>Qualidade</strong>
+            <p>{document.source.quality}</p>
           </div>
           <div className={styles.analysisCard}>
-            <strong>Proveniência</strong>
+            <strong>Licença</strong>
             <p>
-              {document.source.source_name} · qualidade {document.source.quality} · licença {document.source.license.license_id}.
+              {document.source.license.license_id} · {document.source.license.redistribution}
             </p>
           </div>
           <div className={styles.analysisCard}>
-            <strong>Estado de processamento</strong>
-            <p>{document.processing_status}</p>
+            <strong>Estado</strong>
+            <p>{processingLabel(document.processing_status)}</p>
+          </div>
+          <div className={styles.analysisCard}>
+            <strong>Análise estruturada</strong>
+            <p>
+              Resumo, métricas, riscos e citações entram na próxima camada, sem bloquear a leitura do documento oficial.
+            </p>
           </div>
         </aside>
       </section>
