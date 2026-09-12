@@ -9,7 +9,6 @@ from openmarket_api.providers.cvm_financials import (
     CVMReportKind,
 )
 
-
 CSV = """CD_CVM;DT_REFER;DT_INI_EXERC;DT_FIM_EXERC;MOEDA;ESCALA_MOEDA;CD_CONTA;DS_CONTA;VL_CONTA\n9512;2026-06-30;2026-01-01;2026-06-30;REAL;MIL;3.01;Receita de Venda de Bens e/ou Serviços;1234,5\n9512;2026-06-30;2026-04-01;2026-06-30;REAL;MIL;3.01;Receita de Venda de Bens e/ou Serviços;700,5\n9512;2026-06-30;2026-01-01;2026-06-30;REAL;MIL;3.11;Lucro/Prejuízo Consolidado do Período;100,25\n9999;2026-06-30;2026-01-01;2026-06-30;REAL;MIL;3.01;Outra Empresa;999\n"""
 
 
