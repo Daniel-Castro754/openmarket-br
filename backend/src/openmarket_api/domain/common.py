@@ -1,6 +1,5 @@
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from enum import StrEnum
-from typing import Generic, TypeVar
 
 from pydantic import BaseModel, Field
 
@@ -34,14 +33,11 @@ class SourceMetadata(BaseModel):
     source_name: str
     source_url: str | None = None
     reference_date: date | None = None
-    retrieved_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    retrieved_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     quality: DataQuality
     license: DataLicense
 
 
-T = TypeVar("T")
-
-
-class SourcedValue(BaseModel, Generic[T]):
+class SourcedValue[T](BaseModel):
     value: T
     source: SourceMetadata
