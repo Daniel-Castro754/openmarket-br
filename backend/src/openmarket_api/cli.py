@@ -5,7 +5,11 @@ from datetime import date
 
 from openmarket_api.persistence.database import get_session_factory
 from openmarket_api.providers.bootstrap import register_builtin_providers
-from openmarket_api.providers.contracts import CompanyProvider, FinancialProvider, InstrumentProvider
+from openmarket_api.providers.contracts import (
+    CompanyProvider,
+    FinancialProvider,
+    InstrumentProvider,
+)
 from openmarket_api.providers.registry import registry
 from openmarket_api.services.asset_sync import AssetSyncService
 
@@ -39,11 +43,11 @@ async def _sync_asset(ticker: str, *, start: date | None, end: date | None) -> i
     company_provider = registry.get("cvm-company-registry")
     financial_provider = registry.get("cvm-financial-statements")
     if not isinstance(instrument_provider, InstrumentProvider):
-        raise RuntimeError("B3 instrument provider is unavailable")
+        raise TypeError("B3 instrument provider has an invalid type")
     if not isinstance(company_provider, CompanyProvider):
-        raise RuntimeError("CVM company provider is unavailable")
+        raise TypeError("CVM company provider has an invalid type")
     if not isinstance(financial_provider, FinancialProvider):
-        raise RuntimeError("CVM financial provider is unavailable")
+        raise TypeError("CVM financial provider has an invalid type")
 
     factory = get_session_factory()
     with factory() as session:
