@@ -64,7 +64,7 @@ class CVMFinancialProvider(FinancialProvider):
 
         items: list[FinancialStatementItem] = []
         for year in range(start.year, end.year + 1):
-            for report_kind in (CVMReportKind.DFP, CVMReportKind.ITR):
+            for report_kind in (CVMReportKind.ITR, CVMReportKind.DFP):
                 archive = await self._download_archive(report_kind, year)
                 items.extend(
                     self.parse_archive(
@@ -157,6 +157,7 @@ class CVMFinancialProvider(FinancialProvider):
             period_end = cls._parse_date(row.get("DT_FIM_EXERC") or row.get("DT_REFER"))
             if period_end is None or not start <= period_end <= end:
                 continue
+            period_start = cls._parse_date(row.get("DT_INI_EXERC"))
 
             account_code = cls._clean(row.get("CD_CONTA"))
             account_name = cls._clean(row.get("DS_CONTA"))
@@ -173,6 +174,7 @@ class CVMFinancialProvider(FinancialProvider):
             items.append(
                 FinancialStatementItem(
                     company_id=company.id,
+                    period_start=period_start,
                     period_end=period_end,
                     statement=statement,
                     account_code=account_code,
@@ -284,11 +286,23 @@ class CVMFinancialProvider(FinancialProvider):
 
     @staticmethod
     def _deduplicate(items: Iterable[FinancialStatementItem]) -> list[FinancialStatementItem]:
-        deduped: dict[tuple[date, str, str, bool], FinancialStatementItem] = {}
+        deduped: dict[tuple[date | None, date, str, str, bool], FinancialStatementItem] = {}
         for item in items:
-            key = (item.period_end, item.statement, item.account_code, item.consolidated)
+            key = (
+                item.period_start,
+                item.period_end,
+                item.statement,
+                item.account_code,
+                item.consolidated,
+            )
             deduped[key] = item
         return sorted(
             deduped.values(),
-            key=lambda item: (item.period_end, item.statement, item.account_code, item.consolidated),
+            key=lambda item: (
+                item.period_end,
+                item.period_start or item.period_end,
+                item.statement,
+                item.account_code,
+                item.consolidated,
+            ),
         )
