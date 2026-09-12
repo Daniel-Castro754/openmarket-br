@@ -30,11 +30,33 @@ function monthlyRate(annualPct: number) {
 }
 
 function Field({ label, value, onChange, suffix }: { label: string; value: number; onChange: (value: number) => void; suffix?: string }) {
+  const [draft, setDraft] = useState(() => (Number.isFinite(value) ? String(value) : ""));
+
+  function handleChange(next: string) {
+    setDraft(next);
+    if (next.trim() === "") return;
+    const numeric = Number(next);
+    if (Number.isFinite(numeric)) onChange(numeric);
+  }
+
+  function handleBlur() {
+    if (draft.trim() === "" || !Number.isFinite(Number(draft))) {
+      setDraft(Number.isFinite(value) ? String(value) : "0");
+    }
+  }
+
   return (
     <label className={styles.field}>
       <span>{label}</span>
       <div className={styles.inputWrap}>
-        <input type="number" value={Number.isFinite(value) ? value : 0} onChange={(event) => onChange(Number(event.target.value))} />
+        <input
+          inputMode="decimal"
+          step="any"
+          type="number"
+          value={draft}
+          onBlur={handleBlur}
+          onChange={(event) => handleChange(event.target.value)}
+        />
         {suffix ? <small>{suffix}</small> : null}
       </div>
     </label>
