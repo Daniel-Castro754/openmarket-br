@@ -157,6 +157,7 @@ class CVMFinancialProvider(FinancialProvider):
             if period_end is None or not start <= period_end <= end:
                 continue
             period_start = cls._parse_date(row.get("DT_INI_EXERC"))
+            filing_reference_date = cls._parse_date(row.get("DT_REFER")) or period_end
 
             account_code = cls._clean(row.get("CD_CONTA"))
             account_name = cls._clean(row.get("DS_CONTA"))
@@ -173,6 +174,12 @@ class CVMFinancialProvider(FinancialProvider):
             items.append(
                 FinancialStatementItem(
                     company_id=company.id,
+                    filing_type=report_kind.value.upper(),
+                    filing_reference_date=filing_reference_date,
+                    filing_version=cls._parse_int(row.get("VERSAO")),
+                    exercise_order=cls._clean(row.get("ORDEM_EXERC")),
+                    fixed_account=cls._parse_yes_no(row.get("ST_CONTA_FIXA")),
+                    statement_group=cls._clean(row.get("GRUPO_DFP")),
                     period_start=period_start,
                     period_end=period_end,
                     statement=statement,
@@ -181,7 +188,7 @@ class CVMFinancialProvider(FinancialProvider):
                     value=value,
                     currency=cls._currency(row.get("MOEDA")),
                     consolidated=consolidated,
-                    source=cls._source_metadata(report_kind, period_end),
+                    source=cls._source_metadata(report_kind, filing_reference_date),
                 )
             )
 
@@ -201,6 +208,7 @@ class CVMFinancialProvider(FinancialProvider):
             ("_bpa_", "BPA"),
             ("_bpp_", "BPP"),
             ("_dre_", "DRE"),
+            ("_dra_", "DRA"),
             ("_dva_", "DVA"),
             ("_dfc_md_", "DFC_MD"),
             ("_dfc_mi_", "DFC_MI"),
@@ -237,6 +245,24 @@ class CVMFinancialProvider(FinancialProvider):
             return date.fromisoformat(value.strip()[:10])
         except ValueError:
             return None
+
+    @staticmethod
+    def _parse_int(value: str | None) -> int | None:
+        if not value:
+            return None
+        try:
+            return int(value.strip())
+        except ValueError:
+            return None
+
+    @staticmethod
+    def _parse_yes_no(value: str | None) -> bool | None:
+        normalized = (value or "").strip().upper()
+        if normalized == "S":
+            return True
+        if normalized == "N":
+            return False
+        return None
 
     @staticmethod
     def _parse_decimal(value: str | None) -> Decimal | None:
@@ -287,9 +313,16 @@ class CVMFinancialProvider(FinancialProvider):
 
     @staticmethod
     def _deduplicate(items: Iterable[FinancialStatementItem]) -> list[FinancialStatementItem]:
-        deduped: dict[tuple[date | None, date, str, str, bool], FinancialStatementItem] = {}
+        deduped: dict[
+            tuple[str | None, date | None, int | None, str | None, date | None, date, str, str, bool],
+            FinancialStatementItem,
+        ] = {}
         for item in items:
             key = (
+                item.filing_type,
+                item.filing_reference_date,
+                item.filing_version,
+                item.exercise_order,
                 item.period_start,
                 item.period_end,
                 item.statement,
@@ -300,10 +333,13 @@ class CVMFinancialProvider(FinancialProvider):
         return sorted(
             deduped.values(),
             key=lambda item: (
+                item.filing_reference_date or item.period_end,
+                item.filing_version or 0,
                 item.period_end,
                 item.period_start or item.period_end,
                 item.statement,
                 item.account_code,
+                item.exercise_order or "",
                 item.consolidated,
             ),
         )

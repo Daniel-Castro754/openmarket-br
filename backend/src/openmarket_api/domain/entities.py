@@ -54,6 +54,12 @@ class Quote(BaseModel):
 
 class FinancialStatementItem(BaseModel):
     company_id: UUID
+    filing_type: str | None = None
+    filing_reference_date: date | None = None
+    filing_version: int | None = None
+    exercise_order: str | None = None
+    fixed_account: bool | None = None
+    statement_group: str | None = None
     period_start: date | None = None
     period_end: date
     statement: str
