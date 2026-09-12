@@ -71,6 +71,24 @@ METRICS: dict[FinancialMetric, MetricDefinition] = {
         account_code="2.03",
         flow=False,
     ),
+    FinancialMetric.CASH: MetricDefinition(
+        label="Caixa e equivalentes",
+        statement="BPA",
+        account_code="1.01.01",
+        flow=False,
+    ),
+    FinancialMetric.SHORT_TERM_DEBT: MetricDefinition(
+        label="Dívida de curto prazo",
+        statement="BPP",
+        account_code="2.01.04",
+        flow=False,
+    ),
+    FinancialMetric.LONG_TERM_DEBT: MetricDefinition(
+        label="Dívida de longo prazo",
+        statement="BPP",
+        account_code="2.02.01",
+        flow=False,
+    ),
 }
 
 MARGINS: dict[FinancialMetric, MarginDefinition] = {
@@ -106,6 +124,10 @@ class FinancialSeriesService:
     ) -> FinancialSeries:
         if metric in METRICS:
             return self._get_direct_series(ticker, metric, frequency=frequency)
+        if metric == FinancialMetric.GROSS_DEBT:
+            return self._get_gross_debt_series(ticker, frequency=frequency)
+        if metric == FinancialMetric.NET_DEBT:
+            return self._get_net_debt_series(ticker, frequency=frequency)
         if metric in MARGINS:
             return self._get_margin_series(ticker, metric, frequency=frequency)
         if metric == FinancialMetric.REVENUE_GROWTH_YOY:
@@ -116,6 +138,8 @@ class FinancialSeriesService:
                 label="Crescimento da receita (YoY)",
                 frequency=frequency,
             )
+        if metric == FinancialMetric.ROE:
+            return self._get_roe_series(ticker, frequency=frequency)
         raise ValueError(f"unsupported financial metric: {metric}")
 
     def get_annual_series(
@@ -187,6 +211,189 @@ class FinancialSeriesService:
             statement=definition.statement,
             account_code=definition.account_code,
             points=sorted(points_by_period.values(), key=lambda item: item.period_end),
+        )
+
+    def _get_gross_debt_series(
+        self,
+        ticker: str,
+        *,
+        frequency: SeriesFrequency,
+    ) -> FinancialSeries:
+        short_term = self._get_direct_series(
+            ticker,
+            FinancialMetric.SHORT_TERM_DEBT,
+            frequency=frequency,
+        )
+        long_term = self._get_direct_series(
+            ticker,
+            FinancialMetric.LONG_TERM_DEBT,
+            frequency=frequency,
+        )
+        return self._combine_currency_series(
+            FinancialMetric.GROSS_DEBT,
+            "Dívida bruta",
+            "short_term_debt + long_term_debt",
+            short_term,
+            long_term,
+            frequency=frequency,
+            subtract=False,
+        )
+
+    def _get_net_debt_series(
+        self,
+        ticker: str,
+        *,
+        frequency: SeriesFrequency,
+    ) -> FinancialSeries:
+        gross_debt = self._get_gross_debt_series(ticker, frequency=frequency)
+        cash = self._get_direct_series(
+            ticker,
+            FinancialMetric.CASH,
+            frequency=frequency,
+        )
+        return self._combine_currency_series(
+            FinancialMetric.NET_DEBT,
+            "Dívida líquida",
+            "gross_debt - cash",
+            gross_debt,
+            cash,
+            frequency=frequency,
+            subtract=True,
+        )
+
+    def _combine_currency_series(
+        self,
+        metric: FinancialMetric,
+        label: str,
+        formula: str,
+        left: FinancialSeries,
+        right: FinancialSeries,
+        *,
+        frequency: SeriesFrequency,
+        subtract: bool,
+    ) -> FinancialSeries:
+        right_by_period = {point.period_end: point for point in right.points}
+        points: list[FinancialSeriesPoint] = []
+
+        for left_point in left.points:
+            right_point = right_by_period.get(left_point.period_end)
+            if right_point is None:
+                continue
+            if left_point.currency != right_point.currency:
+                continue
+            if not self._same_filing(left_point, right_point):
+                continue
+
+            inputs = self._merge_input_sources(left_point, right_point)
+            value = (
+                left_point.value - right_point.value
+                if subtract
+                else left_point.value + right_point.value
+            )
+            points.append(
+                FinancialSeriesPoint(
+                    period_end=left_point.period_end,
+                    value=value,
+                    currency=left_point.currency,
+                    filing_reference_date=left_point.filing_reference_date,
+                    source=self._calculation_source(
+                        label,
+                        inputs,
+                        left_point.filing_reference_date,
+                    ),
+                    derived=True,
+                    derivation=formula,
+                    input_sources=inputs,
+                )
+            )
+
+        return FinancialSeries(
+            metric=metric,
+            label=label,
+            frequency=frequency,
+            unit=SeriesUnit.CURRENCY,
+            formula=formula,
+            points=points,
+        )
+
+    def _get_roe_series(
+        self,
+        ticker: str,
+        *,
+        frequency: SeriesFrequency,
+    ) -> FinancialSeries:
+        formula = "annual_net_income / average_equity * 100"
+        if frequency != SeriesFrequency.ANNUAL:
+            return FinancialSeries(
+                metric=FinancialMetric.ROE,
+                label="ROE (consolidado)",
+                frequency=frequency,
+                unit=SeriesUnit.PERCENT,
+                formula=formula,
+                points=[],
+            )
+
+        net_income = self._get_direct_series(
+            ticker,
+            FinancialMetric.NET_INCOME,
+            frequency=frequency,
+        )
+        equity = self._get_direct_series(
+            ticker,
+            FinancialMetric.EQUITY,
+            frequency=frequency,
+        )
+        equity_by_period = {point.period_end: point for point in equity.points}
+
+        points: list[FinancialSeriesPoint] = []
+        for income_point in net_income.points:
+            current_equity = equity_by_period.get(income_point.period_end)
+            previous_equity = equity_by_period.get(
+                date(
+                    income_point.period_end.year - 1,
+                    income_point.period_end.month,
+                    income_point.period_end.day,
+                )
+            )
+            if current_equity is None or previous_equity is None:
+                continue
+            if not self._same_filing(income_point, current_equity):
+                continue
+
+            average_equity = (current_equity.value + previous_equity.value) / Decimal(2)
+            if average_equity == 0:
+                continue
+
+            inputs = self._merge_input_sources(
+                previous_equity,
+                current_equity,
+                income_point,
+            )
+            points.append(
+                FinancialSeriesPoint(
+                    period_start=income_point.period_start,
+                    period_end=income_point.period_end,
+                    value=(income_point.value / average_equity) * Decimal(100),
+                    currency=None,
+                    filing_reference_date=income_point.filing_reference_date,
+                    source=self._calculation_source(
+                        "ROE consolidado",
+                        inputs,
+                        income_point.filing_reference_date,
+                    ),
+                    derived=True,
+                    derivation=formula,
+                    input_sources=inputs,
+                )
+            )
+
+        return FinancialSeries(
+            metric=FinancialMetric.ROE,
+            label="ROE (consolidado)",
+            frequency=frequency,
+            unit=SeriesUnit.PERCENT,
+            formula=formula,
+            points=points,
         )
 
     def _get_margin_series(
@@ -443,8 +650,6 @@ class FinancialSeriesService:
         right: FinancialSeriesPoint,
     ) -> bool:
         if left.derived or right.derived:
-            if left.derived != right.derived:
-                return False
             return cls._source_signature(left) == cls._source_signature(right)
         return (
             left.filing_reference_date == right.filing_reference_date
