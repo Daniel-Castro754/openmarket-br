@@ -8,6 +8,7 @@ from .routes.health import router as health_router
 from .routes.instruments import router as instruments_router
 from .routes.macro import router as macro_router
 from .routes.meta import router as meta_router
+from .routes.screener import router as screener_router
 
 router = APIRouter()
 router.include_router(health_router)
@@ -18,3 +19,4 @@ router.include_router(financials_router)
 router.include_router(instruments_router)
 router.include_router(macro_router)
 router.include_router(meta_router)
+router.include_router(screener_router)
