@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { MacroTickerBar } from "../components/macro-ticker-bar";
 import { SiteHeader } from "../components/site-header";
 import "./styles.css";
 import "./derived.css";
@@ -14,6 +15,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="pt-BR">
       <body>
         <SiteHeader />
+        <MacroTickerBar />
         {children}
       </body>
     </html>
