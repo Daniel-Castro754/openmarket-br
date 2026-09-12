@@ -79,19 +79,19 @@ export default function Home() {
           </div>
           <div className="market-stat-list">
             <div>
-              <span>Ativo de referência</span>
-              <strong>PETR4</strong>
-              <small>Petrobras • B3</small>
+              <span>Fundamentos</span>
+              <strong>DFP + ITR</strong>
+              <small>Séries anuais e trimestrais com proveniência</small>
             </div>
             <div>
-              <span>Documentos disponíveis</span>
-              <strong>515</strong>
-              <small>Metadados IPE validados</small>
+              <span>Documentos</span>
+              <strong>IPE / CVM</strong>
+              <small>Comunicados e documentos oficiais por ticker</small>
             </div>
             <div>
-              <span>Fatos financeiros</span>
-              <strong>6.460</strong>
-              <small>DFP + ITR sincronizados</small>
+              <span>Metodologia</span>
+              <strong>Rastreável</strong>
+              <small>Fonte, data de referência e derivação preservadas</small>
             </div>
           </div>
           <Link className="market-card-link" href="/ativos/PETR4">
