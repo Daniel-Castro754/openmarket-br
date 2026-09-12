@@ -327,7 +327,7 @@ class CVMIpeDocumentProvider(DocumentProvider):
                 pass
         for fmt in ("%d/%m/%Y", "%d/%m/%Y %H:%M:%S", "%Y-%m-%d %H:%M:%S"):
             try:
-                return datetime.strptime(raw, fmt).date()
+                return datetime.strptime(raw, fmt).replace(tzinfo=UTC).date()
             except ValueError:
                 continue
         return None
