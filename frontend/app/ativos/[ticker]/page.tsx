@@ -117,9 +117,7 @@ export default async function AssetPage({ params }: { params: Promise<{ ticker: 
             contábeis em séries comparáveis de receita, lucro, margens e endividamento.
           </p>
         </div>
-        <Link className="text-link" href={`/api-placeholder/${ticker}`} aria-disabled="true">
-          Em desenvolvimento
-        </Link>
+        <span className="text-link">Em desenvolvimento</span>
       </section>
 
       <footer className="asset-sources">
