@@ -27,15 +27,10 @@ class PublicDocumentRepository:
         source_url = (document.source_url or "-").strip()
         published_at = document.published_at.isoformat() if document.published_at else "-"
         company = str(document.company_id) if document.company_id else "-"
-        return "|".join(
-            (
-                document.source.provider,
-                company,
-                document.document_type.value,
-                published_at,
-                source_url,
-                document.title.strip(),
-            )
+        title = document.title.strip()
+        return (
+            f"{document.source.provider}|{company}|{document.document_type.value}|"
+            f"{published_at}|{source_url}|{title}"
         )
 
     def upsert(self, document: PublicDocument) -> PublicDocumentRecord:
