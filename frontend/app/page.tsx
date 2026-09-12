@@ -2,138 +2,162 @@ import Link from "next/link";
 
 import { AssetSearch } from "./asset-search";
 
+const quickLinks = [
+  { label: "Listas", detail: "Screener compacto", href: "/listas" },
+  { label: "Análises", detail: "Consumo e atividade", href: "/analises" },
+  { label: "Macroeconomia", detail: "BCB + Focus", href: "/macroeconomia" },
+  { label: "Calculadoras", detail: "Simulações financeiras", href: "/calculadoras" },
+  { label: "Relatórios", detail: "Document Hub", href: "/relatorios" },
+];
+
 const rankingCards = [
   {
     title: "Crescimento",
     metric: "Receita e lucro",
-    description: "Compare evolução anual e trimestral usando fatos oficiais da CVM.",
+    description: "Evolução anual e trimestral a partir dos fatos publicados na CVM.",
   },
   {
     title: "Rentabilidade",
     metric: "Margens e ROE",
-    description: "Encontre empresas com retorno e eficiência operacional consistentes.",
+    description: "Eficiência operacional e retorno reunidos em uma leitura comparável.",
   },
   {
     title: "Balanço",
     metric: "Caixa e dívida",
-    description: "Observe liquidez, dívida bruta e dívida líquida no mesmo fechamento.",
+    description: "Liquidez, dívida bruta e dívida líquida no mesmo fechamento contábil.",
   },
   {
     title: "Documentos",
     metric: "Eventos e resultados",
-    description: "Acompanhe comunicados, apresentações e documentos oficiais da CVM.",
+    description: "Comunicados, apresentações e documentos oficiais organizados por empresa.",
   },
 ];
 
 const productCards = [
   {
     kicker: "ATIVOS",
-    title: "Fundamentos em uma única página",
-    text: "Históricos, margens, retorno, caixa, dívida e proveniência sem esconder a origem dos números.",
+    title: "Empresa em uma única tela",
+    text: "Resultados, balanço, caixa, margens e documentos com origem preservada.",
     href: "/ativos/PETR4",
     link: "Abrir PETR4",
   },
   {
-    kicker: "DOCUMENT HUB",
-    title: "Relatórios corporativos",
-    text: "Biblioteca pública por ticker, período e tipo, com acesso direto ao documento oficial.",
-    href: "/relatorios?ticker=PETR4",
-    link: "Explorar documentos",
+    kicker: "LISTAS",
+    title: "Compare muitas empresas",
+    text: "Escolha listas prontas ou monte sua própria combinação de indicadores.",
+    href: "/listas",
+    link: "Abrir listas",
   },
   {
-    kicker: "OPEN DATA",
-    title: "Dados que podem ser auditados",
-    text: "B3 e CVM entram por providers substituíveis, com fonte, referência e política de uso preservadas.",
-    href: "/relatorios",
-    link: "Ver proveniência",
+    kicker: "ANÁLISES",
+    title: "Economia real no contexto",
+    text: "Consumo, atividade, inflação e séries oficiais do IBGE em painéis compactos.",
+    href: "/analises",
+    link: "Ver análises",
+  },
+  {
+    kicker: "DOCUMENTOS",
+    title: "Fonte primária sempre perto",
+    text: "Navegue pelos documentos públicos por ticker, período e tipo sem perder a proveniência.",
+    href: "/relatorios?ticker=PETR4",
+    link: "Explorar documentos",
   },
 ];
 
 export default function Home() {
   return (
-    <main className="home-page">
-      <section className="market-hero">
-        <div className="hero-copy">
-          <span className="eyebrow">MERCADO BRASILEIRO • OPEN SOURCE</span>
+    <main className="home-page home-dashboard-page">
+      <section className="home-overview">
+        <div className="hero-copy home-hero-copy">
+          <span className="eyebrow">MERCADO BRASILEIRO • DADOS RASTREÁVEIS</span>
           <h1>Dados para investir com contexto.</h1>
           <p>
-            Pesquise ações, acompanhe fundamentos, leia documentos oficiais e compare sinais sem perder a
-            proveniência dos dados.
+            Fundamentos, documentos oficiais, macroeconomia e análises econômicas em uma interface feita para
+            pesquisar rápido e aprofundar quando necessário.
           </p>
           <AssetSearch />
           <div className="hero-trust-row">
             <span>CVM</span>
             <span>B3</span>
-            <span>PostgreSQL</span>
-            <span>Dados rastreáveis</span>
+            <span>Banco Central</span>
+            <span>IBGE</span>
           </div>
         </div>
 
-        <aside className="hero-market-card">
-          <div className="market-card-heading">
+        <aside className="home-coverage-panel">
+          <div className="home-panel-heading">
             <div>
-              <span className="eyebrow">VISÃO RÁPIDA</span>
-              <h2>OpenMarket BR</h2>
+              <span className="eyebrow">PESQUISA CONECTADA</span>
+              <h2>Do dado primário ao contexto.</h2>
             </div>
-            <span className="live-dot">base local</span>
+            <span className="live-dot">open source</span>
           </div>
-          <div className="market-stat-list">
+          <div className="home-coverage-grid">
             <div>
               <span>Fundamentos</span>
               <strong>DFP + ITR</strong>
-              <small>Séries anuais e trimestrais com proveniência</small>
+              <small>CVM</small>
+            </div>
+            <div>
+              <span>Economia</span>
+              <strong>BCB + IBGE</strong>
+              <small>Macro e atividade</small>
             </div>
             <div>
               <span>Documentos</span>
-              <strong>IPE / CVM</strong>
-              <small>Comunicados e documentos oficiais por ticker</small>
-            </div>
-            <div>
-              <span>Metodologia</span>
-              <strong>Rastreável</strong>
-              <small>Fonte, data de referência e derivação preservadas</small>
+              <strong>IPE</strong>
+              <small>Fonte oficial</small>
             </div>
           </div>
           <Link className="market-card-link" href="/ativos/PETR4">
-            Ver visão da ação →
+            Abrir visão de uma empresa →
           </Link>
         </aside>
       </section>
 
-      <section className="market-section" id="rankings">
-        <div className="market-section-heading">
+      <nav className="home-quick-links" aria-label="Atalhos do OpenMarket">
+        {quickLinks.map((item) => (
+          <Link href={item.href} key={item.href}>
+            <strong>{item.label}</strong>
+            <span>{item.detail}</span>
+            <b aria-hidden="true">→</b>
+          </Link>
+        ))}
+      </nav>
+
+      <section className="market-section home-ranking-section" id="rankings">
+        <div className="market-section-heading home-section-heading">
           <div>
             <span className="eyebrow">RANKINGS</span>
-            <h2>Encontre oportunidades por fundamento</h2>
+            <h2>Fundamentos para descobrir e comparar</h2>
           </div>
-          <p>
-            A estrutura visual já está preparada para rankings. Os resultados serão liberados apenas quando o
-            universo sincronizado tiver dados suficientes — sem preencher posições com dados fictícios.
-          </p>
+          <Link href="/listas">Abrir screener →</Link>
         </div>
-        <div className="ranking-grid">
+        <div className="ranking-grid home-ranking-grid">
           {rankingCards.map((card, index) => (
-            <article className="ranking-card" key={card.title}>
-              <div className="ranking-number">0{index + 1}</div>
-              <span className="ranking-metric">{card.metric}</span>
-              <h3>{card.title}</h3>
-              <p>{card.description}</p>
-              <span className="ranking-state">Universo em expansão</span>
-            </article>
+            <Link className="ranking-card home-ranking-card" href="/listas" key={card.title}>
+              <span className="home-ranking-index">0{index + 1}</span>
+              <div>
+                <span className="ranking-metric">{card.metric}</span>
+                <h3>{card.title}</h3>
+                <p>{card.description}</p>
+              </div>
+              <span className="home-ranking-action">Explorar →</span>
+            </Link>
           ))}
         </div>
       </section>
 
-      <section className="market-section">
-        <div className="market-section-heading compact-heading">
+      <section className="market-section home-products-section">
+        <div className="market-section-heading compact-heading home-section-heading">
           <div>
-            <span className="eyebrow">EXPLORE</span>
-            <h2>Pesquisa, fundamentos e documentos</h2>
+            <span className="eyebrow">PESQUISA</span>
+            <h2>Escolha o nível de profundidade</h2>
           </div>
         </div>
-        <div className="product-grid">
+        <div className="home-product-grid">
           {productCards.map((card) => (
-            <article className="product-card" key={card.title}>
+            <article className="product-card home-product-card" key={card.title}>
               <span className="eyebrow">{card.kicker}</span>
               <h3>{card.title}</h3>
               <p>{card.text}</p>
