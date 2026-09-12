@@ -72,6 +72,9 @@ export type FinancialSeriesPoint = {
   filing_reference_date?: string | null;
   filing_version?: number | null;
   source: SourceMetadata;
+  derived: boolean;
+  derivation?: string | null;
+  input_sources: SourceMetadata[];
 };
 
 export type FinancialSeries = {
