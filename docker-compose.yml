@@ -1,0 +1,31 @@
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: openmarket
+      POSTGRES_USER: openmarket
+      POSTGRES_PASSWORD: openmarket
+    ports:
+      - "5432:5432"
+    volumes:
+      - openmarket_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openmarket -d openmarket"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: ./backend
+    environment:
+      OPENMARKET_ENV: development
+      OPENMARKET_DATABASE_URL: postgresql+psycopg://openmarket:openmarket@db:5432/openmarket
+      OPENMARKET_CORS_ORIGINS: http://localhost:3000
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  openmarket_pgdata:
