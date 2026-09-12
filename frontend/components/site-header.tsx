@@ -14,6 +14,7 @@ export function SiteHeader() {
 
         <nav className="site-nav" aria-label="Navegação principal">
           <Link href="/">Início</Link>
+          <Link href="/listas">Listas</Link>
           <Link href="/#rankings">Rankings</Link>
           <Link href="/ativos/PETR4">Ativos</Link>
           <Link href="/comparar">Comparar</Link>
