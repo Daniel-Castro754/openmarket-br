@@ -10,6 +10,7 @@ import "./visual-overrides.css";
 import "./shell-navigation.css";
 import "./home-dashboard.css";
 import "./asset-terminal.css";
+import "./final-polish.css";
 
 export const metadata: Metadata = {
   title: "OpenMarket BR",
