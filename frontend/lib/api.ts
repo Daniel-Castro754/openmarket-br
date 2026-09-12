@@ -99,6 +99,48 @@ export type FinancialSeries = {
   points: FinancialSeriesPoint[];
 };
 
+export type DocumentType =
+  | "dfp"
+  | "itr"
+  | "fre"
+  | "material_fact"
+  | "earnings_release"
+  | "presentation"
+  | "annual_report"
+  | "other";
+
+export type DocumentProcessingStatus = "pending" | "ready" | "failed";
+
+export type DocumentSection = {
+  id: string;
+  document_id: string;
+  sequence: number;
+  page_start?: number | null;
+  page_end?: number | null;
+  heading?: string | null;
+  text: string;
+};
+
+export type DocumentSummary = {
+  id: string;
+  company_id?: string | null;
+  company_name?: string | null;
+  tickers: string[];
+  title: string;
+  document_type: DocumentType;
+  source_url?: string | null;
+  published_at?: string | null;
+  reference_period?: string | null;
+  content_type: string;
+  page_count?: number | null;
+  processing_status: DocumentProcessingStatus;
+  source: SourceMetadata;
+};
+
+export type DocumentDetail = DocumentSummary & {
+  sections: DocumentSection[];
+};
+
 const apiBase = (process.env.OPENMARKET_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
 
 export async function getAsset(ticker: string): Promise<AssetSnapshot | null> {
@@ -129,4 +171,40 @@ export async function getFinancialSeries(
     throw new Error(`OpenMarket API returned ${response.status} for ${metric}`);
   }
   return (await response.json()) as FinancialSeries;
+}
+
+export async function getDocuments(filters?: {
+  ticker?: string;
+  documentType?: DocumentType;
+  q?: string;
+}): Promise<DocumentSummary[]> {
+  const params = new URLSearchParams();
+  if (filters?.ticker) params.set("ticker", filters.ticker);
+  if (filters?.documentType) params.set("document_type", filters.documentType);
+  if (filters?.q) params.set("q", filters.q);
+
+  const suffix = params.size ? `?${params.toString()}` : "";
+  const response = await fetch(`${apiBase}/api/v1/documents${suffix}`, {
+    next: { revalidate: 60 },
+  });
+  if (response.status === 404 && filters?.ticker) {
+    return [];
+  }
+  if (!response.ok) {
+    throw new Error(`OpenMarket API returned ${response.status} for documents`);
+  }
+  return (await response.json()) as DocumentSummary[];
+}
+
+export async function getDocument(documentId: string): Promise<DocumentDetail | null> {
+  const response = await fetch(`${apiBase}/api/v1/documents/${encodeURIComponent(documentId)}`, {
+    next: { revalidate: 60 },
+  });
+  if (response.status === 404) {
+    return null;
+  }
+  if (!response.ok) {
+    throw new Error(`OpenMarket API returned ${response.status} for document ${documentId}`);
+  }
+  return (await response.json()) as DocumentDetail;
 }
