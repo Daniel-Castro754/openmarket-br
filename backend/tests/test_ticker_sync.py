@@ -117,7 +117,7 @@ class FakeFinancialProvider(FinancialProvider):
                 statement="DRE",
                 account_code="3.01",
                 account_name="Receita",
-                value=Decimal("1234567"),
+                value=Decimal(1234567),
                 consolidated=True,
                 source=_source(self.name),
             )
