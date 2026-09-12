@@ -19,7 +19,6 @@ from openmarket_api.domain.common import (
 from openmarket_api.domain.entities import Company, FinancialStatementItem
 from openmarket_api.providers.contracts import FinancialProvider
 
-
 CVM_DFP_DATA_URL = "https://dados.cvm.gov.br/dados/CIA_ABERTA/DOC/DFP/DADOS"
 CVM_ITR_DATA_URL = "https://dados.cvm.gov.br/dados/CIA_ABERTA/DOC/ITR/DADOS"
 CVM_DFP_DATASET_URL = "https://dados.cvm.gov.br/dataset/cia_aberta-doc-dfp"
