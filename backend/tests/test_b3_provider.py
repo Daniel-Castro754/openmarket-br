@@ -4,7 +4,6 @@ from openmarket_api.domain.common import DataQuality, RedistributionScope
 from openmarket_api.domain.entities import InstrumentType
 from openmarket_api.providers.b3 import B3InstrumentProvider
 
-
 PAYLOAD = {
     "table": {
         "columns": [
