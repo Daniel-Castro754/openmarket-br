@@ -1,0 +1,106 @@
+html {
+  scrollbar-gutter: stable;
+}
+
+body {
+  min-width: 320px;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: var(--border-strong);
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--muted) 58%, transparent);
+  background-clip: padding-box;
+}
+
+.home-dashboard-page {
+  padding-top: 24px;
+}
+
+.home-overview {
+  min-height: 280px;
+  gap: 20px;
+}
+
+.home-hero-copy {
+  max-width: 640px;
+}
+
+.home-hero-copy h1 {
+  max-width: 610px;
+  font-size: clamp(2.1rem, 3.1vw, 2.9rem);
+  line-height: 1.02;
+  letter-spacing: -.042em;
+}
+
+.home-hero-copy > p {
+  max-width: 620px;
+  font-size: .84rem;
+}
+
+input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+
+button,
+a,
+input,
+select {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--info);
+  outline-offset: 2px;
+}
+
+@media (max-width: 760px) {
+  .home-overview {
+    min-height: 0;
+  }
+
+  .home-hero-copy h1 {
+    font-size: clamp(2rem, 9vw, 2.55rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
