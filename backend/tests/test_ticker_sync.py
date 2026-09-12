@@ -164,7 +164,8 @@ def test_ticker_sync_persists_financials_and_documents_end_to_end() -> None:
     Base.metadata.create_all(engine)
 
     with Session(engine) as session:
-        result = asyncio.run(_service(session, company_provider=FakeCompanyProvider()).sync("PETR4"))
+        service = _service(session, company_provider=FakeCompanyProvider())
+        result = asyncio.run(service.sync("PETR4"))
 
         financial_count = session.scalar(select(func.count()).select_from(FinancialStatementRecord))
         document_count = session.scalar(select(func.count()).select_from(PublicDocumentRecord))
