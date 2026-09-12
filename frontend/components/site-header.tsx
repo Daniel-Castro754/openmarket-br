@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { ThemeSwitcher } from "./theme-switcher";
+
 export function SiteHeader() {
   return (
     <header className="site-header">
@@ -26,6 +28,7 @@ export function SiteHeader() {
 
         <div className="site-header-actions">
           <span className="open-source-pill">Dados rastreáveis</span>
+          <ThemeSwitcher />
           <Link className="header-cta" href="/relatorios">Document Hub</Link>
         </div>
       </div>
