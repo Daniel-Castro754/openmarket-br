@@ -20,5 +20,8 @@ jobs:
         working-directory: backend
       - run: pytest
         working-directory: backend
-      - run: ruff check src tests
+      - name: Show Ruff autofix diff
         working-directory: backend
+        run: |
+          ruff check --fix src tests
+          git diff -- src tests
