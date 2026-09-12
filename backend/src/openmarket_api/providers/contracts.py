@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from datetime import date
-from typing import Sequence
 
 from openmarket_api.domain.entities import Company, FinancialStatementItem, Instrument, Quote
 
