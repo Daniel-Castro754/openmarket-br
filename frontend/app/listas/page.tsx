@@ -2,6 +2,8 @@ import { AssetListTable } from "./asset-list-table";
 import { getScreener } from "../../lib/api";
 import styles from "./listas.module.css";
 
+export const dynamic = "force-dynamic";
+
 export default async function AssetListsPage() {
   const screener = await getScreener({ limit: 80 });
 
