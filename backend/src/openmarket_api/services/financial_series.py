@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 
 from sqlalchemy.orm import Session
@@ -11,7 +11,7 @@ from openmarket_api.domain.analytics import (
     SeriesFrequency,
     SeriesUnit,
 )
-from openmarket_api.domain.common import SourceMetadata
+from openmarket_api.domain.common import DataQuality, SourceMetadata
 from openmarket_api.persistence.models import FinancialStatementRecord
 from openmarket_api.persistence.repositories import (
     FinancialStatementRepository,
@@ -171,18 +171,14 @@ class FinancialSeriesService:
             if current is None or self._filing_rank(record) > self._filing_rank(current):
                 selected[record.period_end] = record
 
-        points = [
-            FinancialSeriesPoint(
-                period_start=record.period_start,
-                period_end=record.period_end,
-                value=record.value,
-                currency=record.currency,
-                filing_reference_date=record.filing_reference_date,
-                filing_version=record.filing_version,
-                source=SourceMetadata.model_validate(record.source),
-            )
-            for record in sorted(selected.values(), key=lambda item: item.period_end)
-        ]
+        points_by_period = {
+            record.period_end: self._point_from_record(record)
+            for record in selected.values()
+        }
+        if frequency == SeriesFrequency.QUARTERLY and definition.flow:
+            for point in self._derive_q4_points(records, definition):
+                points_by_period.setdefault(point.period_end, point)
+
         return FinancialSeries(
             metric=metric,
             label=definition.label,
@@ -190,7 +186,7 @@ class FinancialSeriesService:
             unit=SeriesUnit.CURRENCY,
             statement=definition.statement,
             account_code=definition.account_code,
-            points=points,
+            points=sorted(points_by_period.values(), key=lambda item: item.period_end),
         )
 
     def _get_margin_series(
@@ -220,6 +216,8 @@ class FinancialSeriesService:
                 continue
             if not self._same_filing(point, denominator):
                 continue
+
+            inputs = self._merge_input_sources(point, denominator)
             points.append(
                 FinancialSeriesPoint(
                     period_start=point.period_start,
@@ -227,8 +225,15 @@ class FinancialSeriesService:
                     value=(point.value / denominator.value) * Decimal(100),
                     currency=None,
                     filing_reference_date=point.filing_reference_date,
-                    filing_version=point.filing_version,
-                    source=point.source,
+                    filing_version=point.filing_version if not point.derived else None,
+                    source=self._calculation_source(
+                        definition.label,
+                        inputs,
+                        point.filing_reference_date,
+                    ),
+                    derived=True,
+                    derivation=definition.formula,
+                    input_sources=inputs,
                 )
             )
 
@@ -256,6 +261,7 @@ class FinancialSeriesService:
             for point in base.points
         }
 
+        formula = "(current / same_period_previous_year - 1) * 100"
         points: list[FinancialSeriesPoint] = []
         for point in base.points:
             previous = by_period.get(
@@ -263,6 +269,8 @@ class FinancialSeriesService:
             )
             if previous is None or previous.value <= 0:
                 continue
+
+            inputs = self._merge_input_sources(previous, point)
             points.append(
                 FinancialSeriesPoint(
                     period_start=point.period_start,
@@ -270,19 +278,88 @@ class FinancialSeriesService:
                     value=((point.value / previous.value) - Decimal(1)) * Decimal(100),
                     currency=None,
                     filing_reference_date=point.filing_reference_date,
-                    filing_version=point.filing_version,
-                    source=point.source,
+                    filing_version=None,
+                    source=self._calculation_source(
+                        label,
+                        inputs,
+                        point.filing_reference_date,
+                    ),
+                    derived=True,
+                    derivation=formula,
+                    input_sources=inputs,
                 )
             )
 
-        comparison = "t-1 ano" if frequency == SeriesFrequency.ANNUAL else "mesmo trimestre anterior"
         return FinancialSeries(
             metric=metric,
             label=label,
             frequency=frequency,
             unit=SeriesUnit.PERCENT,
-            formula=f"({base_metric.value}_t / {base_metric.value}_{comparison} - 1) * 100",
+            formula=formula,
             points=points,
+        )
+
+    def _derive_q4_points(
+        self,
+        records: list[FinancialStatementRecord],
+        definition: MetricDefinition,
+    ) -> list[FinancialSeriesPoint]:
+        annual_by_start: dict[date, FinancialStatementRecord] = {}
+        nine_month_by_start: dict[date, FinancialStatementRecord] = {}
+
+        for record in records:
+            if record.period_start is None:
+                continue
+            if self._is_annual_candidate(record, definition):
+                current = annual_by_start.get(record.period_start)
+                if current is None or self._filing_rank(record) > self._filing_rank(current):
+                    annual_by_start[record.period_start] = record
+            elif self._is_nine_month_candidate(record, definition):
+                current = nine_month_by_start.get(record.period_start)
+                if current is None or self._filing_rank(record) > self._filing_rank(current):
+                    nine_month_by_start[record.period_start] = record
+
+        points: list[FinancialSeriesPoint] = []
+        for period_start, annual in annual_by_start.items():
+            nine_month = nine_month_by_start.get(period_start)
+            if nine_month is None or nine_month.period_end >= annual.period_end:
+                continue
+            if nine_month.currency != annual.currency:
+                continue
+
+            annual_source = SourceMetadata.model_validate(annual.source)
+            nine_month_source = SourceMetadata.model_validate(nine_month.source)
+            inputs = [nine_month_source, annual_source]
+            points.append(
+                FinancialSeriesPoint(
+                    period_start=nine_month.period_end + timedelta(days=1),
+                    period_end=annual.period_end,
+                    value=annual.value - nine_month.value,
+                    currency=annual.currency,
+                    filing_reference_date=annual.filing_reference_date,
+                    filing_version=None,
+                    source=self._calculation_source(
+                        "4T derivado de DFP e ITR",
+                        inputs,
+                        annual.filing_reference_date,
+                    ),
+                    derived=True,
+                    derivation="DFP anual - ITR acumulado de 9M",
+                    input_sources=inputs,
+                )
+            )
+        return points
+
+    @staticmethod
+    def _point_from_record(record: FinancialStatementRecord) -> FinancialSeriesPoint:
+        return FinancialSeriesPoint(
+            period_start=record.period_start,
+            period_end=record.period_end,
+            value=record.value,
+            currency=record.currency,
+            filing_reference_date=record.filing_reference_date,
+            filing_version=record.filing_version,
+            source=SourceMetadata.model_validate(record.source),
         )
 
     @staticmethod
@@ -346,14 +423,72 @@ class FinancialSeriesService:
 
         return record.filing_type in {"ITR", "DFP"}
 
-    @staticmethod
+    @classmethod
+    def _is_nine_month_candidate(
+        cls,
+        record: FinancialStatementRecord,
+        definition: MetricDefinition,
+    ) -> bool:
+        if not definition.flow or not cls._base_candidate(record, definition):
+            return False
+        if record.filing_type != "ITR" or record.period_start is None:
+            return False
+        period_days = (record.period_end - record.period_start).days + 1
+        return 240 <= period_days <= 300
+
+    @classmethod
     def _same_filing(
+        cls,
         left: FinancialSeriesPoint,
         right: FinancialSeriesPoint,
     ) -> bool:
+        if left.derived or right.derived:
+            if left.derived != right.derived:
+                return False
+            return cls._source_signature(left) == cls._source_signature(right)
         return (
             left.filing_reference_date == right.filing_reference_date
             and left.filing_version == right.filing_version
+        )
+
+    @staticmethod
+    def _source_signature(point: FinancialSeriesPoint) -> tuple[tuple[str, date | None], ...]:
+        sources = point.input_sources or [point.source]
+        return tuple((source.source_name, source.reference_date) for source in sources)
+
+    @staticmethod
+    def _point_inputs(point: FinancialSeriesPoint) -> list[SourceMetadata]:
+        return point.input_sources or [point.source]
+
+    @classmethod
+    def _merge_input_sources(
+        cls,
+        *points: FinancialSeriesPoint,
+    ) -> list[SourceMetadata]:
+        merged: list[SourceMetadata] = []
+        seen: set[tuple[str, date | None]] = set()
+        for point in points:
+            for source in cls._point_inputs(point):
+                key = (source.source_name, source.reference_date)
+                if key not in seen:
+                    seen.add(key)
+                    merged.append(source)
+        return merged
+
+    @staticmethod
+    def _calculation_source(
+        label: str,
+        inputs: list[SourceMetadata],
+        reference_date: date | None,
+    ) -> SourceMetadata:
+        primary = inputs[-1]
+        return SourceMetadata(
+            provider="openmarket-derived",
+            source_name=f"OpenMarket BR — {label}",
+            source_url=primary.source_url,
+            reference_date=reference_date,
+            quality=DataQuality.SECONDARY,
+            license=primary.license,
         )
 
     @staticmethod
