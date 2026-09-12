@@ -14,16 +14,27 @@ class FinancialMetric(StrEnum):
     NET_INCOME = "net_income"
     TOTAL_ASSETS = "total_assets"
     EQUITY = "equity"
+    GROSS_MARGIN = "gross_margin"
+    OPERATING_MARGIN = "operating_margin"
+    NET_MARGIN = "net_margin"
+    REVENUE_GROWTH_YOY = "revenue_growth_yoy"
 
 
 class SeriesFrequency(StrEnum):
     ANNUAL = "annual"
+    QUARTERLY = "quarterly"
+
+
+class SeriesUnit(StrEnum):
+    CURRENCY = "currency"
+    PERCENT = "percent"
 
 
 class FinancialSeriesPoint(BaseModel):
+    period_start: date | None = None
     period_end: date
     value: Decimal
-    currency: str
+    currency: str | None = None
     filing_reference_date: date | None = None
     filing_version: int | None = None
     source: SourceMetadata
@@ -33,7 +44,9 @@ class FinancialSeries(BaseModel):
     metric: FinancialMetric
     label: str
     frequency: SeriesFrequency = SeriesFrequency.ANNUAL
-    statement: str
-    account_code: str
+    unit: SeriesUnit = SeriesUnit.CURRENCY
+    statement: str | None = None
+    account_code: str | None = None
     consolidated: bool = True
+    formula: str | None = None
     points: list[FinancialSeriesPoint]
