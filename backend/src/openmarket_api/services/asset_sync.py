@@ -8,7 +8,11 @@ from openmarket_api.persistence.repositories import (
     FinancialStatementRepository,
     InstrumentRepository,
 )
-from openmarket_api.providers.contracts import CompanyProvider, FinancialProvider, InstrumentProvider
+from openmarket_api.providers.contracts import (
+    CompanyProvider,
+    FinancialProvider,
+    InstrumentProvider,
+)
 from openmarket_api.services.instrument_resolution import InstrumentResolutionService
 
 
