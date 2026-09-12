@@ -140,6 +140,33 @@
 .methodGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 .methodGrid p { margin: 0; padding: 7px; background: var(--surface-strong); border-radius: var(--radius-sm); font-size: .59rem; line-height: 1.35; }
 
+.unavailable {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  padding: 18px;
+  border: 1px solid color-mix(in srgb, var(--warning) 48%, var(--border));
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+.unavailable h2 { margin: 5px 0 4px; font-size: 1rem; }
+.unavailable p { max-width: 780px; margin: 0; color: var(--muted); font-size: .68rem; line-height: 1.45; }
+.retryLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 11px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  color: var(--text);
+  background: var(--surface-strong);
+  text-decoration: none;
+  font-size: .67rem;
+  font-weight: 800;
+}
+.retryLink:hover { border-color: var(--accent-border); color: var(--accent); }
+
 @media (max-width: 1100px) {
   .trendGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .methodCard { grid-template-columns: 1fr; }
@@ -160,4 +187,6 @@
   .trendGrid,
   .methodGrid { grid-template-columns: 1fr; }
   .consumptionLabel span { white-space: normal; }
+  .unavailable { grid-template-columns: 1fr; }
+  .retryLink { justify-content: center; }
 }
