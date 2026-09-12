@@ -36,11 +36,17 @@
   max-width: 760px;
 }
 
-.eyebrow {
+.eyebrow,
+.eyebrowBlock {
   font-size: .72rem;
   letter-spacing: .16em;
   font-weight: 800;
   color: #8493a7;
+}
+
+.eyebrowBlock {
+  display: block;
+  margin-top: 24px;
 }
 
 .filters {
@@ -51,7 +57,7 @@
   border: 1px solid #28313f;
   background: rgba(20, 24, 31, .8);
   border-radius: 18px;
-  margin-bottom: 18px;
+  margin-bottom: 14px;
 }
 
 .filters input,
@@ -74,6 +80,30 @@
   cursor: pointer;
 }
 
+.librarySummary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 4px;
+  margin-bottom: 18px;
+  color: #8593a6;
+  font-size: .8rem;
+}
+
+.librarySummary strong { color: #e7edf5; }
+
+.summaryActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.summaryActions a {
+  color: #c9d4e1;
+  text-decoration: none;
+}
+
 .libraryGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -88,10 +118,15 @@
   border-radius: 18px;
   color: inherit;
   text-decoration: none;
+  transition: border-color .16s ease, transform .16s ease, background .16s ease;
 }
 
-.card:hover { border-color: #47576d; }
-.card h2 { margin: 10px 0 10px; font-size: 1.15rem; }
+.card:hover {
+  border-color: #47576d;
+  background: rgba(24, 29, 38, .9);
+  transform: translateY(-1px);
+}
+.card h2 { margin: 10px 0 10px; font-size: 1.15rem; overflow-wrap: anywhere; }
 .card p { margin: 0; color: #94a2b4; line-height: 1.5; }
 
 .cardTop,
@@ -130,6 +165,28 @@
   text-align: center;
 }
 
+.pagination {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+  margin-top: 22px;
+  padding: 14px 4px 0;
+  color: #7f8da0;
+  font-size: .8rem;
+}
+
+.pagination a {
+  color: #dce5f0;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.pagination a:last-child,
+.paginationDisabled:last-child { text-align: right; }
+
+.paginationDisabled { color: #4f5a69; }
+
 .viewerHeader {
   padding: 24px;
   border: 1px solid #28313f;
@@ -139,8 +196,9 @@
 }
 
 .viewerHeader h1 {
-  font-size: clamp(2rem, 4vw, 3.4rem);
+  font-size: clamp(1.8rem, 4vw, 3.2rem);
   margin: 10px 0 12px;
+  overflow-wrap: anywhere;
 }
 
 .viewerHeader p { color: #93a0b2; margin: 0; line-height: 1.55; }
@@ -171,7 +229,7 @@
 .analysisPane h2,
 .documentPane h2 { margin: 7px 0 14px; font-size: 1rem; }
 
-.sectionNav { display: grid; gap: 7px; margin-top: 18px; }
+.sectionNav { display: grid; gap: 7px; margin-top: 12px; }
 .sectionNav a {
   color: #a9b5c5;
   text-decoration: none;
@@ -183,7 +241,55 @@
   border: 1px solid #252e3b;
 }
 
-.documentPane { padding: 24px; min-height: 640px; }
+.documentPane { padding: 18px; min-height: 640px; }
+
+.documentPaneHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 14px;
+}
+
+.documentPaneHeader h2 { margin-bottom: 0; }
+
+.documentPaneHeader a {
+  color: #dce5f0;
+  text-decoration: none;
+  font-size: .78rem;
+  font-weight: 700;
+}
+
+.pdfFrameWrap {
+  overflow: hidden;
+  border: 1px solid #2b3544;
+  border-radius: 14px;
+  background: #0d1117;
+}
+
+.pdfFrame {
+  display: block;
+  width: 100%;
+  min-height: 760px;
+  height: 78vh;
+  border: 0;
+  background: #f4f5f6;
+}
+
+.viewerFallback {
+  margin: 0;
+  padding: 10px 12px;
+  border-top: 1px solid #2b3544;
+  color: #718095;
+  font-size: .72rem;
+  line-height: 1.5;
+}
+
+.extractedContent {
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid #28313f;
+}
 
 .documentSection {
   scroll-margin-top: 22px;
@@ -191,7 +297,7 @@
   border-top: 1px solid #28313f;
 }
 
-.documentSection:first-of-type { border-top: 0; padding-top: 4px; }
+.documentSection:first-of-type { border-top: 0; padding-top: 12px; }
 .documentSection h2 { font-size: 1.3rem; margin: 0 0 10px; }
 .documentSection p { white-space: pre-wrap; color: #c2cad5; line-height: 1.78; margin: 0; }
 
@@ -228,7 +334,7 @@
   border-radius: 12px;
 }
 .analysisCard strong { display: block; margin-bottom: 7px; }
-.analysisCard p { margin: 0; color: #8593a6; font-size: .78rem; line-height: 1.55; }
+.analysisCard p { margin: 0; color: #8593a6; font-size: .78rem; line-height: 1.55; overflow-wrap: anywhere; }
 
 @media (max-width: 1050px) {
   .viewerGrid { grid-template-columns: 220px 1fr; }
@@ -238,11 +344,13 @@
 
 @media (max-width: 760px) {
   .shell { width: min(94vw, 720px); padding-top: 24px; }
-  .topbar, .header { align-items: flex-start; flex-direction: column; }
+  .topbar, .header, .librarySummary, .documentPaneHeader { align-items: flex-start; flex-direction: column; }
   .filters { grid-template-columns: 1fr; }
   .filters button { min-height: 44px; }
   .viewerGrid { grid-template-columns: 1fr; }
   .sidebar, .analysisPane { position: static; }
   .metaList div { grid-template-columns: 1fr; }
   .metaList dd { text-align: left; }
+  .pdfFrame { min-height: 620px; height: 70vh; }
+  .pagination { grid-template-columns: 1fr auto 1fr; }
 }
