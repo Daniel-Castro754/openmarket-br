@@ -14,10 +14,16 @@ class FinancialMetric(StrEnum):
     NET_INCOME = "net_income"
     TOTAL_ASSETS = "total_assets"
     EQUITY = "equity"
+    CASH = "cash"
+    SHORT_TERM_DEBT = "short_term_debt"
+    LONG_TERM_DEBT = "long_term_debt"
+    GROSS_DEBT = "gross_debt"
+    NET_DEBT = "net_debt"
     GROSS_MARGIN = "gross_margin"
     OPERATING_MARGIN = "operating_margin"
     NET_MARGIN = "net_margin"
     REVENUE_GROWTH_YOY = "revenue_growth_yoy"
+    ROE = "roe"
 
 
 class SeriesFrequency(StrEnum):
