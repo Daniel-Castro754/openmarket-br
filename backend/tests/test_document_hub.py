@@ -1,6 +1,6 @@
 from datetime import date
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
 
 from openmarket_api.domain.common import (
@@ -18,6 +18,7 @@ from openmarket_api.domain.documents import (
 from openmarket_api.domain.entities import Company, Instrument
 from openmarket_api.persistence.base import Base
 from openmarket_api.persistence.document_repository import PublicDocumentRepository
+from openmarket_api.persistence.models import PublicDocumentRecord
 from openmarket_api.persistence.repositories import CompanyRepository, InstrumentRepository
 from openmarket_api.services.document_hub import DocumentHubService
 
@@ -173,6 +174,39 @@ def test_document_hub_supports_type_and_text_filters() -> None:
 
         assert len(results) == 1
         assert results[0].document_type == DocumentType.MATERIAL_FACT
+
+
+def test_document_hub_handles_long_ipe_identity_without_truncation() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+
+    with Session(engine) as session:
+        company = _seed_company(session)
+        repo = PublicDocumentRepository(session)
+        long_title = "Deliberação sobre item de assembleia | " + ("detalhe extenso " * 80)
+        document = PublicDocument(
+            company_id=company.id,
+            title=long_title,
+            document_type=DocumentType.EARNINGS_RELEASE,
+            source_url=(
+                "https://www.rad.cvm.gov.br/ENET/frmDownloadDocumento.aspx?"
+                "Tela=ext&descTipo=IPE&CodigoInstituicao=1&numProtocolo=1367564&"
+                "numSequencia=892290&numVersao=1"
+            ),
+            published_at=date(2025, 4, 29),
+            reference_period="2025-04-16",
+            source=_source(date(2025, 4, 29)),
+        )
+
+        first = repo.upsert(document)
+        second = repo.upsert(document)
+        session.commit()
+
+        count = session.scalar(select(func.count()).select_from(PublicDocumentRecord))
+        assert len(repo.natural_key(document)) == 71
+        assert first.id == second.id
+        assert first.title == long_title
+        assert count == 1
 
 
 def test_document_hub_rejects_unknown_ticker() -> None:

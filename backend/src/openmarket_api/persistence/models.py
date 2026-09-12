@@ -85,7 +85,7 @@ class PublicDocumentRecord(Base):
     company_id: Mapped[UUID | None] = mapped_column(
         Uuid(as_uuid=True), ForeignKey("companies.id", ondelete="SET NULL"), index=True
     )
-    title: Mapped[str] = mapped_column(String(500), nullable=False)
+    title: Mapped[str] = mapped_column(Text, nullable=False)
     document_type: Mapped[str] = mapped_column(String(64), index=True)
     source_url: Mapped[str | None] = mapped_column(String(1500))
     published_at: Mapped[date | None] = mapped_column(Date, index=True)

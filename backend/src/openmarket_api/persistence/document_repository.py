@@ -1,3 +1,4 @@
+from hashlib import sha256
 from uuid import UUID
 
 from sqlalchemy import delete, func, or_, select
@@ -23,7 +24,7 @@ class PublicDocumentRepository:
         self.session = session
 
     @staticmethod
-    def natural_key(document: PublicDocument) -> str:
+    def legacy_natural_key(document: PublicDocument) -> str:
         source_url = (document.source_url or "-").strip()
         published_at = document.published_at.isoformat() if document.published_at else "-"
         company = str(document.company_id) if document.company_id else "-"
@@ -33,12 +34,28 @@ class PublicDocumentRepository:
             f"{published_at}|{source_url}|{title}"
         )
 
+    @classmethod
+    def natural_key(cls, document: PublicDocument) -> str:
+        identity = cls.legacy_natural_key(document)
+        digest = sha256(identity.encode("utf-8")).hexdigest()
+        return f"sha256:{digest}"
+
     def upsert(self, document: PublicDocument) -> PublicDocumentRecord:
         natural_key = self.natural_key(document)
         record = self.session.scalar(
             select(PublicDocumentRecord).where(PublicDocumentRecord.natural_key == natural_key)
         )
+        if record is None:
+            legacy_key = self.legacy_natural_key(document)
+            if len(legacy_key) <= 1024:
+                record = self.session.scalar(
+                    select(PublicDocumentRecord).where(
+                        PublicDocumentRecord.natural_key == legacy_key
+                    )
+                )
+
         values = {
+            "natural_key": natural_key,
             "company_id": document.company_id,
             "title": document.title,
             "document_type": document.document_type.value,
@@ -51,11 +68,7 @@ class PublicDocumentRepository:
             "source": document.source.model_dump(mode="json"),
         }
         if record is None:
-            record = PublicDocumentRecord(
-                id=document.id,
-                natural_key=natural_key,
-                **values,
-            )
+            record = PublicDocumentRecord(id=document.id, **values)
             self.session.add(record)
         else:
             for field, value in values.items():
