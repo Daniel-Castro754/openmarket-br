@@ -49,6 +49,33 @@ export type AssetSnapshot = {
   available_periods: string[];
 };
 
+export type FinancialMetric =
+  | "revenue"
+  | "gross_profit"
+  | "operating_result"
+  | "net_income"
+  | "total_assets"
+  | "equity";
+
+export type FinancialSeriesPoint = {
+  period_end: string;
+  value: string;
+  currency: string;
+  filing_reference_date?: string | null;
+  filing_version?: number | null;
+  source: SourceMetadata;
+};
+
+export type FinancialSeries = {
+  metric: FinancialMetric;
+  label: string;
+  frequency: "annual";
+  statement: string;
+  account_code: string;
+  consolidated: boolean;
+  points: FinancialSeriesPoint[];
+};
+
 const apiBase = (process.env.OPENMARKET_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
 
 export async function getAsset(ticker: string): Promise<AssetSnapshot | null> {
@@ -63,4 +90,19 @@ export async function getAsset(ticker: string): Promise<AssetSnapshot | null> {
     throw new Error(`OpenMarket API returned ${response.status}`);
   }
   return (await response.json()) as AssetSnapshot;
+}
+
+export async function getFinancialSeries(
+  ticker: string,
+  metric: FinancialMetric,
+): Promise<FinancialSeries> {
+  const response = await fetch(
+    `${apiBase}/api/v1/assets/${encodeURIComponent(ticker)}/series/${metric}`,
+    { next: { revalidate: 60 } },
+  );
+
+  if (!response.ok) {
+    throw new Error(`OpenMarket API returned ${response.status} for ${metric}`);
+  }
+  return (await response.json()) as FinancialSeries;
 }

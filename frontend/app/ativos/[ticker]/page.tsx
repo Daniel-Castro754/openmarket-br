@@ -1,7 +1,22 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { getAsset, SourceMetadata } from "../../../lib/api";
+import { FinancialBarChart } from "../../../components/financial-bar-chart";
+import {
+  getAsset,
+  getFinancialSeries,
+  type FinancialMetric,
+  type SourceMetadata,
+} from "../../../lib/api";
+
+const chartMetrics: FinancialMetric[] = [
+  "revenue",
+  "gross_profit",
+  "operating_result",
+  "net_income",
+  "total_assets",
+  "equity",
+];
 
 function formatDate(value?: string | null) {
   if (!value) return "—";
@@ -24,6 +39,9 @@ export default async function AssetPage({ params }: { params: Promise<{ ticker: 
 
   if (!asset) notFound();
 
+  const series = await Promise.all(
+    chartMetrics.map((metric) => getFinancialSeries(ticker, metric)),
+  );
   const { instrument, company } = asset;
   const title = company?.trading_name || company?.legal_name || instrument.issuer_name || ticker;
 
@@ -108,13 +126,31 @@ export default async function AssetPage({ params }: { params: Promise<{ ticker: 
         </article>
       </section>
 
+      <section className="series-section">
+        <div className="section-heading">
+          <div>
+            <span className="eyebrow">DEMONSTRAÇÕES FINANCEIRAS</span>
+            <h2>Histórico anual</h2>
+          </div>
+          <p>
+            DFP consolidada da CVM. Quando existe reapresentação, o gráfico usa a versão mais recente
+            e mantém as versões anteriores preservadas no banco.
+          </p>
+        </div>
+        <div className="series-grid">
+          {series.map((item) => (
+            <FinancialBarChart key={item.metric} series={item} />
+          ))}
+        </div>
+      </section>
+
       <section className="panel roadmap-panel">
         <div>
           <span className="eyebrow">PRÓXIMO BLOCO</span>
-          <h2>Séries e gráficos</h2>
+          <h2>Trimestres, margens e crescimento</h2>
           <p>
-            A base já conhece o ativo e os demonstrativos. O próximo módulo transforma esses fatos
-            contábeis em séries comparáveis de receita, lucro, margens e endividamento.
+            As séries anuais já estão auditáveis. O próximo passo será separar corretamente trimestre
+            corrente de valores acumulados do ITR e, a partir disso, calcular margens e crescimento.
           </p>
         </div>
         <span className="text-link">Em desenvolvimento</span>
