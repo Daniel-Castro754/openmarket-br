@@ -1,4 +1,7 @@
-from openmarket_api.domain.common import DataQuality, RedistributionScope
+from openmarket_api.domain.common import (
+    DataQuality,
+    RedistributionScope,
+)
 from openmarket_api.providers.cvm import CVMCompanyProvider
 
 
