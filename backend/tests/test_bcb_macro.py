@@ -1,13 +1,13 @@
+import asyncio
 from datetime import UTC, datetime
+from decimal import Decimal
 
 import httpx
-import pytest
 
 from openmarket_api.providers.bcb_macro import BCBMacroProvider
 
 
-@pytest.mark.asyncio
-async def test_macro_snapshot_parses_sgs_and_focus_data() -> None:
+def test_macro_snapshot_parses_sgs_and_focus_data() -> None:
     year = datetime.now(UTC).year
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -81,15 +81,17 @@ async def test_macro_snapshot_parses_sgs_and_focus_data() -> None:
         return httpx.Response(404)
 
     provider = BCBMacroProvider(transport=httpx.MockTransport(handler))
-    snapshot = await provider.snapshot()
+    snapshot = asyncio.run(provider.snapshot())
 
     assert len(snapshot.indicators) == 5
-    assert snapshot.indicators[0].latest_value == 4.22
-    assert snapshot.indicators[0].change == 0.12
+    assert snapshot.indicators[0].latest_value == Decimal("4.22")
+    assert snapshot.indicators[0].change == Decimal("0.12")
     assert snapshot.indicators[0].source.quality.value == "official"
     assert len(snapshot.expectations) == 12
     assert {item.reference_year for item in snapshot.expectations} == {year, year + 1, year + 2}
-    assert any(item.key == "ipca" and item.median == 4.2 for item in snapshot.expectations)
+    assert any(
+        item.key == "ipca" and item.median == Decimal("4.2") for item in snapshot.expectations
+    )
 
 
 def test_sgs_parser_ignores_invalid_rows_and_orders_points() -> None:
@@ -102,5 +104,5 @@ def test_sgs_parser_ignores_invalid_rows_and_orders_points() -> None:
         ]
     )
 
-    assert [point.value for point in points] == [1.25, 2.50]
+    assert [point.value for point in points] == [Decimal("1.25"), Decimal("2.50")]
     assert [point.reference_date.isoformat() for point in points] == ["2026-01-01", "2026-02-01"]
