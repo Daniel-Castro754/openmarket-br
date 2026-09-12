@@ -1,0 +1,19 @@
+:root {
+  --line: var(--border);
+  --line-strong: var(--border-strong);
+  --surface-2: var(--surface-strong);
+  --surface-3: var(--surface-hover);
+  --blue: var(--info);
+  --shadow: var(--shadow-card);
+}
+
+[data-theme="light"] img,
+[data-theme="light"] iframe {
+  color-scheme: light;
+}
+
+[data-theme="dark"] iframe,
+[data-theme="terminal"] iframe,
+[data-theme="ocean"] iframe {
+  color-scheme: dark;
+}
