@@ -4,8 +4,12 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from openmarket_api.domain.entities import Company, FinancialStatementItem
-from openmarket_api.persistence.models import CompanyRecord, FinancialStatementRecord
+from openmarket_api.domain.entities import Company, FinancialStatementItem, Instrument
+from openmarket_api.persistence.models import (
+    CompanyRecord,
+    FinancialStatementRecord,
+    InstrumentRecord,
+)
 
 
 class CompanyRepository:
@@ -35,6 +39,44 @@ class CompanyRepository:
 
         if record is None:
             record = CompanyRecord(id=company.id, **values)
+            self.session.add(record)
+        else:
+            for field, value in values.items():
+                setattr(record, field, value)
+
+        self.session.flush()
+        return record
+
+
+class InstrumentRepository:
+    def __init__(self, session: Session) -> None:
+        self.session = session
+
+    def upsert(self, instrument: Instrument, *, company_id: UUID | None = None) -> InstrumentRecord:
+        exchange = instrument.exchange.upper()
+        ticker = instrument.ticker.upper()
+        record = self.session.scalar(
+            select(InstrumentRecord).where(
+                InstrumentRecord.exchange == exchange,
+                InstrumentRecord.ticker == ticker,
+            )
+        )
+        values = {
+            "company_id": company_id,
+            "ticker": ticker,
+            "exchange": exchange,
+            "isin": instrument.isin,
+            "issuer_name": instrument.issuer_name,
+            "security_category": instrument.security_category,
+            "specification": instrument.specification,
+            "governance_level": instrument.governance_level,
+            "instrument_type": instrument.instrument_type.value,
+            "currency": instrument.currency,
+            "source": instrument.source.model_dump(mode="json") if instrument.source else None,
+        }
+
+        if record is None:
+            record = InstrumentRecord(id=instrument.id, **values)
             self.session.add(record)
         else:
             for field, value in values.items():

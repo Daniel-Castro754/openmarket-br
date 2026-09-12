@@ -35,6 +35,10 @@ class Instrument(BaseModel):
     ticker: str
     exchange: str = "B3"
     isin: str | None = None
+    issuer_name: str | None = None
+    security_category: str | None = None
+    specification: str | None = None
+    governance_level: str | None = None
     instrument_type: InstrumentType = InstrumentType.STOCK
     currency: str = "BRL"
     source: SourceMetadata | None = None
