@@ -12,7 +12,7 @@ Plataforma open source brasileira para dados, pesquisa e visualização do merca
 
 ## Estado
 
-**Fase 1 – Market Core.** O projeto possui providers oficiais CVM/B3, resolução de ticker para companhia, ingestão de DFP/ITR, PostgreSQL, migrations Alembic, read-model de ativos, API, frontend mínimo, Docker Compose, testes e CI.
+**Market Core pré-painel concluído em código.** O projeto possui providers oficiais CVM/B3, resolução de ticker para companhia, ingestão de DFP/ITR, PostgreSQL, migrations Alembic, read-model de ativos, séries financeiras, Document Hub, provider CVM IPE, API, frontend inicial, Docker Compose, testes e CI. O checkpoint operacional antes do trabalho focado no Report Viewer é a sincronização ponta a ponta de um ticker real.
 
 ## Stack
 
@@ -40,19 +40,24 @@ API: `http://localhost:8000`
 
 Health check: `GET /health`
 
-## Sincronizando um ativo
+## Sincronizando um ticker ponta a ponta
 
 O site público lê o banco local. A atualização de dados é feita separadamente pelo worker/CLI, para que uma visita à página não dispare downloads da B3 ou CVM.
 
+Para sincronizar instrumento B3, companhia CVM, DFP/ITR e metadados de documentos IPE em um único fluxo:
+
 ```bash
 cd backend
-python -m openmarket_api.cli sync-asset PETR4
+python -m openmarket_api.cli sync-ticker PETR4 --start 2025-01-01
 ```
 
-Para limitar o histórico:
+O comando falha explicitamente se o ticker não puder ser vinculado a uma companhia CVM. Em caso de sucesso, o resumo final informa o código CVM, a quantidade de fatos financeiros e a quantidade de documentos sincronizados.
+
+Os comandos separados continuam disponíveis para diagnóstico e manutenção:
 
 ```bash
-python -m openmarket_api.cli sync-asset PETR4 --start 2025-01-01 --end 2026-12-31
+python -m openmarket_api.cli sync-asset PETR4 --start 2025-01-01
+python -m openmarket_api.cli sync-documents PETR4 --start 2025-01-01
 ```
 
 Depois da sincronização:
@@ -61,9 +66,10 @@ Depois da sincronização:
 GET /api/v1/assets/PETR4
 GET /api/v1/assets/PETR4/financials
 GET /api/v1/assets/PETR4/financials?statement=DRE&consolidated=true
+GET /api/v1/documents?ticker=PETR4
 ```
 
-`GET /api/v1/assets/{ticker}` é um read-model do PostgreSQL e não consulta provedores externos durante a requisição.
+As rotas públicas são read-models do PostgreSQL e não consultam provedores externos durante a requisição.
 
 ## Docker
 
@@ -79,10 +85,10 @@ Aplique as migrations:
 docker compose run --rm api alembic upgrade head
 ```
 
-Sincronize um ativo dentro do container:
+Execute o checkpoint ponta a ponta dentro do container:
 
 ```bash
-docker compose run --rm api python -m openmarket_api.cli sync-asset PETR4
+docker compose run --rm api python -m openmarket_api.cli sync-ticker PETR4 --start 2025-01-01
 ```
 
 Para criar uma nova migration durante o desenvolvimento:
