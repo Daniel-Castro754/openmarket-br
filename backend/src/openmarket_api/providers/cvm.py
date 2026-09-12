@@ -1,6 +1,7 @@
 import asyncio
 import csv
 import io
+import unicodedata
 from collections.abc import Sequence
 from time import monotonic
 
@@ -108,7 +109,9 @@ class CVMCompanyProvider(CompanyProvider):
 
     @staticmethod
     def _normalize(value: str) -> str:
-        return "".join(ch for ch in value.casefold().strip() if ch.isalnum())
+        normalized = unicodedata.normalize("NFKD", value.casefold().strip())
+        ascii_value = normalized.encode("ascii", "ignore").decode("ascii")
+        return "".join(ch for ch in ascii_value if ch.isalnum())
 
     @staticmethod
     def _source_metadata() -> SourceMetadata:
