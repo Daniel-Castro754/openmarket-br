@@ -19,6 +19,14 @@ const fundamentalMetrics: FinancialMetric[] = [
   "equity",
 ];
 
+const capitalMetrics: FinancialMetric[] = [
+  "cash",
+  "short_term_debt",
+  "long_term_debt",
+  "gross_debt",
+  "net_debt",
+];
+
 const analyticsMetrics: FinancialMetric[] = [
   "gross_margin",
   "operating_margin",
@@ -51,21 +59,27 @@ export default async function AssetPage({
   const ticker = rawTicker.trim().toUpperCase();
   const requestedView = Array.isArray(query.view) ? query.view[0] : query.view;
   const frequency: SeriesFrequency = requestedView === "quarterly" ? "quarterly" : "annual";
+  const isQuarterly = frequency === "quarterly";
+  const analysisMetrics: FinancialMetric[] = isQuarterly
+    ? analyticsMetrics
+    : [...analyticsMetrics, "roe"];
   const asset = await getAsset(ticker);
 
   if (!asset) notFound();
 
-  const [fundamentalSeries, analyticsSeries] = await Promise.all([
+  const [fundamentalSeries, capitalSeries, analyticsSeries] = await Promise.all([
     Promise.all(
       fundamentalMetrics.map((metric) => getFinancialSeries(ticker, metric, frequency)),
     ),
     Promise.all(
-      analyticsMetrics.map((metric) => getFinancialSeries(ticker, metric, frequency)),
+      capitalMetrics.map((metric) => getFinancialSeries(ticker, metric, frequency)),
+    ),
+    Promise.all(
+      analysisMetrics.map((metric) => getFinancialSeries(ticker, metric, frequency)),
     ),
   ]);
   const { instrument, company } = asset;
   const title = company?.trading_name || company?.legal_name || instrument.issuer_name || ticker;
-  const isQuarterly = frequency === "quarterly";
 
   return (
     <main className="asset-page">
@@ -183,12 +197,30 @@ export default async function AssetPage({
       <section className="series-section analytics-section">
         <div className="section-heading">
           <div>
-            <span className="eyebrow">ANÁLISE</span>
-            <h2>Margens e crescimento</h2>
+            <span className="eyebrow">LIQUIDEZ E ENDIVIDAMENTO</span>
+            <h2>Caixa e estrutura da dívida</h2>
           </div>
           <p>
-            Indicadores calculados sobre fatos oficiais compatíveis da CVM. Valores derivados também
-            carregam a fórmula e as fontes que participaram do cálculo.
+            Caixa, empréstimos de curto e longo prazo usam contas padronizadas da CVM. Dívida bruta
+            e líquida só são calculadas quando os componentes pertencem ao mesmo fechamento.
+          </p>
+        </div>
+        <div className="series-grid">
+          {capitalSeries.map((item) => (
+            <FinancialBarChart key={`${item.metric}-${frequency}`} series={item} />
+          ))}
+        </div>
+      </section>
+
+      <section className="series-section analytics-section">
+        <div className="section-heading">
+          <div>
+            <span className="eyebrow">ANÁLISE</span>
+            <h2>{isQuarterly ? "Margens e crescimento" : "Margens, crescimento e retorno"}</h2>
+          </div>
+          <p>
+            Indicadores calculados sobre fatos oficiais compatíveis da CVM. O ROE anual usa lucro
+            líquido consolidado e patrimônio líquido médio; nenhum ROE trimestral é anualizado implicitamente.
           </p>
         </div>
         <div className="series-grid">
@@ -201,10 +233,10 @@ export default async function AssetPage({
       <section className="panel roadmap-panel">
         <div>
           <span className="eyebrow">PRÓXIMO BLOCO</span>
-          <h2>Endividamento, retorno e caixa</h2>
+          <h2>Fluxo de caixa e geração de valor</h2>
           <p>
-            Com histórico anual e trimestral fechado, o próximo bloco vai mapear indicadores como
-            dívida, caixa e retorno somente onde a estrutura contábil permitir cálculo consistente.
+            O próximo passo será mapear fluxo de caixa operacional, investimentos e CAPEX para chegar
+            a fluxo de caixa livre somente onde a estrutura CVM permitir uma derivação auditável.
           </p>
         </div>
         <span className="text-link">Em desenvolvimento</span>
