@@ -16,6 +16,7 @@ export function SiteHeader() {
           <Link href="/">Início</Link>
           <Link href="/#rankings">Rankings</Link>
           <Link href="/ativos/PETR4">Ativos</Link>
+          <Link href="/macroeconomia">Macroeconomia</Link>
           <Link href="/relatorios">Relatórios</Link>
         </nav>
 
