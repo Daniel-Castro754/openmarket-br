@@ -177,11 +177,15 @@ export async function getDocuments(filters?: {
   ticker?: string;
   documentType?: DocumentType;
   q?: string;
+  limit?: number;
+  offset?: number;
 }): Promise<DocumentSummary[]> {
   const params = new URLSearchParams();
   if (filters?.ticker) params.set("ticker", filters.ticker);
   if (filters?.documentType) params.set("document_type", filters.documentType);
   if (filters?.q) params.set("q", filters.q);
+  if (filters?.limit != null) params.set("limit", String(filters.limit));
+  if (filters?.offset != null) params.set("offset", String(filters.offset));
 
   const suffix = params.size ? `?${params.toString()}` : "";
   const response = await fetch(`${apiBase}/api/v1/documents${suffix}`, {
