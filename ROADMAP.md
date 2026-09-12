@@ -28,6 +28,8 @@ python -m openmarket_api.cli sync-ticker PETR4 --start 2025-01-01
 
 Ele falha explicitamente se o ticker não puder ser vinculado a uma companhia CVM, evitando que uma sincronização parcial seja confundida com sucesso.
 
+Validação real concluída com PETR4: código CVM 9512, fatos financeiros DFP/ITR e metadados IPE persistidos e expostos pela API.
+
 ## Report Viewer / Workspace
 
 O painel de relatórios é uma camada própria da experiência web, separada do motor de análise. A primeira versão deve permitir abrir e navegar documentos antes de depender de IA.
@@ -40,8 +42,11 @@ O painel de relatórios é uma camada própria da experiência web, separada do 
 - [x] provider CVM IPE para metadados públicos;
 - [x] sincronização idempotente de metadados por ticker;
 - [x] páginas web iniciais `/relatorios` e `/relatorios/{document_id}`;
+- [x] biblioteca paginada conectada aos documentos reais persistidos;
+- [x] visualização incorporada do documento oficial com fallback para a fonte CVM;
+- [x] metadados e proveniência visíveis no workspace;
 - [ ] extração do conteúdo dos documentos por página/seção;
-- [ ] visualização final do documento e navegação refinada;
+- [ ] navegação refinada por página/seção extraída;
 - [ ] painel lateral de análise e citações.
 
 ### OpenMarket BR — público
