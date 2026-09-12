@@ -37,7 +37,7 @@ export default async function ReportViewerPage({
   const hasExtractedText = document.sections.length > 0;
 
   return (
-    <main className={styles.shell}>
+    <main className={`${styles.shell} ${styles.viewerShell}`}>
       <nav className={styles.topbar}>
         <Link href="/relatorios">← Biblioteca de relatórios</Link>
         <span>{document.tickers.length ? document.tickers.join(" / ") : "Documento público"}</span>
