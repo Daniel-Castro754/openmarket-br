@@ -141,6 +141,31 @@ export type DocumentDetail = DocumentSummary & {
   sections: DocumentSection[];
 };
 
+export type ScreenerRow = {
+  ticker: string;
+  company_name: string;
+  legal_name?: string | null;
+  exchange: string;
+  instrument_type: string;
+  security_category?: string | null;
+  governance_level?: string | null;
+  currency: string;
+  cvm_code?: string | null;
+  isin?: string | null;
+  latest_period?: string | null;
+  financial_item_count: number;
+  document_count: number;
+  metrics: Partial<Record<FinancialMetric, string | null>>;
+  metric_periods: Partial<Record<FinancialMetric, string | null>>;
+};
+
+export type ScreenerResponse = {
+  rows: ScreenerRow[];
+  total: number;
+  limit: number;
+  offset: number;
+};
+
 const apiBase = (process.env.OPENMARKET_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
 
 export async function getAsset(ticker: string): Promise<AssetSnapshot | null> {
@@ -171,6 +196,25 @@ export async function getFinancialSeries(
     throw new Error(`OpenMarket API returned ${response.status} for ${metric}`);
   }
   return (await response.json()) as FinancialSeries;
+}
+
+export async function getScreener(filters?: {
+  q?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<ScreenerResponse> {
+  const params = new URLSearchParams();
+  if (filters?.q) params.set("q", filters.q);
+  if (filters?.limit != null) params.set("limit", String(filters.limit));
+  if (filters?.offset != null) params.set("offset", String(filters.offset));
+  const suffix = params.size ? `?${params.toString()}` : "";
+  const response = await fetch(`${apiBase}/api/v1/screener${suffix}`, {
+    next: { revalidate: 60 },
+  });
+  if (!response.ok) {
+    throw new Error(`OpenMarket API returned ${response.status} for screener`);
+  }
+  return (await response.json()) as ScreenerResponse;
 }
 
 export async function getDocuments(filters?: {
