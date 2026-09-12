@@ -10,6 +10,7 @@ from sqlalchemy import (
     Integer,
     Numeric,
     String,
+    Text,
     UniqueConstraint,
     Uuid,
 )
@@ -74,3 +75,39 @@ class FinancialStatementRecord(Base):
     currency: Mapped[str] = mapped_column(String(8), default="BRL")
     consolidated: Mapped[bool] = mapped_column(Boolean, default=True)
     source: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False)
+
+
+class PublicDocumentRecord(Base):
+    __tablename__ = "public_documents"
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    natural_key: Mapped[str] = mapped_column(String(1024), unique=True, index=True)
+    company_id: Mapped[UUID | None] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("companies.id", ondelete="SET NULL"), index=True
+    )
+    title: Mapped[str] = mapped_column(String(500), nullable=False)
+    document_type: Mapped[str] = mapped_column(String(64), index=True)
+    source_url: Mapped[str | None] = mapped_column(String(1500))
+    published_at: Mapped[date | None] = mapped_column(Date, index=True)
+    reference_period: Mapped[str | None] = mapped_column(String(64))
+    content_type: Mapped[str] = mapped_column(String(128), default="application/pdf")
+    page_count: Mapped[int | None] = mapped_column(Integer)
+    processing_status: Mapped[str] = mapped_column(String(32), index=True)
+    source: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False)
+
+
+class DocumentSectionRecord(Base):
+    __tablename__ = "document_sections"
+    __table_args__ = (
+        UniqueConstraint("document_id", "sequence", name="uq_document_sections_document_sequence"),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    document_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("public_documents.id", ondelete="CASCADE"), index=True
+    )
+    sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    page_start: Mapped[int | None] = mapped_column(Integer)
+    page_end: Mapped[int | None] = mapped_column(Integer)
+    heading: Mapped[str | None] = mapped_column(String(500))
+    text: Mapped[str] = mapped_column(Text, nullable=False)
