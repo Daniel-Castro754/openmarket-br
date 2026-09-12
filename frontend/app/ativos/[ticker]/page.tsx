@@ -27,6 +27,13 @@ const capitalMetrics: FinancialMetric[] = [
   "net_debt",
 ];
 
+const cashFlowMetrics: FinancialMetric[] = [
+  "operating_cash_flow",
+  "investing_cash_flow",
+  "financing_cash_flow",
+  "net_change_in_cash",
+];
+
 const analyticsMetrics: FinancialMetric[] = [
   "gross_margin",
   "operating_margin",
@@ -67,12 +74,15 @@ export default async function AssetPage({
 
   if (!asset) notFound();
 
-  const [fundamentalSeries, capitalSeries, analyticsSeries] = await Promise.all([
+  const [fundamentalSeries, capitalSeries, cashFlowSeries, analyticsSeries] = await Promise.all([
     Promise.all(
       fundamentalMetrics.map((metric) => getFinancialSeries(ticker, metric, frequency)),
     ),
     Promise.all(
       capitalMetrics.map((metric) => getFinancialSeries(ticker, metric, frequency)),
+    ),
+    Promise.all(
+      cashFlowMetrics.map((metric) => getFinancialSeries(ticker, metric, frequency)),
     ),
     Promise.all(
       analysisMetrics.map((metric) => getFinancialSeries(ticker, metric, frequency)),
@@ -215,6 +225,24 @@ export default async function AssetPage({
       <section className="series-section analytics-section">
         <div className="section-heading">
           <div>
+            <span className="eyebrow">FLUXO DE CAIXA</span>
+            <h2>Geração e uso de caixa</h2>
+          </div>
+          <p>
+            A DFC usa os totais padronizados 6.01, 6.02, 6.03 e 6.05. Na visão trimestral, 2T, 3T e
+            4T são derivados pela diferença entre acumulados sucessivos e aparecem com proveniência explícita.
+          </p>
+        </div>
+        <div className="series-grid">
+          {cashFlowSeries.map((item) => (
+            <FinancialBarChart key={`${item.metric}-${frequency}`} series={item} />
+          ))}
+        </div>
+      </section>
+
+      <section className="series-section analytics-section">
+        <div className="section-heading">
+          <div>
             <span className="eyebrow">ANÁLISE</span>
             <h2>{isQuarterly ? "Margens e crescimento" : "Margens, crescimento e retorno"}</h2>
           </div>
@@ -233,13 +261,14 @@ export default async function AssetPage({
       <section className="panel roadmap-panel">
         <div>
           <span className="eyebrow">PRÓXIMO BLOCO</span>
-          <h2>Fluxo de caixa e geração de valor</h2>
+          <h2>Document Hub e Report Viewer</h2>
           <p>
-            O próximo passo será mapear fluxo de caixa operacional, investimentos e CAPEX para chegar
-            a fluxo de caixa livre somente onde a estrutura CVM permitir uma derivação auditável.
+            A próxima camada de produto será o painel web de documentos: biblioteca por companhia,
+            relatório aberto no centro, busca e navegação por páginas, proveniência e painel lateral de análise.
+            CAPEX e fluxo de caixa livre continuam pendentes até termos uma regra contábil auditável.
           </p>
         </div>
-        <span className="text-link">Em desenvolvimento</span>
+        <span className="text-link">Planejado</span>
       </section>
 
       <footer className="asset-sources">
