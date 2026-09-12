@@ -98,6 +98,21 @@ class FinancialStatementRepository:
         self.session = session
 
     @staticmethod
+    def legacy_natural_key(item: FinancialStatementItem, *, company_id: UUID) -> str:
+        start = item.period_start.isoformat() if item.period_start else "-"
+        return "|".join(
+            (
+                str(company_id),
+                start,
+                item.period_end.isoformat(),
+                item.statement,
+                item.account_code,
+                "con" if item.consolidated else "ind",
+                item.currency,
+            )
+        )
+
+    @staticmethod
     def natural_key(item: FinancialStatementItem, *, company_id: UUID) -> str:
         start = item.period_start.isoformat() if item.period_start else "-"
         filing_date = item.filing_reference_date.isoformat() if item.filing_reference_date else "-"
@@ -177,6 +192,16 @@ class FinancialStatementRepository:
                     FinancialStatementRecord.natural_key == natural_key
                 )
             )
+            if record is None:
+                legacy_key = self.legacy_natural_key(item, company_id=company_id)
+                record = self.session.scalar(
+                    select(FinancialStatementRecord).where(
+                        FinancialStatementRecord.natural_key == legacy_key
+                    )
+                )
+                if record is not None:
+                    record.natural_key = natural_key
+
             values = {
                 "company_id": company_id,
                 "filing_type": item.filing_type,
