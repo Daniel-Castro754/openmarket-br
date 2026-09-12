@@ -1,4 +1,4 @@
-import type { FinancialSeries } from "../lib/api";
+import type { FinancialSeries, FinancialSeriesPoint } from "../lib/api";
 
 function formatValue(value: string, currency: string | null | undefined, unit: FinancialSeries["unit"]) {
   const numeric = Number(value);
@@ -27,6 +27,11 @@ function periodLabel(periodEnd: string, frequency: FinancialSeries["frequency"])
   return `${quarter}T${String(year).slice(-2)}`;
 }
 
+function derivationTitle(point: FinancialSeriesPoint) {
+  const sources = point.input_sources.map((source) => source.source_name).join(" + ");
+  return [point.derivation, sources ? `Fontes: ${sources}` : null].filter(Boolean).join(" • ");
+}
+
 export function FinancialBarChart({ series }: { series: FinancialSeries }) {
   const limit = series.frequency === "annual" ? 6 : 8;
   const points = series.points.slice(-limit);
@@ -35,6 +40,10 @@ export function FinancialBarChart({ series }: { series: FinancialSeries }) {
   const accountLabel = series.statement && series.account_code
     ? `${series.statement} · ${series.account_code}`
     : "Métrica derivada";
+  const hasDerivedPoints = points.some((point) => point.derived);
+  const latestFiledPoint = [...points]
+    .reverse()
+    .find((point) => !point.derived && point.filing_version != null);
 
   return (
     <article className="panel series-card">
@@ -54,8 +63,19 @@ export function FinancialBarChart({ series }: { series: FinancialSeries }) {
             const numeric = Number(point.value);
             const width = Math.max((Math.abs(numeric) / maxValue) * 100, 2);
             return (
-              <div className="series-row" key={`${point.period_end}-${point.filing_version ?? 0}`}>
-                <span className="series-year">{periodLabel(point.period_end, series.frequency)}</span>
+              <div className="series-row" key={`${point.period_end}-${point.filing_version ?? 0}-${point.derived}`}>
+                <span className="series-year">
+                  {periodLabel(point.period_end, series.frequency)}
+                  {point.derived && (
+                    <span
+                      className="derived-mark"
+                      title={derivationTitle(point)}
+                      aria-label={`Valor derivado: ${point.derivation ?? "cálculo OpenMarket"}`}
+                    >
+                      D
+                    </span>
+                  )}
+                </span>
                 <div className="series-track">
                   <span
                     className={`series-bar ${numeric < 0 ? "series-bar-negative" : ""}`}
@@ -71,12 +91,14 @@ export function FinancialBarChart({ series }: { series: FinancialSeries }) {
 
       <footer className="series-footer">
         <span>
-          {series.frequency === "annual" ? "DFP consolidada" : "CVM consolidada · trimestre isolado"}
+          {series.frequency === "annual" ? "DFP consolidada" : "ITR/DFP consolidada"}
         </span>
-        {series.formula ? (
+        {hasDerivedPoints ? (
+          <span>D = valor calculado com proveniência</span>
+        ) : series.formula ? (
           <span>Calculado a partir dos fatos CVM</span>
-        ) : points.at(-1)?.filing_version != null ? (
-          <span>Última versão CVM: {points.at(-1)?.filing_version}</span>
+        ) : latestFiledPoint?.filing_version != null ? (
+          <span>Última versão CVM: {latestFiledPoint.filing_version}</span>
         ) : null}
       </footer>
     </article>

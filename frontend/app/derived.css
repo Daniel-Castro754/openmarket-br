@@ -1,0 +1,20 @@
+.series-year {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.derived-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  border: 1px solid #516078;
+  border-radius: 999px;
+  background: #151c26;
+  color: #c6d4e8;
+  font-size: .58rem;
+  font-weight: 900;
+  cursor: help;
+}
