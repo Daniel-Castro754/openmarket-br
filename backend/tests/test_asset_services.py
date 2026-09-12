@@ -19,7 +19,11 @@ from openmarket_api.domain.entities import (
     InstrumentType,
 )
 from openmarket_api.persistence.base import Base
-from openmarket_api.providers.contracts import CompanyProvider, FinancialProvider, InstrumentProvider
+from openmarket_api.providers.contracts import (
+    CompanyProvider,
+    FinancialProvider,
+    InstrumentProvider,
+)
 from openmarket_api.services.asset_read import AssetReadService
 from openmarket_api.services.asset_sync import AssetSyncService
 
