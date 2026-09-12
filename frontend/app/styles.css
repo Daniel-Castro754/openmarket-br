@@ -90,9 +90,32 @@ article p { color: #9da9b9; line-height: 1.6; }
 .identity-panel dd { margin: 0; text-align: right; overflow-wrap: anywhere; }
 
 .series-section { margin-top: 46px; }
+.analytics-section { margin-top: 34px; padding-top: 34px; border-top: 1px solid #252e3b; }
 .section-heading { display: flex; justify-content: space-between; align-items: flex-end; gap: 28px; margin-bottom: 18px; }
 .section-heading h2 { margin: 8px 0 0; font-size: 1.8rem; }
 .section-heading p { margin: 0; max-width: 580px; color: #8f9caf; line-height: 1.55; font-size: .9rem; }
+.series-section-heading { align-items: flex-start; }
+.series-heading-side { display: flex; flex-direction: column; align-items: flex-end; gap: 13px; max-width: 610px; }
+.series-heading-side p { text-align: right; }
+.series-toggle {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid #303a49;
+  border-radius: 12px;
+  background: #10151c;
+}
+.series-toggle a {
+  min-width: 92px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: #8996a8;
+  text-align: center;
+  text-decoration: none;
+  font-size: .76rem;
+  font-weight: 800;
+}
+.series-toggle a.active { background: #edf2f8; color: #121821; }
 .series-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
 .series-card { min-height: 330px; }
 .series-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; }
@@ -120,6 +143,8 @@ article p { color: #9da9b9; line-height: 1.6; }
   .asset-header { align-items: flex-start; flex-direction: column; }
   .source-badge { width: 100%; max-width: none; }
   .section-heading { align-items: flex-start; flex-direction: column; }
+  .series-heading-side { align-items: flex-start; max-width: none; width: 100%; }
+  .series-heading-side p { text-align: left; }
 }
 
 @media (max-width: 760px) {
@@ -130,6 +155,8 @@ article p { color: #9da9b9; line-height: 1.6; }
   .asset-search-row { grid-template-columns: 1fr; }
   .asset-search button { min-height: 46px; }
   .roadmap-panel { align-items: flex-start; flex-direction: column; }
+  .series-toggle { width: 100%; }
+  .series-toggle a { flex: 1; }
   .series-row { grid-template-columns: 42px 1fr; }
   .series-row strong { grid-column: 2; text-align: left; color: #aab5c4; }
   .series-footer { flex-direction: column; }

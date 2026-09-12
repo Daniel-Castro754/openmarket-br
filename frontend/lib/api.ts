@@ -55,12 +55,20 @@ export type FinancialMetric =
   | "operating_result"
   | "net_income"
   | "total_assets"
-  | "equity";
+  | "equity"
+  | "gross_margin"
+  | "operating_margin"
+  | "net_margin"
+  | "revenue_growth_yoy";
+
+export type SeriesFrequency = "annual" | "quarterly";
+export type SeriesUnit = "currency" | "percent";
 
 export type FinancialSeriesPoint = {
+  period_start?: string | null;
   period_end: string;
   value: string;
-  currency: string;
+  currency?: string | null;
   filing_reference_date?: string | null;
   filing_version?: number | null;
   source: SourceMetadata;
@@ -69,10 +77,12 @@ export type FinancialSeriesPoint = {
 export type FinancialSeries = {
   metric: FinancialMetric;
   label: string;
-  frequency: "annual";
-  statement: string;
-  account_code: string;
+  frequency: SeriesFrequency;
+  unit: SeriesUnit;
+  statement?: string | null;
+  account_code?: string | null;
   consolidated: boolean;
+  formula?: string | null;
   points: FinancialSeriesPoint[];
 };
 
@@ -95,9 +105,10 @@ export async function getAsset(ticker: string): Promise<AssetSnapshot | null> {
 export async function getFinancialSeries(
   ticker: string,
   metric: FinancialMetric,
+  frequency: SeriesFrequency = "annual",
 ): Promise<FinancialSeries> {
   const response = await fetch(
-    `${apiBase}/api/v1/assets/${encodeURIComponent(ticker)}/series/${metric}`,
+    `${apiBase}/api/v1/assets/${encodeURIComponent(ticker)}/series/${metric}?frequency=${frequency}`,
     { next: { revalidate: 60 } },
   );
 
