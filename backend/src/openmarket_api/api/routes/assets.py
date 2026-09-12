@@ -13,6 +13,10 @@ from openmarket_api.domain.analytics import (
 )
 from openmarket_api.domain.entities import Company, FinancialStatementItem, Instrument
 from openmarket_api.services.asset_read import AssetReadService
+from openmarket_api.services.cash_flow_series import (
+    CASH_FLOW_METRICS,
+    CashFlowSeriesService,
+)
 from openmarket_api.services.financial_series import FinancialSeriesService
 
 router = APIRouter(prefix="/api/v1/assets", tags=["assets"])
@@ -78,6 +82,12 @@ def get_asset_financial_series(
     frequency: Annotated[SeriesFrequency, Query()] = SeriesFrequency.ANNUAL,
 ) -> FinancialSeries:
     try:
+        if metric in CASH_FLOW_METRICS:
+            return CashFlowSeriesService(session).get_series(
+                ticker,
+                metric,
+                frequency=frequency,
+            )
         return FinancialSeriesService(session).get_series(
             ticker,
             metric,
