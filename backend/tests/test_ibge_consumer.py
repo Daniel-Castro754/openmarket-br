@@ -1,8 +1,9 @@
+import asyncio
 import json
 from datetime import date
+from decimal import Decimal
 
 import httpx
-import pytest
 
 from openmarket_api.providers.ibge_consumer import IBGEConsumerProvider
 
@@ -13,8 +14,7 @@ def _payload(values: list[tuple[str, str]]) -> list[dict[str, str]]:
     return rows
 
 
-@pytest.mark.anyio
-async def test_snapshot_combines_pof_profiles_and_sidra_trends() -> None:
+def test_snapshot_combines_pof_profiles_and_sidra_trends() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         url = str(request.url)
         if "/t/8888/" in url:
@@ -26,14 +26,14 @@ async def test_snapshot_combines_pof_profiles_and_sidra_trends() -> None:
         return httpx.Response(200, content=json.dumps(payload).encode(), request=request)
 
     provider = IBGEConsumerProvider(transport=httpx.MockTransport(handler))
-    snapshot = await provider.snapshot()
+    snapshot = asyncio.run(provider.snapshot())
 
     assert len(snapshot.consumption_profiles) == 8
     brazil = snapshot.consumption_profiles[0]
     assert brazil.key == "brasil"
     assert brazil.average_monthly_consumption is not None
     assert brazil.items[1].label == "Habitação"
-    assert brazil.items[1].share_percent == 36.6
+    assert brazil.items[1].share_percent == Decimal("36.6")
     assert brazil.source.reference_date == date(2018, 7, 10)
 
     keys = {trend.key for trend in snapshot.trends}
@@ -49,4 +49,4 @@ def test_sidra_parser_skips_missing_values() -> None:
 
     assert len(points) == 1
     assert points[0].period == "202603"
-    assert points[0].value == 1.25
+    assert points[0].value == Decimal("1.25")
