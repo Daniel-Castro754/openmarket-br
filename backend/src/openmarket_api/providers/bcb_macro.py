@@ -15,7 +15,12 @@ from openmarket_api.domain.common import (
     RedistributionScope,
     SourceMetadata,
 )
-from openmarket_api.domain.macro import MacroExpectation, MacroIndicator, MacroSeriesPoint, MacroSnapshot
+from openmarket_api.domain.macro import (
+    MacroExpectation,
+    MacroIndicator,
+    MacroSeriesPoint,
+    MacroSnapshot,
+)
 
 BCB_SGS_BASE_URL = "https://api.bcb.gov.br/dados/serie/bcdata.sgs"
 BCB_SGS_PORTAL_URL = "https://dadosabertos.bcb.gov.br/"
@@ -216,12 +221,16 @@ class BCBMacroProvider:
         if not isinstance(rows, list) or not rows:
             return []
 
-        latest_date = max(
+        observation_dates = [
             parsed
             for row in rows
             if isinstance(row, dict)
             if (parsed := self._parse_iso_date(row.get("Data"))) is not None
-        )
+        ]
+        if not observation_dates:
+            return []
+        latest_date = max(observation_dates)
+
         allowed_years = {today.year, today.year + 1, today.year + 2}
         expectations: list[MacroExpectation] = []
         seen: set[int] = set()
@@ -270,8 +279,9 @@ class BCBMacroProvider:
             if value is None or not isinstance(raw_date, str):
                 continue
             try:
-                reference_date = datetime.strptime(raw_date, "%d/%m/%Y").date()
-            except ValueError:
+                day, month, year = (int(part) for part in raw_date.split("/"))
+                reference_date = date(year, month, day)
+            except (TypeError, ValueError):
                 continue
             points.append(MacroSeriesPoint(reference_date=reference_date, value=value))
         points.sort(key=lambda point: point.reference_date)
