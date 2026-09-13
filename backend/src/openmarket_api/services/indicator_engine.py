@@ -14,6 +14,10 @@ from openmarket_api.domain.indicators import (
     IndicatorValue,
 )
 from openmarket_api.services.asset_read import AssetReadService
+from openmarket_api.services.derived_indicator_series import (
+    DerivedIndicatorSeriesService,
+    IndicatorSeriesResult,
+)
 from openmarket_api.services.financial_series import FinancialSeriesService
 
 
@@ -33,7 +37,9 @@ INDICATOR_CATALOG: tuple[IndicatorDefinition, ...] = (
         group=IndicatorGroup.EFFICIENCY,
         description="Lucro bruto como percentual da receita líquida.",
         unit=SeriesUnit.PERCENT,
+        format="percent_2",
         formula="gross_profit / revenue * 100",
+        dependencies=[FinancialMetric.GROSS_PROFIT, FinancialMetric.REVENUE],
     ),
     IndicatorDefinition(
         slug="operating-margin",
@@ -42,7 +48,9 @@ INDICATOR_CATALOG: tuple[IndicatorDefinition, ...] = (
         group=IndicatorGroup.EFFICIENCY,
         description="Resultado operacional como percentual da receita líquida.",
         unit=SeriesUnit.PERCENT,
+        format="percent_2",
         formula="operating_result / revenue * 100",
+        dependencies=[FinancialMetric.OPERATING_RESULT, FinancialMetric.REVENUE],
     ),
     IndicatorDefinition(
         slug="net-margin",
@@ -51,7 +59,9 @@ INDICATOR_CATALOG: tuple[IndicatorDefinition, ...] = (
         group=IndicatorGroup.EFFICIENCY,
         description="Lucro líquido como percentual da receita líquida.",
         unit=SeriesUnit.PERCENT,
+        format="percent_2",
         formula="net_income / revenue * 100",
+        dependencies=[FinancialMetric.NET_INCOME, FinancialMetric.REVENUE],
     ),
     IndicatorDefinition(
         slug="roe",
@@ -60,7 +70,21 @@ INDICATOR_CATALOG: tuple[IndicatorDefinition, ...] = (
         group=IndicatorGroup.PROFITABILITY,
         description="Retorno sobre o patrimônio líquido médio do período.",
         unit=SeriesUnit.PERCENT,
+        format="percent_2",
         formula="annual_net_income / average_equity * 100",
+        dependencies=[FinancialMetric.NET_INCOME, FinancialMetric.EQUITY],
+        available_frequencies=[SeriesFrequency.ANNUAL],
+    ),
+    IndicatorDefinition(
+        slug="roa",
+        label="ROA",
+        group=IndicatorGroup.PROFITABILITY,
+        description="Retorno anual sobre a média dos ativos totais do período.",
+        unit=SeriesUnit.PERCENT,
+        format="percent_2",
+        formula="annual_net_income / average_total_assets * 100",
+        dependencies=[FinancialMetric.NET_INCOME, FinancialMetric.TOTAL_ASSETS],
+        available_frequencies=[SeriesFrequency.ANNUAL],
     ),
     IndicatorDefinition(
         slug="gross-debt",
@@ -69,7 +93,9 @@ INDICATOR_CATALOG: tuple[IndicatorDefinition, ...] = (
         group=IndicatorGroup.LEVERAGE,
         description="Soma das dívidas financeiras de curto e longo prazo mapeadas.",
         unit=SeriesUnit.CURRENCY,
+        format="currency_compact",
         formula="short_term_debt + long_term_debt",
+        dependencies=[FinancialMetric.SHORT_TERM_DEBT, FinancialMetric.LONG_TERM_DEBT],
     ),
     IndicatorDefinition(
         slug="net-debt",
@@ -78,7 +104,43 @@ INDICATOR_CATALOG: tuple[IndicatorDefinition, ...] = (
         group=IndicatorGroup.LEVERAGE,
         description="Dívida bruta menos caixa e equivalentes.",
         unit=SeriesUnit.CURRENCY,
+        format="currency_compact",
         formula="gross_debt - cash",
+        dependencies=[
+            FinancialMetric.SHORT_TERM_DEBT,
+            FinancialMetric.LONG_TERM_DEBT,
+            FinancialMetric.CASH,
+        ],
+    ),
+    IndicatorDefinition(
+        slug="net-debt-to-equity",
+        label="Dívida Líquida / PL",
+        group=IndicatorGroup.LEVERAGE,
+        description="Dívida líquida como percentual do patrimônio líquido.",
+        unit=SeriesUnit.PERCENT,
+        format="percent_2",
+        formula="net_debt / equity * 100",
+        dependencies=[FinancialMetric.NET_DEBT, FinancialMetric.EQUITY],
+    ),
+    IndicatorDefinition(
+        slug="gross-debt-to-equity",
+        label="Dívida Bruta / PL",
+        group=IndicatorGroup.LEVERAGE,
+        description="Dívida bruta como percentual do patrimônio líquido.",
+        unit=SeriesUnit.PERCENT,
+        format="percent_2",
+        formula="gross_debt / equity * 100",
+        dependencies=[FinancialMetric.GROSS_DEBT, FinancialMetric.EQUITY],
+    ),
+    IndicatorDefinition(
+        slug="equity-to-assets",
+        label="Patrimônio / Ativos",
+        group=IndicatorGroup.LEVERAGE,
+        description="Participação do patrimônio líquido nos ativos totais.",
+        unit=SeriesUnit.PERCENT,
+        format="percent_2",
+        formula="equity / total_assets * 100",
+        dependencies=[FinancialMetric.EQUITY, FinancialMetric.TOTAL_ASSETS],
     ),
     IndicatorDefinition(
         slug="revenue-growth-yoy",
@@ -87,7 +149,22 @@ INDICATOR_CATALOG: tuple[IndicatorDefinition, ...] = (
         group=IndicatorGroup.GROWTH,
         description="Variação da receita contra o mesmo período do ano anterior.",
         unit=SeriesUnit.PERCENT,
+        format="percent_2",
         formula="(current / same_period_previous_year - 1) * 100",
+        dependencies=[FinancialMetric.REVENUE],
+    ),
+    IndicatorDefinition(
+        slug="net-income-growth-yoy",
+        label="Crescimento do Lucro",
+        group=IndicatorGroup.GROWTH,
+        description=(
+            "Variação do lucro líquido contra o mesmo período do ano anterior; "
+            "não é calculada quando a base anterior é nula ou negativa."
+        ),
+        unit=SeriesUnit.PERCENT,
+        format="percent_2",
+        formula="(current_net_income / same_period_previous_year - 1) * 100",
+        dependencies=[FinancialMetric.NET_INCOME],
     ),
 )
 
@@ -96,6 +173,7 @@ class IndicatorEngine:
     def __init__(self, session: Session) -> None:
         self.assets = AssetReadService(session)
         self.series = FinancialSeriesService(session)
+        self.derived_series = DerivedIndicatorSeriesService(self.series)
 
     @staticmethod
     def get_catalog() -> list[IndicatorDefinition]:
@@ -123,9 +201,9 @@ class IndicatorEngine:
         }
 
         for definition in INDICATOR_CATALOG:
-            series = self.series.get_series(
+            series = self._resolve_series(
                 normalized_ticker,
-                definition.metric,
+                definition,
                 frequency=frequency,
             )
             latest = series.points[-1] if series.points else None
@@ -169,9 +247,9 @@ class IndicatorEngine:
         normalized_ticker = ticker.strip().upper()
         self.assets.get_asset(normalized_ticker)
         definition = self.get_definition(slug)
-        series = self.series.get_series(
+        series = self._resolve_series(
             normalized_ticker,
-            definition.metric,
+            definition,
             frequency=frequency,
         )
 
@@ -198,4 +276,31 @@ class IndicatorEngine:
             current_period=current.period_end if current else None,
             historical_average=average,
             points=points,
+        )
+
+    def _resolve_series(
+        self,
+        ticker: str,
+        definition: IndicatorDefinition,
+        *,
+        frequency: SeriesFrequency,
+    ) -> IndicatorSeriesResult:
+        if frequency not in definition.available_frequencies:
+            return IndicatorSeriesResult(formula=definition.formula, points=[])
+
+        if definition.metric is not None:
+            series = self.series.get_series(
+                ticker,
+                definition.metric,
+                frequency=frequency,
+            )
+            return IndicatorSeriesResult(
+                formula=series.formula or definition.formula,
+                points=series.points,
+            )
+
+        return self.derived_series.get_series(
+            ticker,
+            definition,
+            frequency=frequency,
         )
