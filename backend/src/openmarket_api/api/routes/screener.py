@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal, InvalidOperation
 from typing import Annotated, Literal
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
@@ -9,15 +10,14 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from openmarket_api.api.dependencies import get_db_session
-from openmarket_api.domain.analytics import FinancialMetric, SeriesFrequency
+from openmarket_api.domain.analytics import FinancialMetric
 from openmarket_api.persistence.models import (
     CompanyRecord,
     FinancialStatementRecord,
     InstrumentRecord,
     PublicDocumentRecord,
 )
-from openmarket_api.services.cash_flow_series import CASH_FLOW_METRICS, CashFlowSeriesService
-from openmarket_api.services.financial_series import FinancialSeriesService
+from openmarket_api.services.screener_snapshots import ScreenerSnapshotService, SnapshotMap
 
 router = APIRouter(prefix="/api/v1/screener", tags=["screener"])
 
@@ -44,6 +44,7 @@ SCREENER_METRICS: tuple[FinancialMetric, ...] = (
 
 SCREENER_METRIC_BY_VALUE = {metric.value: metric for metric in SCREENER_METRICS}
 FILTER_OPERATORS = {"gt", "gte", "lt", "lte"}
+CompanyStats = tuple[int, date | None, int]
 
 
 @dataclass(frozen=True)
@@ -80,26 +81,6 @@ class ScreenerResponse(BaseModel):
     sort: str
     direction: Literal["asc", "desc"]
     applied_filters: int
-
-
-def _latest_metric(
-    ticker: str,
-    metric: FinancialMetric,
-    financial_service: FinancialSeriesService,
-    cash_service: CashFlowSeriesService,
-) -> tuple[Decimal | None, date | None]:
-    try:
-        if metric in CASH_FLOW_METRICS:
-            series = cash_service.get_series(ticker, metric, frequency=SeriesFrequency.ANNUAL)
-        else:
-            series = financial_service.get_series(ticker, metric, frequency=SeriesFrequency.ANNUAL)
-    except LookupError:
-        return None, None
-
-    if not series.points:
-        return None, None
-    latest = series.points[-1]
-    return latest.value, latest.period_end
 
 
 def _parse_filter(raw_filter: str) -> ScreenerFilter:
@@ -142,11 +123,19 @@ def _company_name(instrument: InstrumentRecord, company: CompanyRecord | None) -
     return instrument.issuer_name or instrument.ticker
 
 
+def _snapshot_value(
+    values: SnapshotMap,
+    instrument: InstrumentRecord,
+    metric: FinancialMetric,
+) -> tuple[Decimal | None, date | None]:
+    return values.get((instrument.id, metric), (None, None))
+
+
 def _sort_records(
     records: list[tuple[InstrumentRecord, CompanyRecord | None]],
     sort: str,
     direction: Literal["asc", "desc"],
-    metric_value,
+    values: SnapshotMap,
 ) -> list[tuple[InstrumentRecord, CompanyRecord | None]]:
     reverse = direction == "desc"
     if sort == "ticker":
@@ -161,7 +150,7 @@ def _sort_records(
     with_value: list[tuple[Decimal, tuple[InstrumentRecord, CompanyRecord | None]]] = []
     without_value: list[tuple[InstrumentRecord, CompanyRecord | None]] = []
     for record in records:
-        value, _ = metric_value(record[0].ticker, metric)
+        value, _ = _snapshot_value(values, record[0], metric)
         if value is None:
             without_value.append(record)
         else:
@@ -171,40 +160,64 @@ def _sort_records(
     return [record for _, record in with_value] + without_value
 
 
+def _load_company_stats(session: Session, company_ids: set[UUID]) -> dict[UUID, CompanyStats]:
+    if not company_ids:
+        return {}
+
+    financial_rows = session.execute(
+        select(
+            FinancialStatementRecord.company_id,
+            func.count(FinancialStatementRecord.id),
+            func.max(FinancialStatementRecord.period_end),
+        )
+        .where(FinancialStatementRecord.company_id.in_(company_ids))
+        .group_by(FinancialStatementRecord.company_id)
+    ).all()
+    document_rows = session.execute(
+        select(
+            PublicDocumentRecord.company_id,
+            func.count(PublicDocumentRecord.id),
+        )
+        .where(PublicDocumentRecord.company_id.in_(company_ids))
+        .group_by(PublicDocumentRecord.company_id)
+    ).all()
+
+    financial_by_company = {
+        company_id: (int(count), latest_period)
+        for company_id, count, latest_period in financial_rows
+    }
+    documents_by_company = {
+        company_id: int(count)
+        for company_id, count in document_rows
+        if company_id is not None
+    }
+    return {
+        company_id: (
+            financial_by_company.get(company_id, (0, None))[0],
+            financial_by_company.get(company_id, (0, None))[1],
+            documents_by_company.get(company_id, 0),
+        )
+        for company_id in company_ids
+    }
+
+
 def _build_row(
     instrument: InstrumentRecord,
     company: CompanyRecord | None,
-    session: Session,
-    metric_value,
+    values: SnapshotMap,
+    company_stats: dict[UUID, CompanyStats],
 ) -> ScreenerRow:
     metrics: dict[str, Decimal | None] = {}
     periods: dict[str, date | None] = {}
     for metric in SCREENER_METRICS:
-        value, period = metric_value(instrument.ticker, metric)
+        value, period = _snapshot_value(values, instrument, metric)
         metrics[metric.value] = value
         periods[metric.value] = period
 
     if instrument.company_id is not None:
-        financial_item_count = int(
-            session.scalar(
-                select(func.count(FinancialStatementRecord.id)).where(
-                    FinancialStatementRecord.company_id == instrument.company_id
-                )
-            )
-            or 0
-        )
-        latest_period = session.scalar(
-            select(func.max(FinancialStatementRecord.period_end)).where(
-                FinancialStatementRecord.company_id == instrument.company_id
-            )
-        )
-        document_count = int(
-            session.scalar(
-                select(func.count(PublicDocumentRecord.id)).where(
-                    PublicDocumentRecord.company_id == instrument.company_id
-                )
-            )
-            or 0
+        financial_item_count, latest_period, document_count = company_stats.get(
+            instrument.company_id,
+            (0, None, 0),
         )
     else:
         financial_item_count = 0
@@ -268,30 +281,30 @@ def get_screener(
         ).where(predicate)
 
     universe_total = int(session.scalar(count_query) or 0)
-    financial_service = FinancialSeriesService(session)
-    cash_service = CashFlowSeriesService(session)
-    metric_cache: dict[tuple[str, FinancialMetric], tuple[Decimal | None, date | None]] = {}
+    snapshot_service = ScreenerSnapshotService(session)
+    sort_metric = SCREENER_METRIC_BY_VALUE.get(sort)
+    requires_snapshot_scan = bool(parsed_filters) or sort_metric is not None
 
-    def metric_value(ticker: str, metric: FinancialMetric) -> tuple[Decimal | None, date | None]:
-        key = (ticker, metric)
-        if key not in metric_cache:
-            metric_cache[key] = _latest_metric(ticker, metric, financial_service, cash_service)
-        return metric_cache[key]
-
-    requires_python_scan = bool(parsed_filters) or sort not in {"ticker", "company"}
-
-    if requires_python_scan:
+    if requires_snapshot_scan:
         records = list(session.execute(base).all())
+        scan_metrics = {rule.metric for rule in parsed_filters}
+        if sort_metric is not None:
+            scan_metrics.add(sort_metric)
+        scan_values = snapshot_service.ensure(records, scan_metrics)
+
         if parsed_filters:
             records = [
                 record
                 for record in records
                 if all(
-                    _matches_filter(metric_value(record[0].ticker, rule.metric)[0], rule)
+                    _matches_filter(
+                        _snapshot_value(scan_values, record[0], rule.metric)[0],
+                        rule,
+                    )
                     for rule in parsed_filters
                 )
             ]
-        records = _sort_records(records, sort, direction, metric_value)
+        records = _sort_records(records, sort, direction, scan_values)
         total = len(records)
         page_records = records[offset : offset + limit]
     else:
@@ -304,14 +317,23 @@ def get_screener(
                 InstrumentRecord.ticker,
             )
             ordered = base.order_by(company_sort.desc() if direction == "desc" else company_sort.asc())
-        else:
+        elif sort == "ticker":
             ordered = base.order_by(
                 InstrumentRecord.ticker.desc() if direction == "desc" else InstrumentRecord.ticker.asc()
             )
+        else:
+            raise HTTPException(status_code=422, detail=f"Ordenação não suportada: {sort}.")
         page_records = list(session.execute(ordered.limit(limit).offset(offset)).all())
 
+    page_values = snapshot_service.ensure(page_records, SCREENER_METRICS)
+    company_ids = {
+        instrument.company_id
+        for instrument, _ in page_records
+        if instrument.company_id is not None
+    }
+    company_stats = _load_company_stats(session, company_ids)
     rows = [
-        _build_row(instrument, company, session, metric_value)
+        _build_row(instrument, company, page_values, company_stats)
         for instrument, company in page_records
     ]
 
