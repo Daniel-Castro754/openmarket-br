@@ -4,8 +4,47 @@ import styles from "./screener.module.css";
 
 export const dynamic = "force-dynamic";
 
-export default async function ScreenerPage() {
-  const screener = await getScreener({ limit: 100 });
+function firstValue(value?: string | string[]) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function allValues(value?: string | string[]) {
+  if (!value) return [];
+  return Array.isArray(value) ? value : [value];
+}
+
+function parseOffset(value?: string) {
+  const numeric = Number(value ?? 0);
+  return Number.isInteger(numeric) && numeric >= 0 ? numeric : 0;
+}
+
+export default async function ScreenerPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    q?: string | string[];
+    filter?: string | string[];
+    sort?: string | string[];
+    direction?: string | string[];
+    offset?: string | string[];
+  }>;
+}) {
+  const query = await searchParams;
+  const q = firstValue(query.q)?.trim() || undefined;
+  const filters = allValues(query.filter);
+  const sort = firstValue(query.sort) || "ticker";
+  const direction = firstValue(query.direction) === "desc" ? "desc" : "asc";
+  const offset = parseOffset(firstValue(query.offset));
+  const limit = 50;
+
+  const screener = await getScreener({
+    q,
+    filters,
+    sort,
+    direction,
+    offset,
+    limit,
+  });
 
   return (
     <main className={styles.page}>
@@ -14,18 +53,22 @@ export default async function ScreenerPage() {
           <span className="eyebrow">SCREENER FUNDAMENTALISTA · CVM</span>
           <h1>Filtre empresas por fundamentos reais.</h1>
           <p>
-            Combine condições sobre crescimento, margens, rentabilidade, resultados e balanço usando apenas os
-            valores já sincronizados no OpenMarket BR. Sem preços, estimativas ou preenchimento artificial.
+            Filtros, ordenação e paginação são processados pela API sobre o universo sincronizado. A interface não
+            precisa mais limitar a análise ao primeiro lote carregado no navegador.
           </p>
         </div>
-        <div className={styles.headerStats} aria-label="Resumo do universo carregado">
-          <div><strong>{screener.total.toLocaleString("pt-BR")}</strong><span>ativos sincronizados</span></div>
-          <div><strong>{screener.rows.length.toLocaleString("pt-BR")}</strong><span>carregados nesta visão</span></div>
+        <div className={styles.headerStats} aria-label="Resumo do universo do screener">
+          <div><strong>{screener.universe_total.toLocaleString("pt-BR")}</strong><span>ativos pesquisados</span></div>
+          <div><strong>{screener.total.toLocaleString("pt-BR")}</strong><span>após os filtros</span></div>
           <div><strong>CVM</strong><span>fonte financeira</span></div>
         </div>
       </header>
 
-      <ScreenerWorkspace rows={screener.rows} total={screener.total} />
+      <ScreenerWorkspace
+        response={screener}
+        initialQuery={q ?? ""}
+        initialFilters={filters}
+      />
     </main>
   );
 }
