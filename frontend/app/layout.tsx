@@ -11,26 +11,42 @@ import "./shell-navigation.css";
 import "./home-dashboard.css";
 import "./asset-terminal.css";
 import "./final-polish.css";
+import "./redesign-shell.css";
 
 export const metadata: Metadata = {
   title: "OpenMarket BR",
   description: "Mercado financeiro brasileiro com dados rastreáveis e código aberto.",
 };
 
-const themeInitScript = `
+const appearanceInitScript = `
 (() => {
   try {
-    const stored = localStorage.getItem("openmarket-theme") || "system";
-    const allowed = ["system", "light", "dark", "terminal", "ocean"];
-    const preference = allowed.includes(stored) ? stored : "system";
-    const resolved = preference === "system"
-      ? (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark")
-      : preference;
-    document.documentElement.dataset.theme = resolved;
-    document.documentElement.dataset.themePreference = preference;
+    const storedMode = localStorage.getItem("openmarket-mode");
+    const mode = storedMode === "light" || storedMode === "dark"
+      ? storedMode
+      : (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+
+    const storedColorTheme = localStorage.getItem("openmarket-color-theme");
+    const colorTheme = ["openmarket", "ocean", "terminal"].includes(storedColorTheme)
+      ? storedColorTheme
+      : "openmarket";
+
+    const storedNavigation = localStorage.getItem("openmarket-nav-position");
+    const navigation = ["sidebar", "rail", "topbar"].includes(storedNavigation)
+      ? storedNavigation
+      : "topbar";
+
+    document.documentElement.dataset.mode = mode;
+    document.documentElement.dataset.theme = mode;
+    document.documentElement.dataset.themePreference = mode;
+    document.documentElement.dataset.colorTheme = colorTheme;
+    document.documentElement.dataset.navigation = navigation;
   } catch {
-    document.documentElement.dataset.theme = "dark";
-    document.documentElement.dataset.themePreference = "system";
+    document.documentElement.dataset.mode = "light";
+    document.documentElement.dataset.theme = "light";
+    document.documentElement.dataset.themePreference = "light";
+    document.documentElement.dataset.colorTheme = "openmarket";
+    document.documentElement.dataset.navigation = "topbar";
   }
 })();
 `;
@@ -39,7 +55,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <script dangerouslySetInnerHTML={{ __html: appearanceInitScript }} />
       </head>
       <body>
         <SiteHeader />
