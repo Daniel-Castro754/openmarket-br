@@ -20,6 +20,7 @@ import "./asset-indicator-refinement.css";
 import "./asset-financial-refinement.css";
 import "./market-discovery.css";
 import "./discovery-pages.css";
+import "./design-governance.css";
 
 export const metadata: Metadata = {
   title: "OpenMarket BR",
