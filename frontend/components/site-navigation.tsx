@@ -36,6 +36,9 @@ const links = {
   assets: { href: "/ativos/PETR4", label: "Ativos", icon: "assets", activePrefixes: ["/ativos"] } satisfies NavLink,
   lists: { href: "/listas", label: "Listas", icon: "lists", activePrefixes: ["/listas"] } satisfies NavLink,
   compare: { href: "/comparar", label: "Comparar", icon: "compare", activePrefixes: ["/comparar"] } satisfies NavLink,
+  sectors: { href: "/setores", label: "Setores", icon: "assets", activePrefixes: ["/setores"] } satisfies NavLink,
+  rankings: { href: "/rankings", label: "Rankings", icon: "analysis", activePrefixes: ["/rankings"] } satisfies NavLink,
+  results: { href: "/resultados", label: "Resultados", icon: "reports", activePrefixes: ["/resultados"] } satisfies NavLink,
   macro: { href: "/macroeconomia", label: "Macroeconomia", icon: "macro", activePrefixes: ["/macroeconomia"] } satisfies NavLink,
   analysis: { href: "/analises", label: "Análises", icon: "analysis", activePrefixes: ["/analises"] } satisfies NavLink,
   calculator: { href: "/calculadoras", label: "Calculadoras", icon: "calculator", activePrefixes: ["/calculadoras"] } satisfies NavLink,
@@ -44,6 +47,7 @@ const links = {
 
 const sideGroups: NavGroup[] = [
   { label: "Navegar", links: [links.home, links.assets, links.lists, links.compare] },
+  { label: "Descobrir", links: [links.rankings, links.results, links.sectors] },
   { label: "Mercado", links: [links.macro, links.analysis] },
   { label: "Ferramentas", links: [links.calculator, links.reports] },
 ];
@@ -60,9 +64,9 @@ const marketColumns: MegaColumn[] = [
   {
     label: "Descobrir",
     items: [
-      { label: "Setores", detail: "Empresas organizadas por atividade", planned: true },
-      { label: "Rankings", detail: "Crescimento, retorno, margens e dívida", planned: true },
-      { label: "Últimos resultados", detail: "DFP e ITR publicados recentemente", planned: true },
+      { label: "Setores", detail: "Estrutura pronta; fonte setorial ainda pendente", href: links.sectors.href, icon: "assets", activePrefixes: ["/setores"] },
+      { label: "Rankings", detail: "Crescimento, retorno e margens com dados CVM", href: links.rankings.href, icon: "analysis", activePrefixes: ["/rankings"] },
+      { label: "Últimos resultados", detail: "DFP e ITR publicados e sincronizados", href: links.results.href, icon: "reports", activePrefixes: ["/resultados"] },
     ],
   },
   {
@@ -86,6 +90,7 @@ const toolColumns: MegaColumn[] = [
     label: "Análise",
     items: [
       { label: "Listas", detail: "Base atual para filtros e descoberta", href: links.lists.href, icon: "lists", activePrefixes: ["/listas"] },
+      { label: "Rankings", detail: "Ordene empresas pelos indicadores disponíveis", href: links.rankings.href, icon: "analysis", activePrefixes: ["/rankings"] },
       { label: "Comparar empresas", detail: "Compare fundamentos em paralelo", href: links.compare.href, icon: "compare", activePrefixes: ["/comparar"] },
       { label: "Screener avançado", detail: "Filtros combinados por indicador", planned: true },
     ],
@@ -130,27 +135,13 @@ function Icon({ name }: { name: IconName }) {
     "aria-hidden": true,
   };
 
-  if (name === "home") {
-    return <svg {...common}><path d="M4 11.5 12 4l8 7.5" /><path d="M6 10v9h12v-9" /><path d="M10 19v-5h4v5" /></svg>;
-  }
-  if (name === "assets") {
-    return <svg {...common}><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></svg>;
-  }
-  if (name === "lists") {
-    return <svg {...common}><path d="M4 7h16" /><path d="M4 12h16" /><path d="M4 17h10" /></svg>;
-  }
-  if (name === "compare") {
-    return <svg {...common}><path d="M8 3v13" /><path d="m4 12 4 4 4-4" /><path d="M16 21V8" /><path d="m20 12-4-4-4 4" /></svg>;
-  }
-  if (name === "macro") {
-    return <svg {...common}><path d="M3 21h18" /><path d="M5 21V10" /><path d="M9 21V10" /><path d="M15 21V10" /><path d="M19 21V10" /><path d="m3 10 9-6 9 6" /></svg>;
-  }
-  if (name === "analysis") {
-    return <svg {...common}><path d="M5 21V10" /><path d="M12 21V4" /><path d="M19 21v-7" /><path d="M3 21h18" /></svg>;
-  }
-  if (name === "calculator") {
-    return <svg {...common}><rect x="5" y="3" width="14" height="18" rx="2" /><path d="M8 7h8" /><path d="M8 11h.01" /><path d="M12 11h.01" /><path d="M16 11h.01" /><path d="M8 15h.01" /><path d="M12 15h.01" /><path d="M16 15v4" /></svg>;
-  }
+  if (name === "home") return <svg {...common}><path d="M4 11.5 12 4l8 7.5" /><path d="M6 10v9h12v-9" /><path d="M10 19v-5h4v5" /></svg>;
+  if (name === "assets") return <svg {...common}><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></svg>;
+  if (name === "lists") return <svg {...common}><path d="M4 7h16" /><path d="M4 12h16" /><path d="M4 17h10" /></svg>;
+  if (name === "compare") return <svg {...common}><path d="M8 3v13" /><path d="m4 12 4 4 4-4" /><path d="M16 21V8" /><path d="m20 12-4-4-4 4" /></svg>;
+  if (name === "macro") return <svg {...common}><path d="M3 21h18" /><path d="M5 21V10" /><path d="M9 21V10" /><path d="M15 21V10" /><path d="M19 21V10" /><path d="m3 10 9-6 9 6" /></svg>;
+  if (name === "analysis") return <svg {...common}><path d="M5 21V10" /><path d="M12 21V4" /><path d="M19 21v-7" /><path d="M3 21h18" /></svg>;
+  if (name === "calculator") return <svg {...common}><rect x="5" y="3" width="14" height="18" rx="2" /><path d="M8 7h8" /><path d="M8 11h.01" /><path d="M12 11h.01" /><path d="M16 11h.01" /><path d="M8 15h.01" /><path d="M12 15h.01" /><path d="M16 15v4" /></svg>;
   return <svg {...common}><path d="M6 3h8l4 4v14H6z" /><path d="M14 3v4h4" /><path d="M8 12h8" /><path d="M8 16h8" /></svg>;
 }
 
@@ -161,9 +152,7 @@ function MegaMenu({ label, columns, pathname }: { label: string; columns: MegaCo
     <div className={`nav-group nav-mega-group ${active ? "nav-group-active" : ""}`}>
       <button type="button" className="nav-group-trigger" aria-haspopup="true">
         {label}
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="m7 10 5 5 5-5" />
-        </svg>
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
       </button>
       <div className="nav-dropdown nav-mega" role="menu">
         {columns.map((column) => (
@@ -178,17 +167,11 @@ function MegaMenu({ label, columns, pathname }: { label: string; columns: MegaCo
                   className={isMegaItemActive(pathname, item) ? "nav-mega-item nav-dropdown-active" : "nav-mega-item"}
                 >
                   {item.icon ? <span className="nav-mega-icon"><Icon name={item.icon} /></span> : null}
-                  <span className="nav-mega-copy">
-                    <strong>{item.label}</strong>
-                    <small>{item.detail}</small>
-                  </span>
+                  <span className="nav-mega-copy"><strong>{item.label}</strong><small>{item.detail}</small></span>
                 </Link>
               ) : (
                 <div className="nav-mega-item nav-mega-planned" key={item.label} aria-disabled="true">
-                  <span className="nav-mega-copy">
-                    <strong>{item.label}</strong>
-                    <small>{item.detail}</small>
-                  </span>
+                  <span className="nav-mega-copy"><strong>{item.label}</strong><small>{item.detail}</small></span>
                   <span className="nav-planned-badge">Planejado</span>
                 </div>
               ))}
@@ -202,11 +185,7 @@ function MegaMenu({ label, columns, pathname }: { label: string; columns: MegaCo
 
 function SideLink({ link, pathname }: { link: NavLink; pathname: string }) {
   return (
-    <Link
-      href={link.href}
-      title={link.label}
-      className={`side-nav-item ${isActive(pathname, link) ? "active" : ""}`}
-    >
+    <Link href={link.href} title={link.label} className={`side-nav-item ${isActive(pathname, link) ? "active" : ""}`}>
       <Icon name={link.icon} />
       <span>{link.label}</span>
     </Link>
@@ -226,16 +205,11 @@ export function SiteSideNavigation() {
     <aside className="site-side-navigation" aria-label="Navegação principal lateral">
       <Link className="side-brand" href="/" aria-label="OpenMarket BR">
         <span className="side-brand-mark">OM</span>
-        <span className="side-brand-copy">
-          <strong>OpenMarket</strong>
-          <small>Brasil · dados públicos</small>
-        </span>
+        <span className="side-brand-copy"><strong>OpenMarket</strong><small>Brasil · dados públicos</small></span>
       </Link>
 
       <button type="button" className="rail-expand-button" onClick={expandSidebar} aria-label="Expandir navegação" title="Expandir menu">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="m9 6 6 6-6 6" />
-        </svg>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
       </button>
 
       <div className="side-nav-sections">
