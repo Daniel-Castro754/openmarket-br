@@ -12,12 +12,14 @@ from openmarket_api.domain.analytics import (
     SeriesFrequency,
 )
 from openmarket_api.domain.entities import Company, FinancialStatementItem, Instrument
+from openmarket_api.domain.indicators import IndicatorSummary
 from openmarket_api.services.asset_read import AssetReadService
 from openmarket_api.services.cash_flow_series import (
     CASH_FLOW_METRICS,
     CashFlowSeriesService,
 )
 from openmarket_api.services.financial_series import FinancialSeriesService
+from openmarket_api.services.indicator_engine import IndicatorEngine
 
 router = APIRouter(prefix="/api/v1/assets", tags=["assets"])
 
@@ -70,6 +72,18 @@ def get_asset_financials(
             statement=statement,
             consolidated=consolidated,
         )
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.get("/{ticker}/indicator-summary", response_model=IndicatorSummary)
+def get_asset_indicator_summary(
+    ticker: str,
+    session: Annotated[Session, Depends(get_db_session)],
+    frequency: Annotated[SeriesFrequency, Query()] = SeriesFrequency.ANNUAL,
+) -> IndicatorSummary:
+    try:
+        return IndicatorEngine(session).get_summary(ticker, frequency=frequency)
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
