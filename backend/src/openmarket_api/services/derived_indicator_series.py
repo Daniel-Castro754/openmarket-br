@@ -247,13 +247,11 @@ class DerivedIndicatorSeriesService:
     ) -> bool:
         if left.period_end != right.period_end:
             return False
-        if (
-            left.filing_reference_date is not None
-            and right.filing_reference_date is not None
-            and left.filing_reference_date != right.filing_reference_date
-        ):
-            return False
-        return True
+        return (
+            left.filing_reference_date is None
+            or right.filing_reference_date is None
+            or left.filing_reference_date == right.filing_reference_date
+        )
 
     @staticmethod
     def _point_inputs(point: FinancialSeriesPoint) -> list[SourceMetadata]:
