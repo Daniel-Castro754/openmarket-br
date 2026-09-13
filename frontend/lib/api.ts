@@ -211,8 +211,21 @@ export type ScreenerRow = {
 export type ScreenerResponse = {
   rows: ScreenerRow[];
   total: number;
+  universe_total: number;
   limit: number;
   offset: number;
+  sort: string;
+  direction: "asc" | "desc";
+  applied_filters: number;
+};
+
+export type ScreenerQuery = {
+  q?: string;
+  filters?: string[];
+  sort?: string;
+  direction?: "asc" | "desc";
+  limit?: number;
+  offset?: number;
 };
 
 const apiBase = (process.env.OPENMARKET_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
@@ -276,18 +289,17 @@ export async function getIndicatorHistory(
   return (await response.json()) as IndicatorHistory;
 }
 
-export async function getScreener(filters?: {
-  q?: string;
-  limit?: number;
-  offset?: number;
-}): Promise<ScreenerResponse> {
+export async function getScreener(filters?: ScreenerQuery): Promise<ScreenerResponse> {
   const params = new URLSearchParams();
   if (filters?.q) params.set("q", filters.q);
+  for (const filter of filters?.filters ?? []) params.append("filter", filter);
+  if (filters?.sort) params.set("sort", filters.sort);
+  if (filters?.direction) params.set("direction", filters.direction);
   if (filters?.limit != null) params.set("limit", String(filters.limit));
   if (filters?.offset != null) params.set("offset", String(filters.offset));
   const suffix = params.size ? `?${params.toString()}` : "";
   const response = await fetch(`${apiBase}/api/v1/screener${suffix}`, {
-    next: { revalidate: 60 },
+    cache: "no-store",
   });
   if (!response.ok) {
     throw new Error(`OpenMarket API returned ${response.status} for screener`);

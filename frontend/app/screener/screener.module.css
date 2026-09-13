@@ -203,6 +203,7 @@
   pointer-events: none;
 }
 
+.applyButton,
 .addRuleButton,
 .clearButton {
   width: calc(100% - 24px);
@@ -215,7 +216,19 @@
   cursor: pointer;
 }
 
+.applyButton {
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--surface);
+}
+
+.applyButton:disabled {
+  opacity: .62;
+  cursor: wait;
+}
+
 .addRuleButton {
+  margin-top: 6px;
   border: 1px solid var(--accent-border);
   background: var(--accent-soft);
   color: var(--accent);
@@ -367,6 +380,11 @@
   cursor: pointer;
 }
 
+.table th button:disabled {
+  opacity: .62;
+  cursor: wait;
+}
+
 .table tbody tr:hover { background: var(--surface-hover); }
 .table tbody tr:last-child td { border-bottom: 0; }
 .numeric { text-align: right !important; }
@@ -378,6 +396,48 @@
   text-overflow: ellipsis;
 }
 .empty { height: 150px; color: var(--muted); text-align: center !important; }
+
+.pagination {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface);
+}
+
+.pagination span {
+  min-width: 110px;
+  color: var(--muted);
+  font-size: .54rem;
+  text-align: center;
+}
+
+.pagination button {
+  height: 28px;
+  padding: 0 9px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--surface-soft);
+  color: var(--text);
+  font: inherit;
+  font-size: .54rem;
+  font-weight: 720;
+  cursor: pointer;
+}
+
+.pagination button:hover:not(:disabled) {
+  border-color: var(--accent-border);
+  color: var(--accent);
+}
+
+.pagination button:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
 
 .footer {
   display: flex;
@@ -421,4 +481,6 @@
   .summaryBar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .summaryBar button { grid-column: 1 / -1; width: calc(100% - 18px); justify-self: center; margin: 0 9px 9px; }
   .tableShell { max-height: none; }
+  .pagination { justify-content: space-between; }
+  .pagination span { min-width: 0; }
 }

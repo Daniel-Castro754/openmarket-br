@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 
-import type { FinancialMetric, ScreenerRow } from "../../lib/api";
+import type { FinancialMetric, ScreenerResponse, ScreenerRow } from "../../lib/api";
 import styles from "./screener.module.css";
 
 type MetricKey =
@@ -19,6 +20,8 @@ type MetricKey =
   | "net_debt";
 
 type Operator = "gt" | "gte" | "lt" | "lte";
+type SortableKey = "ticker" | "company" | MetricKey;
+type ColumnKey = SortableKey | "latest_period";
 
 type FilterRule = {
   id: number;
@@ -28,10 +31,11 @@ type FilterRule = {
 };
 
 type ColumnDefinition = {
-  key: "ticker" | "company" | "latest_period" | MetricKey;
+  key: ColumnKey;
   label: string;
   kind: "text" | "date" | "currency" | "percent";
   metric?: MetricKey;
+  sortable?: boolean;
 };
 
 const metricOptions: Array<{ key: MetricKey; label: string; unit: "%" | "R$"; group: string }> = [
@@ -47,6 +51,9 @@ const metricOptions: Array<{ key: MetricKey; label: string; unit: "%" | "R$"; gr
   { key: "net_debt", label: "Dívida líquida", unit: "R$", group: "Balanço" },
 ];
 
+const metricKeys = new Set<MetricKey>(metricOptions.map((item) => item.key));
+const operatorKeys = new Set<Operator>(["gt", "gte", "lt", "lte"]);
+
 const operatorLabels: Record<Operator, string> = {
   gt: ">",
   gte: "≥",
@@ -55,22 +62,22 @@ const operatorLabels: Record<Operator, string> = {
 };
 
 const columns: ColumnDefinition[] = [
-  { key: "ticker", label: "Ticker", kind: "text" },
-  { key: "company", label: "Empresa", kind: "text" },
-  { key: "revenue", label: "Receita", kind: "currency", metric: "revenue" },
-  { key: "revenue_growth_yoy", label: "Receita YoY", kind: "percent", metric: "revenue_growth_yoy" },
-  { key: "net_income", label: "Lucro líquido", kind: "currency", metric: "net_income" },
-  { key: "roe", label: "ROE", kind: "percent", metric: "roe" },
-  { key: "gross_margin", label: "Margem bruta", kind: "percent", metric: "gross_margin" },
-  { key: "operating_margin", label: "Margem op.", kind: "percent", metric: "operating_margin" },
-  { key: "net_margin", label: "Margem líquida", kind: "percent", metric: "net_margin" },
-  { key: "cash", label: "Caixa", kind: "currency", metric: "cash" },
-  { key: "gross_debt", label: "Dívida bruta", kind: "currency", metric: "gross_debt" },
-  { key: "net_debt", label: "Dívida líquida", kind: "currency", metric: "net_debt" },
+  { key: "ticker", label: "Ticker", kind: "text", sortable: true },
+  { key: "company", label: "Empresa", kind: "text", sortable: true },
+  { key: "revenue", label: "Receita", kind: "currency", metric: "revenue", sortable: true },
+  { key: "revenue_growth_yoy", label: "Receita YoY", kind: "percent", metric: "revenue_growth_yoy", sortable: true },
+  { key: "net_income", label: "Lucro líquido", kind: "currency", metric: "net_income", sortable: true },
+  { key: "roe", label: "ROE", kind: "percent", metric: "roe", sortable: true },
+  { key: "gross_margin", label: "Margem bruta", kind: "percent", metric: "gross_margin", sortable: true },
+  { key: "operating_margin", label: "Margem op.", kind: "percent", metric: "operating_margin", sortable: true },
+  { key: "net_margin", label: "Margem líquida", kind: "percent", metric: "net_margin", sortable: true },
+  { key: "cash", label: "Caixa", kind: "currency", metric: "cash", sortable: true },
+  { key: "gross_debt", label: "Dívida bruta", kind: "currency", metric: "gross_debt", sortable: true },
+  { key: "net_debt", label: "Dívida líquida", kind: "currency", metric: "net_debt", sortable: true },
   { key: "latest_period", label: "Último período", kind: "date" },
 ];
 
-const defaultColumns: ColumnDefinition["key"][] = [
+const defaultColumns: ColumnKey[] = [
   "ticker",
   "company",
   "revenue_growth_yoy",
@@ -95,17 +102,6 @@ function metricNumber(row: ScreenerRow, metric: MetricKey) {
   return Number.isFinite(numeric) ? numeric : null;
 }
 
-function matchesRule(row: ScreenerRow, rule: FilterRule) {
-  const threshold = parseNumber(rule.value);
-  if (threshold == null) return true;
-  const current = metricNumber(row, rule.metric);
-  if (current == null) return false;
-  if (rule.operator === "gt") return current > threshold;
-  if (rule.operator === "gte") return current >= threshold;
-  if (rule.operator === "lt") return current < threshold;
-  return current <= threshold;
-}
-
 function formatMetric(row: ScreenerRow, column: ColumnDefinition) {
   if (!column.metric) return "—";
   const value = metricNumber(row, column.metric);
@@ -121,46 +117,74 @@ function formatMetric(row: ScreenerRow, column: ColumnDefinition) {
   }).format(value);
 }
 
-function comparableValue(row: ScreenerRow, key: ColumnDefinition["key"]): string | number | null {
-  if (key === "ticker") return row.ticker;
-  if (key === "company") return row.company_name;
-  if (key === "latest_period") return row.latest_period ?? null;
-  return metricNumber(row, key);
+function parseFilterExpression(expression: string, id: number): FilterRule | null {
+  const [metric, operator, value] = expression.split(":", 3);
+  if (!metricKeys.has(metric as MetricKey) || !operatorKeys.has(operator as Operator) || value == null) return null;
+  return { id, metric: metric as MetricKey, operator: operator as Operator, value };
 }
 
-export function ScreenerWorkspace({ rows, total }: { rows: ScreenerRow[]; total: number }) {
-  const [rules, setRules] = useState<FilterRule[]>([
-    { id: 1, metric: "roe", operator: "gte", value: "" },
-  ]);
-  const [query, setQuery] = useState("");
-  const [visibleColumns, setVisibleColumns] = useState<ColumnDefinition["key"][]>(defaultColumns);
+function rulesFromFilters(filters: string[]) {
+  const parsed = filters
+    .map((filter, index) => parseFilterExpression(filter, index + 1))
+    .filter((rule): rule is FilterRule => Boolean(rule));
+  return parsed.length ? parsed : [{ id: 1, metric: "roe" as MetricKey, operator: "gte" as Operator, value: "" }];
+}
+
+function serializeRule(rule: FilterRule) {
+  const value = parseNumber(rule.value);
+  if (value == null) return null;
+  return `${rule.metric}:${rule.operator}:${value}`;
+}
+
+function buildSearchParams({
+  query,
+  filters,
+  sort,
+  direction,
+  offset,
+}: {
+  query: string;
+  filters: string[];
+  sort: string;
+  direction: "asc" | "desc";
+  offset?: number;
+}) {
+  const params = new URLSearchParams();
+  if (query.trim()) params.set("q", query.trim());
+  for (const filter of filters) params.append("filter", filter);
+  if (sort !== "ticker") params.set("sort", sort);
+  if (direction !== "asc") params.set("direction", direction);
+  if (offset && offset > 0) params.set("offset", String(offset));
+  return params;
+}
+
+export function ScreenerWorkspace({
+  response,
+  initialQuery,
+  initialFilters,
+}: {
+  response: ScreenerResponse;
+  initialQuery: string;
+  initialFilters: string[];
+}) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [rules, setRules] = useState<FilterRule[]>(() => rulesFromFilters(initialFilters));
+  const [query, setQuery] = useState(initialQuery);
+  const [visibleColumns, setVisibleColumns] = useState<ColumnKey[]>(defaultColumns);
   const [showColumns, setShowColumns] = useState(false);
-  const [sortKey, setSortKey] = useState<ColumnDefinition["key"]>("ticker");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   const activeRuleCount = rules.filter((rule) => parseNumber(rule.value) != null).length;
+  const activeColumns = columns.filter((column) => visibleColumns.includes(column.key));
+  const pageStart = response.total === 0 ? 0 : response.offset + 1;
+  const pageEnd = Math.min(response.offset + response.rows.length, response.total);
+  const canGoBack = response.offset > 0;
+  const canGoForward = response.offset + response.limit < response.total;
 
-  const filteredRows = useMemo(() => {
-    const needle = query.trim().toLocaleLowerCase("pt-BR");
-    const filtered = rows.filter((row) => {
-      if (needle && !`${row.ticker} ${row.company_name} ${row.legal_name ?? ""}`.toLocaleLowerCase("pt-BR").includes(needle)) {
-        return false;
-      }
-      return rules.every((rule) => matchesRule(row, rule));
-    });
-
-    return [...filtered].sort((left, right) => {
-      const a = comparableValue(left, sortKey);
-      const b = comparableValue(right, sortKey);
-      if (a == null && b == null) return 0;
-      if (a == null) return 1;
-      if (b == null) return -1;
-      const result = typeof a === "number" && typeof b === "number"
-        ? a - b
-        : String(a).localeCompare(String(b), "pt-BR", { numeric: true });
-      return sortDirection === "asc" ? result : -result;
-    });
-  }, [query, rows, rules, sortDirection, sortKey]);
+  function navigate(params: URLSearchParams) {
+    const suffix = params.size ? `?${params.toString()}` : "";
+    startTransition(() => router.push(`/screener${suffix}`));
+  }
 
   function updateRule(id: number, patch: Partial<FilterRule>) {
     setRules((current) => current.map((rule) => rule.id === id ? { ...rule, ...patch } : rule));
@@ -179,31 +203,53 @@ export function ScreenerWorkspace({ rows, total }: { rows: ScreenerRow[]; total:
       : current.filter((rule) => rule.id !== id));
   }
 
+  function applyFilters() {
+    const filters = rules.map(serializeRule).filter((filter): filter is string => Boolean(filter));
+    navigate(buildSearchParams({
+      query,
+      filters,
+      sort: response.sort,
+      direction: response.direction,
+    }));
+  }
+
   function clearFilters() {
     setRules([{ id: 1, metric: "roe", operator: "gte", value: "" }]);
     setQuery("");
+    navigate(new URLSearchParams());
   }
 
-  function toggleColumn(key: ColumnDefinition["key"]) {
+  function toggleColumn(key: ColumnKey) {
     if (key === "ticker" || key === "company") return;
     setVisibleColumns((current) => current.includes(key)
       ? current.filter((item) => item !== key)
       : [...current, key]);
   }
 
-  function toggleSort(key: ColumnDefinition["key"]) {
-    if (sortKey === key) {
-      setSortDirection((current) => current === "asc" ? "desc" : "asc");
-    } else {
-      setSortKey(key);
-      setSortDirection(key === "ticker" || key === "company" ? "asc" : "desc");
-    }
+  function changeSort(key: SortableKey) {
+    const nextDirection = response.sort === key
+      ? (response.direction === "asc" ? "desc" : "asc")
+      : (key === "ticker" || key === "company" ? "asc" : "desc");
+    navigate(buildSearchParams({
+      query: initialQuery,
+      filters: initialFilters,
+      sort: key,
+      direction: nextDirection,
+    }));
   }
 
-  const activeColumns = columns.filter((column) => visibleColumns.includes(column.key));
+  function changePage(nextOffset: number) {
+    navigate(buildSearchParams({
+      query: initialQuery,
+      filters: initialFilters,
+      sort: response.sort,
+      direction: response.direction,
+      offset: Math.max(0, nextOffset),
+    }));
+  }
 
   return (
-    <section className={styles.workspace}>
+    <section className={styles.workspace} aria-busy={isPending}>
       <aside className={styles.filterPanel}>
         <div className={styles.panelHeading}>
           <div>
@@ -264,21 +310,24 @@ export function ScreenerWorkspace({ rows, total }: { rows: ScreenerRow[]; total:
           })}
         </div>
 
+        <button className={styles.applyButton} type="button" onClick={applyFilters} disabled={isPending}>
+          {isPending ? "Aplicando..." : "Aplicar filtros"}
+        </button>
         <button className={styles.addRuleButton} type="button" onClick={addRule}>+ Adicionar filtro</button>
         <button className={styles.clearButton} type="button" onClick={clearFilters}>Limpar critérios</button>
 
         <div className={styles.sourceNote}>
           <strong>Proveniência</strong>
-          <span>Indicadores financeiros anuais consolidados, oficiais ou derivados de fatos da CVM.</span>
+          <span>Indicadores anuais consolidados, oficiais ou calculados a partir dos fatos sincronizados da CVM.</span>
         </div>
       </aside>
 
       <div className={styles.resultsArea}>
         <div className={styles.summaryBar}>
-          <div><span>Encontradas</span><strong>{filteredRows.length}</strong></div>
-          <div><span>Filtros ativos</span><strong>{activeRuleCount}</strong></div>
-          <div><span>Universo carregado</span><strong>{rows.length}/{total}</strong></div>
-          <div><span>Frequência</span><strong>Anual</strong></div>
+          <div><span>Encontradas</span><strong>{response.total.toLocaleString("pt-BR")}</strong></div>
+          <div><span>Filtros aplicados</span><strong>{response.applied_filters}</strong></div>
+          <div><span>Página</span><strong>{pageStart}-{pageEnd}</strong></div>
+          <div><span>Universo</span><strong>{response.universe_total.toLocaleString("pt-BR")}</strong></div>
           <button type="button" onClick={() => setShowColumns((current) => !current)}>Colunas</button>
         </div>
 
@@ -310,16 +359,18 @@ export function ScreenerWorkspace({ rows, total }: { rows: ScreenerRow[]; total:
               <tr>
                 {activeColumns.map((column) => (
                   <th key={column.key} className={column.kind === "currency" || column.kind === "percent" ? styles.numeric : ""}>
-                    <button type="button" onClick={() => toggleSort(column.key)}>
-                      {column.label}
-                      {sortKey === column.key ? <span>{sortDirection === "asc" ? "↑" : "↓"}</span> : null}
-                    </button>
+                    {column.sortable ? (
+                      <button type="button" onClick={() => changeSort(column.key as SortableKey)} disabled={isPending}>
+                        {column.label}
+                        {response.sort === column.key ? <span>{response.direction === "asc" ? "↑" : "↓"}</span> : null}
+                      </button>
+                    ) : column.label}
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {filteredRows.map((row) => (
+              {response.rows.map((row) => (
                 <tr key={`${row.exchange}-${row.ticker}`}>
                   {activeColumns.map((column) => {
                     if (column.key === "ticker") {
@@ -339,20 +390,22 @@ export function ScreenerWorkspace({ rows, total }: { rows: ScreenerRow[]; total:
                   })}
                 </tr>
               ))}
-              {filteredRows.length === 0 ? (
-                <tr><td className={styles.empty} colSpan={Math.max(1, activeColumns.length)}>Nenhuma empresa atende aos critérios atuais.</td></tr>
+              {response.rows.length === 0 ? (
+                <tr><td className={styles.empty} colSpan={Math.max(1, activeColumns.length)}>Nenhuma empresa atende aos critérios aplicados.</td></tr>
               ) : null}
             </tbody>
           </table>
         </div>
 
+        <div className={styles.pagination}>
+          <button type="button" disabled={!canGoBack || isPending} onClick={() => changePage(response.offset - response.limit)}>← Anterior</button>
+          <span>{pageStart}-{pageEnd} de {response.total.toLocaleString("pt-BR")}</span>
+          <button type="button" disabled={!canGoForward || isPending} onClick={() => changePage(response.offset + response.limit)}>Próxima →</button>
+        </div>
+
         <footer className={styles.footer}>
-          <span>Condições são combinadas com lógica E: a empresa precisa atender a todos os filtros preenchidos.</span>
-          {total > rows.length ? (
-            <span className={styles.warning}>Esta versão filtra os {rows.length} ativos carregados pela API; paginação filtrada no backend será o próximo passo de escala.</span>
-          ) : (
-            <span>Todo o universo sincronizado está carregado nesta visão.</span>
-          )}
+          <span>Condições são combinadas com lógica E: a empresa precisa atender a todos os filtros aplicados.</span>
+          <span>Filtragem, ordenação por indicadores e paginação são processadas no backend sobre o universo pesquisado.</span>
         </footer>
       </div>
     </section>
