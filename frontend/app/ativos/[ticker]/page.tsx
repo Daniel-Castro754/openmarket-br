@@ -6,11 +6,14 @@ import {
   getAsset,
   getDocuments,
   getFinancialSeries,
+  getIndicatorHistory,
+  getIndicatorSummary,
   type FinancialMetric,
   type FinancialSeries,
   type SeriesFrequency,
   type SourceMetadata,
 } from "../../../lib/api";
+import { IndicatorDashboard } from "./indicator-dashboard";
 
 const fundamentalMetrics: FinancialMetric[] = [
   "revenue",
@@ -133,18 +136,30 @@ function documentTypeLabel(value: string) {
   return labels[value] ?? value;
 }
 
+function firstValue(value?: string | string[]) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
 export default async function AssetPage({
   params,
   searchParams,
 }: {
   params: Promise<{ ticker: string }>;
-  searchParams: Promise<{ view?: string | string[] }>;
+  searchParams: Promise<{
+    view?: string | string[];
+    indicator?: string | string[];
+    years?: string | string[];
+    chart?: string | string[];
+  }>;
 }) {
   const [{ ticker: rawTicker }, query] = await Promise.all([params, searchParams]);
   const ticker = rawTicker.trim().toUpperCase();
-  const requestedView = Array.isArray(query.view) ? query.view[0] : query.view;
+  const requestedView = firstValue(query.view);
   const frequency: SeriesFrequency = requestedView === "quarterly" ? "quarterly" : "annual";
   const isQuarterly = frequency === "quarterly";
+  const requestedIndicator = firstValue(query.indicator)?.trim().toLowerCase() || null;
+  const indicatorYears = firstValue(query.years) === "10" ? 10 : 5;
+  const indicatorChart = firstValue(query.chart) === "line" ? "line" : "bar";
   const analysisMetrics: FinancialMetric[] = isQuarterly
     ? analyticsMetrics
     : [...analyticsMetrics, "roe"];
@@ -152,12 +167,24 @@ export default async function AssetPage({
 
   if (!asset) notFound();
 
-  const [fundamentalSeries, capitalSeries, cashFlowSeries, analyticsSeries, recentDocuments] = await Promise.all([
+  const [
+    fundamentalSeries,
+    capitalSeries,
+    cashFlowSeries,
+    analyticsSeries,
+    recentDocuments,
+    indicatorSummary,
+    indicatorHistory,
+  ] = await Promise.all([
     Promise.all(fundamentalMetrics.map((metric) => getFinancialSeries(ticker, metric, frequency))),
     Promise.all(capitalMetrics.map((metric) => getFinancialSeries(ticker, metric, frequency))),
     Promise.all(cashFlowMetrics.map((metric) => getFinancialSeries(ticker, metric, frequency))),
     Promise.all(analysisMetrics.map((metric) => getFinancialSeries(ticker, metric, frequency))),
     getDocuments({ ticker, limit: 4 }),
+    getIndicatorSummary(ticker),
+    requestedIndicator
+      ? getIndicatorHistory(ticker, requestedIndicator, indicatorYears)
+      : Promise.resolve(null),
   ]);
 
   const { instrument, company } = asset;
@@ -204,7 +231,7 @@ export default async function AssetPage({
 
       <nav className="asset-tabs" aria-label="Seções da ação">
         <a className="active" href="#visao-geral">Visão geral</a>
-        <a href="#indicadores">Indicadores</a>
+        <a href="#indicadores-fundamentais">Indicadores</a>
         <a href="#financeiro">Financeiro</a>
         <a href="#eventos">Eventos</a>
         <Link href={`/relatorios?ticker=${ticker}`}>Relatórios</Link>
@@ -233,7 +260,17 @@ export default async function AssetPage({
         </article>
       </section>
 
-      <section className="overview-dashboard" id="indicadores">
+      <IndicatorDashboard
+        ticker={ticker}
+        summary={indicatorSummary}
+        history={indicatorHistory}
+        selectedSlug={indicatorHistory ? requestedIndicator : null}
+        years={indicatorYears}
+        chartMode={indicatorChart}
+        pageFrequency={frequency}
+      />
+
+      <section className="overview-dashboard" id="leitura-rapida">
         <div className="dashboard-main">
           <div className="section-title-row">
             <div>
