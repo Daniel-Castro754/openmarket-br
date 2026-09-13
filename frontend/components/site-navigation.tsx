@@ -20,10 +20,9 @@ type NavGroup = {
 type MegaItem = {
   label: string;
   detail: string;
-  icon?: IconName;
-  href?: string;
+  icon: IconName;
+  href: string;
   activePrefixes?: string[];
-  planned?: boolean;
 };
 
 type MegaColumn = {
@@ -47,9 +46,9 @@ const links = {
 };
 
 const sideGroups: NavGroup[] = [
-  { label: "Navegar", links: [links.home, links.assets, links.lists, links.compare] },
-  { label: "Descobrir", links: [links.rankings, links.results, links.sectors] },
-  { label: "Mercado", links: [links.macro, links.analysis] },
+  { label: "Pesquisa", links: [links.home, links.assets, links.lists, links.compare] },
+  { label: "Descoberta", links: [links.rankings, links.results, links.sectors] },
+  { label: "Contexto", links: [links.macro, links.analysis] },
   { label: "Ferramentas", links: [links.screener, links.calculator, links.reports] },
 ];
 
@@ -59,55 +58,40 @@ const marketColumns: MegaColumn[] = [
     items: [
       { label: "Visão de empresa", detail: "Fundamentos, histórico e documentos", href: links.assets.href, icon: "assets", activePrefixes: ["/ativos"] },
       { label: "Listas", detail: "Pesquisa e seleção de companhias", href: links.lists.href, icon: "lists", activePrefixes: ["/listas"] },
-      { label: "Comparar", detail: "Coloque empresas lado a lado", href: links.compare.href, icon: "compare", activePrefixes: ["/comparar"] },
+      { label: "Comparar", detail: "Empresas lado a lado", href: links.compare.href, icon: "compare", activePrefixes: ["/comparar"] },
     ],
   },
   {
-    label: "Descobrir",
+    label: "Descoberta",
     items: [
-      { label: "Setores", detail: "Estrutura pronta; fonte setorial ainda pendente", href: links.sectors.href, icon: "assets", activePrefixes: ["/setores"] },
-      { label: "Rankings", detail: "Crescimento, retorno e margens com dados CVM", href: links.rankings.href, icon: "analysis", activePrefixes: ["/rankings"] },
-      { label: "Últimos resultados", detail: "DFP e ITR publicados e sincronizados", href: links.results.href, icon: "reports", activePrefixes: ["/resultados"] },
+      { label: "Setores", detail: "Estrutura setorial e cobertura disponível", href: links.sectors.href, icon: "assets", activePrefixes: ["/setores"] },
+      { label: "Rankings", detail: "Crescimento, retorno e margens", href: links.rankings.href, icon: "analysis", activePrefixes: ["/rankings"] },
+      { label: "Resultados", detail: "DFP e ITR sincronizados", href: links.results.href, icon: "reports", activePrefixes: ["/resultados"] },
     ],
   },
   {
     label: "Economia",
     items: [
       { label: "Macroeconomia", detail: "BCB, Focus e séries oficiais", href: links.macro.href, icon: "macro", activePrefixes: ["/macroeconomia"] },
-      { label: "Análises", detail: "Consumo, atividade e contexto econômico", href: links.analysis.href, icon: "analysis", activePrefixes: ["/analises"] },
-    ],
-  },
-  {
-    label: "Fontes",
-    items: [
-      { label: "Documentos", detail: "Hub de relatórios e arquivos oficiais", href: links.reports.href, icon: "reports", activePrefixes: ["/relatorios"] },
-      { label: "Agenda de resultados", detail: "Calendário de divulgações", planned: true },
+      { label: "Análises", detail: "Consumo, atividade e contexto", href: links.analysis.href, icon: "analysis", activePrefixes: ["/analises"] },
     ],
   },
 ];
 
 const toolColumns: MegaColumn[] = [
   {
-    label: "Análise",
+    label: "Pesquisa",
     items: [
-      { label: "Screener avançado", detail: "Combine filtros por crescimento, margens, ROE e balanço", href: links.screener.href, icon: "lists", activePrefixes: ["/screener"] },
-      { label: "Listas", detail: "Base atual para filtros e descoberta", href: links.lists.href, icon: "lists", activePrefixes: ["/listas"] },
-      { label: "Rankings", detail: "Ordene empresas pelos indicadores disponíveis", href: links.rankings.href, icon: "analysis", activePrefixes: ["/rankings"] },
-      { label: "Comparar empresas", detail: "Compare fundamentos em paralelo", href: links.compare.href, icon: "compare", activePrefixes: ["/comparar"] },
+      { label: "Screener", detail: "Combine filtros fundamentalistas", href: links.screener.href, icon: "lists", activePrefixes: ["/screener"] },
+      { label: "Rankings", detail: "Ordene empresas por indicadores", href: links.rankings.href, icon: "analysis", activePrefixes: ["/rankings"] },
+      { label: "Comparar", detail: "Compare fundamentos em paralelo", href: links.compare.href, icon: "compare", activePrefixes: ["/comparar"] },
     ],
   },
   {
     label: "Utilidades",
     items: [
       { label: "Calculadoras", detail: "Simulações financeiras", href: links.calculator.href, icon: "calculator", activePrefixes: ["/calculadoras"] },
-      { label: "Document Hub", detail: "Pesquisa em documentos públicos", href: links.reports.href, icon: "reports", activePrefixes: ["/relatorios"] },
-    ],
-  },
-  {
-    label: "Transparência",
-    items: [
-      { label: "Proveniência", detail: "Origem preservada em cada série e cálculo", href: links.assets.href, icon: "assets", activePrefixes: ["/ativos"] },
-      { label: "Metodologia global", detail: "Catálogo de fórmulas e fontes", planned: true },
+      { label: "Documentos", detail: "Pesquisa em arquivos públicos", href: links.reports.href, icon: "reports", activePrefixes: ["/relatorios"] },
     ],
   },
 ];
@@ -119,7 +103,7 @@ function isActive(pathname: string, link: Pick<NavLink, "href" | "activePrefixes
 }
 
 function isMegaItemActive(pathname: string, item: MegaItem) {
-  if (!item.href || !item.activePrefixes?.length) return false;
+  if (!item.activePrefixes?.length) return false;
   return item.activePrefixes.some((prefix) => pathname.startsWith(prefix));
 }
 
@@ -155,26 +139,21 @@ function MegaMenu({ label, columns, pathname }: { label: string; columns: MegaCo
         {label}
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
       </button>
-      <div className="nav-dropdown nav-mega" role="menu">
+      <div className={`nav-dropdown nav-mega nav-mega-${columns.length}`} role="menu">
         {columns.map((column) => (
           <section className="nav-mega-column" key={column.label}>
             <span className="nav-mega-eyebrow">{column.label}</span>
             <div className="nav-mega-items">
-              {column.items.map((item) => item.href ? (
+              {column.items.map((item) => (
                 <Link
                   key={item.label}
                   href={item.href}
                   role="menuitem"
                   className={isMegaItemActive(pathname, item) ? "nav-mega-item nav-dropdown-active" : "nav-mega-item"}
                 >
-                  {item.icon ? <span className="nav-mega-icon"><Icon name={item.icon} /></span> : null}
+                  <span className="nav-mega-icon"><Icon name={item.icon} /></span>
                   <span className="nav-mega-copy"><strong>{item.label}</strong><small>{item.detail}</small></span>
                 </Link>
-              ) : (
-                <div className="nav-mega-item nav-mega-planned" key={item.label} aria-disabled="true">
-                  <span className="nav-mega-copy"><strong>{item.label}</strong><small>{item.detail}</small></span>
-                  <span className="nav-planned-badge">Planejado</span>
-                </div>
               ))}
             </div>
           </section>
@@ -206,7 +185,7 @@ export function SiteSideNavigation() {
     <aside className="site-side-navigation" aria-label="Navegação principal lateral">
       <Link className="side-brand" href="/" aria-label="OpenMarket BR">
         <span className="side-brand-mark">OM</span>
-        <span className="side-brand-copy"><strong>OpenMarket</strong><small>Brasil · dados públicos</small></span>
+        <span className="side-brand-copy"><strong>OpenMarket BR</strong><small>dados públicos</small></span>
       </Link>
 
       <button type="button" className="rail-expand-button" onClick={expandSidebar} aria-label="Expandir navegação" title="Expandir menu">
@@ -225,8 +204,7 @@ export function SiteSideNavigation() {
       </div>
 
       <div className="side-nav-footer">
-        <span className="side-nav-open-source">Código aberto</span>
-        <small>v0.1 · pré-painel</small>
+        <span className="side-nav-open-source">Dados públicos · código aberto</span>
       </div>
     </aside>
   );
