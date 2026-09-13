@@ -1,0 +1,283 @@
+/* D2 — global chrome refinement.
+   Navigation behaves like a financial workstation: compact, quiet and functional. */
+
+:root {
+  --chrome-height: 52px;
+}
+
+.site-header-inner {
+  min-height: var(--chrome-height);
+  padding-inline: 20px;
+  gap: 18px;
+}
+
+.brand {
+  gap: 8px;
+}
+
+.brand-mark {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  font-size: .62rem;
+}
+
+.brand-copy strong {
+  font-size: .82rem;
+  font-weight: 780;
+  letter-spacing: -.025em;
+}
+
+/* The global header is product chrome, not an institutional masthead. */
+.site-header .brand-copy small {
+  display: none;
+}
+
+.site-nav {
+  height: var(--chrome-height);
+  gap: 0;
+}
+
+.site-nav > a,
+.nav-group-trigger {
+  min-height: var(--chrome-height);
+  padding-inline: 10px;
+  font-size: .7rem;
+  font-weight: 600;
+}
+
+.site-nav > .nav-link-active,
+.nav-group-active > .nav-group-trigger {
+  border-bottom-width: 2px;
+}
+
+.site-header-actions {
+  gap: 6px;
+}
+
+.header-asset-search {
+  width: clamp(185px, 18vw, 260px);
+  height: 30px;
+  gap: 7px;
+  padding: 0 8px;
+  border-radius: 5px;
+  background: transparent;
+}
+
+.header-asset-search:focus-within {
+  border-color: var(--border-strong);
+  background: var(--surface);
+}
+
+.header-asset-search input {
+  font-size: .69rem;
+}
+
+.header-search-shortcut {
+  min-width: 18px;
+  height: 18px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0 4px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--muted);
+  background: var(--surface-soft);
+  font: inherit;
+  font-size: .57rem;
+  line-height: 1;
+}
+
+/* Appearance controls are individual utilities, not a segmented showcase. */
+.mode-quick-actions {
+  gap: 4px;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.appearance-icon-button,
+.appearance-summary {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: transparent;
+}
+
+.appearance-icon-button + .appearance-icon-button {
+  border-left: 1px solid var(--border);
+}
+
+.appearance-icon-button:hover,
+.appearance-summary:hover {
+  color: var(--text-strong);
+  background: var(--surface-strong);
+}
+
+.appearance-icon-button.active {
+  color: var(--accent);
+  border-color: var(--accent-border);
+  background: transparent;
+}
+
+/* Compact dropdowns replace large SaaS-style mega panels. */
+.nav-mega {
+  top: var(--chrome-height);
+  width: min(720px, calc(100vw - 32px));
+  padding: 8px;
+  gap: 0;
+  border-radius: 6px;
+}
+
+.nav-mega.nav-mega-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.nav-mega.nav-mega-2 {
+  width: min(520px, calc(100vw - 32px));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.nav-mega-column {
+  padding: 4px 8px 6px;
+}
+
+.nav-mega-eyebrow {
+  margin: 1px 5px 5px;
+  font-size: .52rem;
+  letter-spacing: .08em;
+}
+
+.nav-mega-items {
+  gap: 1px;
+}
+
+.nav-dropdown .nav-mega-item,
+.nav-mega-item {
+  min-height: 42px;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 7px;
+  padding: 6px 5px;
+  border-radius: 4px;
+}
+
+.nav-dropdown a.nav-mega-item {
+  min-height: 42px;
+  padding: 6px 5px;
+}
+
+.nav-mega-icon {
+  width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted);
+}
+
+.nav-mega-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.nav-mega-copy {
+  gap: 1px;
+}
+
+.nav-mega-copy strong {
+  font-size: .64rem;
+  font-weight: 690;
+}
+
+.nav-mega-copy small {
+  font-size: .52rem;
+  line-height: 1.25;
+}
+
+/* Sidebar uses simple list hierarchy instead of prominent grouped cards. */
+.side-nav-sections {
+  gap: 20px;
+  margin-top: 24px;
+}
+
+.side-nav-eyebrow {
+  margin: 0 8px 5px;
+  font-size: .54rem;
+  letter-spacing: .08em;
+}
+
+.side-nav-item {
+  min-height: 34px;
+  gap: 9px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: .72rem;
+}
+
+.side-nav-item svg {
+  width: 16px;
+  height: 16px;
+}
+
+.side-nav-footer {
+  font-size: .58rem;
+}
+
+.side-nav-open-source {
+  padding: 0;
+  border: 0;
+  color: var(--muted);
+  background: transparent;
+}
+
+@media (max-width: 1120px) {
+  .site-header-inner {
+    padding-inline: 14px;
+    gap: 10px;
+  }
+
+  .site-nav > a,
+  .nav-group-trigger {
+    padding-inline: 7px;
+    font-size: .66rem;
+  }
+
+  .header-asset-search {
+    width: 170px;
+  }
+}
+
+@media (max-width: 900px) {
+  :root {
+    --chrome-height: 50px;
+  }
+
+  .nav-mega,
+  .nav-mega.nav-mega-2,
+  .nav-mega.nav-mega-3 {
+    top: 86px;
+    width: min(520px, calc(100vw - 24px));
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .nav-mega,
+  .nav-mega.nav-mega-2,
+  .nav-mega.nav-mega-3 {
+    grid-template-columns: 1fr;
+    max-height: min(68vh, 520px);
+    overflow-y: auto;
+  }
+
+  .nav-mega-column {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-mega-column:last-child {
+    border-bottom: 0;
+  }
+}
