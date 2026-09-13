@@ -17,6 +17,7 @@ import "./sidebar-layout-fix.css";
 import "./page-proportions.css";
 import "./asset-company-refinement.css";
 import "./asset-indicator-refinement.css";
+import "./asset-financial-refinement.css";
 
 export const metadata: Metadata = {
   title: "OpenMarket BR",
