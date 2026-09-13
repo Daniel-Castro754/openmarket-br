@@ -11,27 +11,17 @@ export default async function AssetListsPage() {
     <main className={styles.page}>
       <header className={styles.pageHeader}>
         <div className={styles.pageTitle}>
-          <span className="eyebrow">SCREENER • LISTAS DE ATIVOS</span>
+          <span className="eyebrow">ATIVOS · CVM</span>
           <div className={styles.titleRow}>
             <h1>Listas de ativos</h1>
             <span className={styles.universeBadge}>{screener.total.toLocaleString("pt-BR")} sincronizados</span>
           </div>
-          <p>Troque a visão, ordene indicadores ou monte sua própria combinação de colunas.</p>
+          <p>Alterne entre visões prontas, ordene a tabela ou personalize as colunas.</p>
         </div>
 
-        <div className={styles.headerStats} aria-label="Resumo do screener">
-          <div>
-            <strong>6</strong>
-            <span>visões prontas</span>
-          </div>
-          <div>
-            <strong>28</strong>
-            <span>campos</span>
-          </div>
-          <div>
-            <strong>CVM</strong>
-            <span>fonte financeira</span>
-          </div>
+        <div className={styles.sourceMeta} aria-label="Origem dos dados">
+          <strong>CVM</strong>
+          <span>Demonstrações anuais consolidadas</span>
         </div>
       </header>
 
