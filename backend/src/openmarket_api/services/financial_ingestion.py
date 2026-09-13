@@ -1,8 +1,10 @@
 from datetime import date
 
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from openmarket_api.domain.entities import Company
+from openmarket_api.persistence.models import InstrumentRecord, ScreenerMetricSnapshotRecord
 from openmarket_api.persistence.repositories import (
     CompanyRepository,
     FinancialStatementRepository,
@@ -46,5 +48,14 @@ class FinancialIngestionService:
         changed = FinancialStatementRepository(self.session).upsert_many(
             items, company_id=company_record.id
         )
+        if changed:
+            instrument_ids = select(InstrumentRecord.id).where(
+                InstrumentRecord.company_id == company_record.id
+            )
+            self.session.execute(
+                delete(ScreenerMetricSnapshotRecord).where(
+                    ScreenerMetricSnapshotRecord.instrument_id.in_(instrument_ids)
+                )
+            )
         self.session.commit()
         return company, changed
