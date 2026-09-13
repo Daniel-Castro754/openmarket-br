@@ -95,8 +95,20 @@ def _seed(session: Session) -> None:
                 _fact(company, year=year, statement="DRE", account_code="3.05", value=operating),
                 _fact(company, year=year, statement="DRE", account_code="3.11", value=net_income),
                 _fact(company, year=year, statement="BPP", account_code="2.03", value=equity),
-                _fact(company, year=year, statement="BPP", account_code="2.01.04", value=short_debt),
-                _fact(company, year=year, statement="BPP", account_code="2.02.01", value=long_debt),
+                _fact(
+                    company,
+                    year=year,
+                    statement="BPP",
+                    account_code="2.01.04",
+                    value=short_debt,
+                ),
+                _fact(
+                    company,
+                    year=year,
+                    statement="BPP",
+                    account_code="2.02.01",
+                    value=long_debt,
+                ),
                 _fact(company, year=year, statement="BPA", account_code="1.01.01", value=cash),
             ]
         )
@@ -145,13 +157,13 @@ def test_indicator_summary_uses_existing_financial_series_engine() -> None:
         for group in summary.groups
         for indicator in group.indicators
     }
-    assert values["gross-margin"].value == Decimal("50")
-    assert values["operating-margin"].value == Decimal("25")
+    assert values["gross-margin"].value == Decimal(50)
+    assert values["operating-margin"].value == Decimal(25)
     assert values["net-margin"].value == Decimal("12.5")
-    assert values["roe"].value == Decimal("25")
-    assert values["gross-debt"].value == Decimal("60")
-    assert values["net-debt"].value == Decimal("45")
-    assert values["revenue-growth-yoy"].value == Decimal("20")
+    assert values["roe"].value == Decimal(25)
+    assert values["gross-debt"].value == Decimal(60)
+    assert values["net-debt"].value == Decimal(45)
+    assert values["revenue-growth-yoy"].value == Decimal(20)
     assert values["gross-margin"].history_points == 2
     assert values["roe"].history_points == 1
     assert values["gross-margin"].source is not None
