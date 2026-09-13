@@ -21,6 +21,7 @@ import "./asset-financial-refinement.css";
 import "./market-discovery.css";
 import "./discovery-pages.css";
 import "./design-governance.css";
+import "./header-navigation-refinement.css";
 
 export const metadata: Metadata = {
   title: "OpenMarket BR",
