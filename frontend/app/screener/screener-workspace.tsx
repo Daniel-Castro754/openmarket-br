@@ -81,7 +81,9 @@ const defaultColumns: ColumnDefinition["key"][] = [
 ];
 
 function parseNumber(value: string) {
-  const normalized = value.trim().replace(/\./g, "").replace(",", ".");
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const normalized = trimmed.includes(",") ? trimmed.replace(/\./g, "").replace(",", ".") : trimmed;
   const numeric = Number(normalized);
   return Number.isFinite(numeric) ? numeric : null;
 }
