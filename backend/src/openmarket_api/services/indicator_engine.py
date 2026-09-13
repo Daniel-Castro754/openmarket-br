@@ -116,10 +116,11 @@ class IndicatorEngine:
                 frequency=frequency,
             )
             latest = series.points[-1] if series.points else None
+            payload = definition.model_dump()
+            payload["formula"] = series.formula or definition.formula
             grouped[definition.group].append(
                 IndicatorValue(
-                    **definition.model_dump(),
-                    formula=series.formula or definition.formula,
+                    **payload,
                     value=latest.value if latest else None,
                     period_end=latest.period_end if latest else None,
                     source=latest.source if latest else None,
