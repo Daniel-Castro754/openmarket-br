@@ -12,7 +12,7 @@ from openmarket_api.domain.analytics import (
     SeriesFrequency,
 )
 from openmarket_api.domain.entities import Company, FinancialStatementItem, Instrument
-from openmarket_api.domain.indicators import IndicatorSummary
+from openmarket_api.domain.indicators import IndicatorHistory, IndicatorSummary
 from openmarket_api.services.asset_read import AssetReadService
 from openmarket_api.services.cash_flow_series import (
     CASH_FLOW_METRICS,
@@ -86,6 +86,27 @@ def get_asset_indicator_summary(
         return IndicatorEngine(session).get_summary(ticker, frequency=frequency)
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.get("/{ticker}/indicators/{slug}/history", response_model=IndicatorHistory)
+def get_asset_indicator_history(
+    ticker: str,
+    slug: str,
+    session: Annotated[Session, Depends(get_db_session)],
+    years: Annotated[int, Query(ge=1, le=20)] = 5,
+    frequency: Annotated[SeriesFrequency, Query()] = SeriesFrequency.ANNUAL,
+) -> IndicatorHistory:
+    try:
+        return IndicatorEngine(session).get_history(
+            ticker,
+            slug,
+            years=years,
+            frequency=frequency,
+        )
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @router.get("/{ticker}/series/{metric}", response_model=FinancialSeries)
