@@ -2,7 +2,7 @@ from datetime import date
 from decimal import Decimal
 from enum import StrEnum
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from openmarket_api.domain.analytics import (
     FinancialMetric,
@@ -22,33 +22,28 @@ class IndicatorGroup(StrEnum):
 
 class IndicatorDefinition(BaseModel):
     slug: str
-    metric: FinancialMetric
+    metric: FinancialMetric | None = None
     label: str
     group: IndicatorGroup
     description: str
     unit: SeriesUnit
+    format: str
     formula: str | None = None
+    dependencies: list[FinancialMetric] = Field(default_factory=list)
+    available_frequencies: list[SeriesFrequency] = Field(
+        default_factory=lambda: [SeriesFrequency.ANNUAL, SeriesFrequency.QUARTERLY]
+    )
     supports_history: bool = True
     supports_sector_benchmark: bool = False
     requires_market_data: bool = False
 
 
-class IndicatorValue(BaseModel):
-    slug: str
-    metric: FinancialMetric
-    label: str
-    group: IndicatorGroup
-    description: str
-    unit: SeriesUnit
-    formula: str | None = None
+class IndicatorValue(IndicatorDefinition):
     value: Decimal | None = None
     period_end: date | None = None
     source: SourceMetadata | None = None
     derived: bool = False
     history_points: int = 0
-    supports_history: bool = True
-    supports_sector_benchmark: bool = False
-    requires_market_data: bool = False
 
 
 class IndicatorGroupSummary(BaseModel):

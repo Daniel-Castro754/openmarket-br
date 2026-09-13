@@ -85,14 +85,26 @@ def _seed(session: Session) -> None:
     )
 
     facts: list[FinancialStatementItem] = []
-    for year, revenue, gross, operating, net_income, equity, short_debt, long_debt, cash in (
-        (2020, 80, 32, 16, 8, 40, 16, 24, 8),
-        (2021, 90, 36, 18, 9, 45, 18, 27, 9),
-        (2022, 100, 40, 20, 10, 50, 20, 30, 10),
-        (2023, 110, 44, 22, 11, 55, 22, 33, 11),
-        (2024, 100, 40, 20, 10, 50, 20, 30, 10),
-        (2025, 120, 60, 30, 15, 70, 25, 35, 15),
-    ):
+    rows = (
+        (2020, 80, 32, 16, 8, 40, 100, 16, 24, 8),
+        (2021, 90, 36, 18, 9, 45, 110, 18, 27, 9),
+        (2022, 100, 40, 20, 10, 50, 120, 20, 30, 10),
+        (2023, 110, 44, 22, 11, 55, 140, 22, 33, 11),
+        (2024, 100, 40, 20, 10, 50, 160, 20, 30, 10),
+        (2025, 120, 60, 30, 15, 70, 140, 25, 35, 15),
+    )
+    for (
+        year,
+        revenue,
+        gross,
+        operating,
+        net_income,
+        equity,
+        total_assets,
+        short_debt,
+        long_debt,
+        cash,
+    ) in rows:
         facts.extend(
             [
                 _fact(company, year=year, statement="DRE", account_code="3.01", value=revenue),
@@ -100,6 +112,7 @@ def _seed(session: Session) -> None:
                 _fact(company, year=year, statement="DRE", account_code="3.05", value=operating),
                 _fact(company, year=year, statement="DRE", account_code="3.11", value=net_income),
                 _fact(company, year=year, statement="BPP", account_code="2.03", value=equity),
+                _fact(company, year=year, statement="BPA", account_code="1", value=total_assets),
                 _fact(
                     company,
                     year=year,
@@ -130,14 +143,29 @@ def test_indicator_catalog_has_stable_groups_and_formulas() -> None:
         "operating-margin",
         "net-margin",
         "roe",
+        "roa",
         "gross-debt",
         "net-debt",
+        "net-debt-to-equity",
+        "gross-debt-to-equity",
+        "equity-to-assets",
         "revenue-growth-yoy",
+        "net-income-growth-yoy",
     ]
     assert catalog[0].group == IndicatorGroup.EFFICIENCY
     assert catalog[0].metric == FinancialMetric.GROSS_MARGIN
+    assert catalog[0].format == "percent_2"
+    assert catalog[0].dependencies == [
+        FinancialMetric.GROSS_PROFIT,
+        FinancialMetric.REVENUE,
+    ]
     assert catalog[0].supports_history is True
     assert catalog[0].requires_market_data is False
+
+    roa = next(item for item in catalog if item.slug == "roa")
+    assert roa.metric is None
+    assert roa.available_frequencies == [SeriesFrequency.ANNUAL]
+    assert roa.dependencies == [FinancialMetric.NET_INCOME, FinancialMetric.TOTAL_ASSETS]
 
 
 def test_indicator_summary_uses_existing_financial_series_engine() -> None:
@@ -166,12 +194,23 @@ def test_indicator_summary_uses_existing_financial_series_engine() -> None:
     assert values["operating-margin"].value == Decimal(25)
     assert values["net-margin"].value == Decimal("12.5")
     assert values["roe"].value == Decimal(25)
+    assert values["roa"].value == Decimal(10)
     assert values["gross-debt"].value == Decimal(60)
     assert values["net-debt"].value == Decimal(45)
+    assert values["net-debt-to-equity"].value is not None
+    assert values["net-debt-to-equity"].value.quantize(Decimal("0.01")) == Decimal("64.29")
+    assert values["gross-debt-to-equity"].value is not None
+    assert values["gross-debt-to-equity"].value.quantize(Decimal("0.01")) == Decimal("85.71")
+    assert values["equity-to-assets"].value == Decimal(50)
     assert values["revenue-growth-yoy"].value == Decimal(20)
+    assert values["net-income-growth-yoy"].value == Decimal(50)
     assert values["gross-margin"].history_points == 6
     assert values["roe"].history_points == 5
+    assert values["roa"].history_points == 5
+    assert values["net-income-growth-yoy"].history_points == 5
     assert values["gross-margin"].source is not None
+    assert values["roa"].source is not None
+    assert values["roa"].source.provider == "openmarket-derived"
 
 
 def test_indicator_history_applies_calendar_window_and_average() -> None:
@@ -203,6 +242,49 @@ def test_indicator_history_applies_calendar_window_and_average() -> None:
     assert history.definition.formula == "gross_profit / revenue * 100"
     assert history.points[-1].source.provider == "openmarket-derived"
     assert history.points[-1].derived is True
+
+
+def test_derived_indicator_history_preserves_inputs_and_methodology() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+
+    with Session(engine) as session:
+        _seed(session)
+        history = IndicatorEngine(session).get_history("PETR4", "roa", years=5)
+
+    assert history.current_value == Decimal(10)
+    assert history.current_period == date(2025, 12, 31)
+    assert history.definition.formula == "annual_net_income / average_total_assets * 100"
+    assert history.definition.available_frequencies == [SeriesFrequency.ANNUAL]
+    assert history.points[-1].derived is True
+    assert history.points[-1].source.provider == "openmarket-derived"
+    assert len(history.points[-1].input_sources) == 2
+    assert {source.reference_date for source in history.points[-1].input_sources} == {
+        date(2024, 12, 31),
+        date(2025, 12, 31),
+    }
+
+
+def test_annual_only_indicator_is_unavailable_quarterly() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+
+    with Session(engine) as session:
+        _seed(session)
+        summary = IndicatorEngine(session).get_summary(
+            "PETR4",
+            frequency=SeriesFrequency.QUARTERLY,
+        )
+
+    values = {
+        indicator.slug: indicator
+        for group in summary.groups
+        for indicator in group.indicators
+    }
+    assert values["roa"].value is None
+    assert values["roa"].history_points == 0
+    assert values["roe"].value is None
+    assert values["roe"].history_points == 0
 
 
 def test_indicator_history_supports_one_year_and_unknown_slug() -> None:

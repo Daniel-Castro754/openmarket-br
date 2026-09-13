@@ -103,12 +103,15 @@ export type IndicatorGroup = "efficiency" | "profitability" | "leverage" | "grow
 
 export type IndicatorDefinition = {
   slug: string;
-  metric: FinancialMetric;
+  metric?: FinancialMetric | null;
   label: string;
   group: IndicatorGroup;
   description: string;
   unit: SeriesUnit;
+  format: string;
   formula?: string | null;
+  dependencies: FinancialMetric[];
+  available_frequencies: SeriesFrequency[];
   supports_history: boolean;
   supports_sector_benchmark: boolean;
   requires_market_data: boolean;
