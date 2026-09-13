@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { HeaderAssetSearch } from "./header-asset-search";
 import { SiteNavigation } from "./site-navigation";
 import { ThemeSwitcher } from "./theme-switcher";
 
@@ -10,16 +11,16 @@ export function SiteHeader() {
         <Link className="brand" href="/" aria-label="OpenMarket BR">
           <span className="brand-mark">OM</span>
           <span className="brand-copy">
-            <strong>OpenMarket</strong>
-            <small>Brasil</small>
+            <strong>OpenMarket BR</strong>
+            <small>dados públicos</small>
           </span>
         </Link>
 
         <SiteNavigation />
 
         <div className="site-header-actions">
+          <HeaderAssetSearch />
           <ThemeSwitcher />
-          <Link className="header-cta" href="/relatorios">Document Hub</Link>
         </div>
       </div>
     </header>
