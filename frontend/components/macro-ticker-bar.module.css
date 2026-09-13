@@ -1,10 +1,13 @@
 .bar {
+  width: calc(100% - var(--shell-offset, 0px));
+  margin-left: var(--shell-offset, 0px);
   border-bottom: 1px solid var(--border);
   background: var(--bg-elevated);
+  transition: width .18s ease, margin-left .18s ease;
 }
 
 .inner {
-  width: min(var(--content-editorial), 94vw);
+  width: calc(100% - 48px);
   margin: 0 auto;
   min-height: 34px;
   display: flex;
@@ -50,6 +53,13 @@
 }
 
 .inner a:hover { color: var(--text-strong); }
+
+@media (max-width: 900px) {
+  .bar {
+    width: 100%;
+    margin-left: 0;
+  }
+}
 
 @media (max-width: 720px) {
   .label { display: none; }
