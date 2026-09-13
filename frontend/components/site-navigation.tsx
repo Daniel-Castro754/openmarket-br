@@ -35,6 +35,7 @@ const links = {
   home: { href: "/", label: "Início", icon: "home", activePrefixes: ["/"] } satisfies NavLink,
   assets: { href: "/ativos/PETR4", label: "Ativos", icon: "assets", activePrefixes: ["/ativos"] } satisfies NavLink,
   lists: { href: "/listas", label: "Listas", icon: "lists", activePrefixes: ["/listas"] } satisfies NavLink,
+  screener: { href: "/screener", label: "Screener", icon: "lists", activePrefixes: ["/screener"] } satisfies NavLink,
   compare: { href: "/comparar", label: "Comparar", icon: "compare", activePrefixes: ["/comparar"] } satisfies NavLink,
   sectors: { href: "/setores", label: "Setores", icon: "assets", activePrefixes: ["/setores"] } satisfies NavLink,
   rankings: { href: "/rankings", label: "Rankings", icon: "analysis", activePrefixes: ["/rankings"] } satisfies NavLink,
@@ -49,7 +50,7 @@ const sideGroups: NavGroup[] = [
   { label: "Navegar", links: [links.home, links.assets, links.lists, links.compare] },
   { label: "Descobrir", links: [links.rankings, links.results, links.sectors] },
   { label: "Mercado", links: [links.macro, links.analysis] },
-  { label: "Ferramentas", links: [links.calculator, links.reports] },
+  { label: "Ferramentas", links: [links.screener, links.calculator, links.reports] },
 ];
 
 const marketColumns: MegaColumn[] = [
@@ -89,10 +90,10 @@ const toolColumns: MegaColumn[] = [
   {
     label: "Análise",
     items: [
+      { label: "Screener avançado", detail: "Combine filtros por crescimento, margens, ROE e balanço", href: links.screener.href, icon: "lists", activePrefixes: ["/screener"] },
       { label: "Listas", detail: "Base atual para filtros e descoberta", href: links.lists.href, icon: "lists", activePrefixes: ["/listas"] },
       { label: "Rankings", detail: "Ordene empresas pelos indicadores disponíveis", href: links.rankings.href, icon: "analysis", activePrefixes: ["/rankings"] },
       { label: "Comparar empresas", detail: "Compare fundamentos em paralelo", href: links.compare.href, icon: "compare", activePrefixes: ["/comparar"] },
-      { label: "Screener avançado", detail: "Filtros combinados por indicador", planned: true },
     ],
   },
   {

@@ -4,6 +4,7 @@ import { AssetSearch } from "./asset-search";
 
 const workspaceLinks = [
   { label: "Empresas", detail: "Abra uma companhia e siga do indicador até a fonte.", href: "/ativos/PETR4", meta: "CVM" },
+  { label: "Screener", detail: "Combine filtros fundamentalistas sobre o universo sincronizado.", href: "/screener", meta: "CVM · cálculo" },
   { label: "Rankings", detail: "Ordene empresas pelos indicadores fundamentalistas disponíveis.", href: "/rankings", meta: "CVM · cálculo" },
   { label: "Últimos resultados", detail: "DFP e ITR recentes conectados ao documento original.", href: "/resultados", meta: "CVM · IPE" },
   { label: "Macroeconomia", detail: "Selic, Focus e séries oficiais em contexto.", href: "/macroeconomia", meta: "BCB" },
@@ -24,6 +25,14 @@ const discoveryModules = [
     text: "Navegue pela base atual e use métricas financeiras para reduzir o universo de análise.",
     href: "/listas",
     action: "Abrir listas",
+    status: "Disponível",
+  },
+  {
+    kicker: "PESQUISA",
+    title: "Screener avançado",
+    text: "Combine crescimento, margens, ROE, resultados e balanço com lógica E e colunas configuráveis.",
+    href: "/screener",
+    action: "Montar filtros",
     status: "Disponível",
   },
   {
@@ -142,7 +151,7 @@ export default function Home() {
             <h2 id="home-discovery-title">Do universo de empresas até a análise individual</h2>
             <p>Recursos ativos usam apenas dados que a base consegue sustentar; lacunas metodológicas ficam explícitas.</p>
           </div>
-          <Link href="/rankings">Abrir rankings →</Link>
+          <Link href="/screener">Abrir screener →</Link>
         </div>
 
         <div className="home-discovery-grid">
