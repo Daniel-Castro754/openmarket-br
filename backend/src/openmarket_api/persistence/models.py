@@ -52,6 +52,28 @@ class InstrumentRecord(Base):
     source: Mapped[dict[str, object] | None] = mapped_column(JSON)
 
 
+class ScreenerMetricSnapshotRecord(Base):
+    __tablename__ = "screener_metric_snapshots"
+    __table_args__ = (
+        UniqueConstraint(
+            "instrument_id",
+            "metric",
+            "frequency",
+            name="uq_screener_metric_snapshot_key",
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    instrument_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("instruments.id", ondelete="CASCADE"), index=True
+    )
+    metric: Mapped[str] = mapped_column(String(64), nullable=False)
+    frequency: Mapped[str] = mapped_column(String(16), nullable=False, default="annual")
+    value: Mapped[Decimal | None] = mapped_column(Numeric(28, 6))
+    period_end: Mapped[date | None] = mapped_column(Date)
+    source_latest_period: Mapped[date | None] = mapped_column(Date)
+
+
 class FinancialStatementRecord(Base):
     __tablename__ = "financial_statement_items"
 
