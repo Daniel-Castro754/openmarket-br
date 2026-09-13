@@ -4,8 +4,9 @@ import { AssetSearch } from "./asset-search";
 
 const workspaceLinks = [
   { label: "Empresas", detail: "Abra uma companhia e siga do indicador até a fonte.", href: "/ativos/PETR4", meta: "CVM" },
+  { label: "Rankings", detail: "Ordene empresas pelos indicadores fundamentalistas disponíveis.", href: "/rankings", meta: "CVM · cálculo" },
+  { label: "Últimos resultados", detail: "DFP e ITR recentes conectados ao documento original.", href: "/resultados", meta: "CVM · IPE" },
   { label: "Macroeconomia", detail: "Selic, Focus e séries oficiais em contexto.", href: "/macroeconomia", meta: "BCB" },
-  { label: "Documentos", detail: "DFP, ITR e arquivos públicos organizados por empresa.", href: "/relatorios", meta: "CVM · IPE" },
 ];
 
 const discoveryModules = [
@@ -28,20 +29,26 @@ const discoveryModules = [
   {
     kicker: "DESCUBERTA",
     title: "Setores",
-    text: "Empresas agrupadas por atividade, com leitura comparável e benchmark futuro.",
-    status: "Planejado",
+    text: "A tela e a metodologia estão preparadas, mas a classificação setorial aguarda uma fonte rastreável.",
+    href: "/setores",
+    action: "Ver status",
+    status: "Fonte pendente",
   },
   {
     kicker: "DESCUBERTA",
     title: "Rankings",
-    text: "Crescimento, retorno, margens e estrutura de capital com metodologia rastreável.",
-    status: "Planejado",
+    text: "Crescimento, retorno e margens ordenados com período e fórmula explícitos.",
+    href: "/rankings",
+    action: "Abrir rankings",
+    status: "Disponível",
   },
   {
     kicker: "RESULTADOS",
     title: "Últimos resultados",
-    text: "Central de DFP e ITR recentes conectada aos demonstrativos e documentos originais.",
-    status: "Planejado",
+    text: "Central de DFP e ITR recentes conectada aos documentos originais e às páginas das empresas.",
+    href: "/resultados",
+    action: "Ver resultados",
+    status: "Disponível",
   },
   {
     kicker: "COMPARAÇÃO",
@@ -133,35 +140,32 @@ export default function Home() {
           <div>
             <span className="eyebrow">DESCOBERTA</span>
             <h2 id="home-discovery-title">Do universo de empresas até a análise individual</h2>
-            <p>O que já está disponível aparece separado do que está previsto para os próximos blocos.</p>
+            <p>Recursos ativos usam apenas dados que a base consegue sustentar; lacunas metodológicas ficam explícitas.</p>
           </div>
-          <Link href="/listas">Explorar base atual →</Link>
+          <Link href="/rankings">Abrir rankings →</Link>
         </div>
 
         <div className="home-discovery-grid">
           {discoveryModules.map((module) => {
+            const available = module.status === "Disponível";
             const content = (
               <>
                 <div className="home-module-topline">
                   <span className="eyebrow">{module.kicker}</span>
-                  <span className={`home-status-badge ${module.status === "Disponível" ? "available" : "planned"}`}>
+                  <span className={`home-status-badge ${available ? "available" : "planned"}`}>
                     {module.status}
                   </span>
                 </div>
                 <h3>{module.title}</h3>
                 <p>{module.text}</p>
-                {module.action ? <span className="home-module-action">{module.action} →</span> : <span className="home-module-action muted">Próximo ciclo</span>}
+                <span className={`home-module-action ${available ? "" : "muted"}`}>{module.action} →</span>
               </>
             );
 
-            return module.href ? (
-              <Link className="home-module-card" href={module.href} key={module.title}>
+            return (
+              <Link className={`home-module-card ${available ? "" : "planned"}`} href={module.href} key={module.title}>
                 {content}
               </Link>
-            ) : (
-              <article className="home-module-card planned" key={module.title} aria-label={`${module.title}: planejado`}>
-                {content}
-              </article>
             );
           })}
         </div>
