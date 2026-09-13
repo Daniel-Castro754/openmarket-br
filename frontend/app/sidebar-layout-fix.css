@@ -1,0 +1,77 @@
+/* Block 1 — shell geometry for lateral and compact navigation.
+   Keep the navigation fixed to the viewport and offset only the content shell once. */
+
+:root {
+  --navigation-sidebar-width: 264px;
+  --navigation-rail-width: 68px;
+  --shell-offset: 0px;
+  --shell-gutter: 24px;
+}
+
+html[data-navigation="sidebar"] {
+  --shell-offset: var(--navigation-sidebar-width);
+}
+
+html[data-navigation="rail"] {
+  --shell-offset: var(--navigation-rail-width);
+}
+
+html[data-navigation="topbar"] {
+  --shell-offset: 0px;
+}
+
+body,
+html[data-navigation="sidebar"] body,
+html[data-navigation="rail"] body {
+  padding-left: 0;
+}
+
+.site-side-navigation {
+  left: 0;
+  right: auto;
+  width: var(--navigation-sidebar-width);
+}
+
+html[data-navigation="rail"] .site-side-navigation {
+  width: var(--navigation-rail-width);
+}
+
+.site-header {
+  width: calc(100% - var(--shell-offset));
+  margin-left: var(--shell-offset);
+  transition: width .18s ease, margin-left .18s ease, background-color .16s ease;
+}
+
+html[data-navigation="sidebar"] main,
+html[data-navigation="rail"] main {
+  width: calc(100% - var(--shell-offset) - (var(--shell-gutter) * 2));
+  max-width: none;
+  margin-left: calc(var(--shell-offset) + var(--shell-gutter));
+  margin-right: var(--shell-gutter);
+}
+
+html[data-navigation="topbar"] main {
+  width: min(1480px, calc(100% - (var(--shell-gutter) * 2)));
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (max-width: 900px) {
+  html[data-navigation="sidebar"],
+  html[data-navigation="rail"] {
+    --shell-offset: 0px;
+  }
+
+  .site-header {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  html[data-navigation="sidebar"] main,
+  html[data-navigation="rail"] main,
+  html[data-navigation="topbar"] main {
+    width: min(calc(100% - 24px), var(--content-analytics));
+    margin-left: auto;
+    margin-right: auto;
+  }
+}

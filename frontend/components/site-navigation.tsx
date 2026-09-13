@@ -129,7 +129,9 @@ function expandSidebar() {
   window.dispatchEvent(new Event("openmarket-appearance-change"));
 }
 
-function SideNavigation({ pathname }: { pathname: string }) {
+export function SiteSideNavigation() {
+  const pathname = usePathname();
+
   return (
     <aside className="site-side-navigation" aria-label="Navegação principal lateral">
       <Link className="side-brand" href="/" aria-label="OpenMarket BR">
@@ -169,17 +171,14 @@ export function SiteNavigation() {
   const pathname = usePathname();
 
   return (
-    <>
-      <nav className="site-nav" aria-label="Navegação principal superior">
-        <Link className={isActive(pathname, links.home) ? "nav-link-active" : undefined} href={links.home.href}>Início</Link>
-        <Link className={isActive(pathname, links.assets) ? "nav-link-active" : undefined} href={links.assets.href}>Ativos</Link>
-        <Link className={isActive(pathname, links.lists) ? "nav-link-active" : undefined} href={links.lists.href}>Listas</Link>
-        <Link className={isActive(pathname, links.compare) ? "nav-link-active" : undefined} href={links.compare.href}>Comparar</Link>
-        <Group group={topGroups[0]} pathname={pathname} />
-        <Group group={topGroups[1]} pathname={pathname} />
-        <Link className={isActive(pathname, links.reports) ? "nav-link-active" : undefined} href={links.reports.href}>Relatórios</Link>
-      </nav>
-      <SideNavigation pathname={pathname} />
-    </>
+    <nav className="site-nav" aria-label="Navegação principal superior">
+      <Link className={isActive(pathname, links.home) ? "nav-link-active" : undefined} href={links.home.href}>Início</Link>
+      <Link className={isActive(pathname, links.assets) ? "nav-link-active" : undefined} href={links.assets.href}>Ativos</Link>
+      <Link className={isActive(pathname, links.lists) ? "nav-link-active" : undefined} href={links.lists.href}>Listas</Link>
+      <Link className={isActive(pathname, links.compare) ? "nav-link-active" : undefined} href={links.compare.href}>Comparar</Link>
+      <Group group={topGroups[0]} pathname={pathname} />
+      <Group group={topGroups[1]} pathname={pathname} />
+      <Link className={isActive(pathname, links.reports) ? "nav-link-active" : undefined} href={links.reports.href}>Relatórios</Link>
+    </nav>
   );
 }
