@@ -15,6 +15,7 @@ import "./final-polish.css";
 import "./redesign-shell.css";
 import "./sidebar-layout-fix.css";
 import "./page-proportions.css";
+import "./asset-company-refinement.css";
 
 export const metadata: Metadata = {
   title: "OpenMarket BR",
