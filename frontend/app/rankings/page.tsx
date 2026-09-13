@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { getScreener, type FinancialMetric, type ScreenerRow } from "../../lib/api";
+import { getScreener, type FinancialMetric } from "../../lib/api";
 
 export const dynamic = "force-dynamic";
 
@@ -69,15 +69,6 @@ function formatPeriod(value: string | null | undefined) {
   return value.slice(0, 4);
 }
 
-function rankedRows(rows: ScreenerRow[], metric: FinancialMetric) {
-  return rows
-    .filter((row) => {
-      const value = row.metrics[metric];
-      return value != null && Number.isFinite(Number(value));
-    })
-    .sort((a, b) => Number(b.metrics[metric]) - Number(a.metrics[metric]));
-}
-
 export default async function RankingsPage({
   searchParams,
 }: {
@@ -86,8 +77,15 @@ export default async function RankingsPage({
   const query = await searchParams;
   const requestedMetric = firstValue(query.metric);
   const selected = rankings.find((ranking) => ranking.slug === requestedMetric) ?? rankings[0];
-  const screener = await getScreener({ limit: 100 });
-  const rows = rankedRows(screener.rows, selected.metric);
+  const screener = await getScreener({
+    sort: selected.metric,
+    direction: "desc",
+    limit: 100,
+  });
+  const rows = screener.rows.filter((row) => {
+    const value = row.metrics[selected.metric];
+    return value != null && Number.isFinite(Number(value));
+  });
 
   return (
     <main className="discovery-page">
@@ -101,8 +99,8 @@ export default async function RankingsPage({
           </p>
         </div>
         <div className="discovery-header-stats" aria-label="Resumo do ranking">
-          <div><strong>{screener.total.toLocaleString("pt-BR")}</strong><span>ativos na base</span></div>
-          <div><strong>{rows.length.toLocaleString("pt-BR")}</strong><span>com dado válido</span></div>
+          <div><strong>{screener.universe_total.toLocaleString("pt-BR")}</strong><span>ativos na base</span></div>
+          <div><strong>{rows.length.toLocaleString("pt-BR")}</strong><span>exibidos com dado válido</span></div>
           <div><strong>CVM</strong><span>base financeira</span></div>
         </div>
       </header>
