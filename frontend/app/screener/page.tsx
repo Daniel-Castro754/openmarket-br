@@ -37,38 +37,25 @@ export default async function ScreenerPage({
   const offset = parseOffset(firstValue(query.offset));
   const limit = 50;
 
-  const screener = await getScreener({
-    q,
-    filters,
-    sort,
-    direction,
-    offset,
-    limit,
-  });
+  const screener = await getScreener({ q, filters, sort, direction, offset, limit });
 
   return (
     <main className={styles.page}>
       <header className={styles.header}>
-        <div>
-          <span className="eyebrow">SCREENER FUNDAMENTALISTA · CVM</span>
-          <h1>Filtre empresas por fundamentos reais.</h1>
-          <p>
-            Filtros, ordenação e paginação são processados pela API sobre o universo sincronizado. A interface não
-            precisa mais limitar a análise ao primeiro lote carregado no navegador.
-          </p>
+        <div className={styles.headerCopy}>
+          <span className="eyebrow">SCREENER · CVM</span>
+          <h1>Screener fundamentalista</h1>
+          <p>Filtre, ordene e compare empresas usando apenas indicadores disponíveis na base sincronizada.</p>
         </div>
         <div className={styles.headerStats} aria-label="Resumo do universo do screener">
-          <div><strong>{screener.universe_total.toLocaleString("pt-BR")}</strong><span>ativos pesquisados</span></div>
-          <div><strong>{screener.total.toLocaleString("pt-BR")}</strong><span>após os filtros</span></div>
-          <div><strong>CVM</strong><span>fonte financeira</span></div>
+          <div><strong>{screener.universe_total.toLocaleString("pt-BR")}</strong><span>universo</span></div>
+          <div><strong>{screener.total.toLocaleString("pt-BR")}</strong><span>resultados</span></div>
+          <div><strong>{screener.applied_filters}</strong><span>filtros</span></div>
+          <div><strong>CVM</strong><span>fonte</span></div>
         </div>
       </header>
 
-      <ScreenerWorkspace
-        response={screener}
-        initialQuery={q ?? ""}
-        initialFilters={filters}
-      />
+      <ScreenerWorkspace response={screener} initialQuery={q ?? ""} initialFilters={filters} />
     </main>
   );
 }
