@@ -99,6 +99,52 @@ export type FinancialSeries = {
   points: FinancialSeriesPoint[];
 };
 
+export type IndicatorGroup = "efficiency" | "profitability" | "leverage" | "growth";
+
+export type IndicatorDefinition = {
+  slug: string;
+  metric: FinancialMetric;
+  label: string;
+  group: IndicatorGroup;
+  description: string;
+  unit: SeriesUnit;
+  formula?: string | null;
+  supports_history: boolean;
+  supports_sector_benchmark: boolean;
+  requires_market_data: boolean;
+};
+
+export type IndicatorValue = IndicatorDefinition & {
+  value?: string | null;
+  period_end?: string | null;
+  source?: SourceMetadata | null;
+  derived: boolean;
+  history_points: number;
+};
+
+export type IndicatorGroupSummary = {
+  group: IndicatorGroup;
+  label: string;
+  indicators: IndicatorValue[];
+};
+
+export type IndicatorSummary = {
+  ticker: string;
+  frequency: SeriesFrequency;
+  groups: IndicatorGroupSummary[];
+};
+
+export type IndicatorHistory = {
+  ticker: string;
+  definition: IndicatorDefinition;
+  frequency: SeriesFrequency;
+  years: number;
+  current_value?: string | null;
+  current_period?: string | null;
+  historical_average?: string | null;
+  points: FinancialSeriesPoint[];
+};
+
 export type DocumentType =
   | "dfp"
   | "itr"
@@ -196,6 +242,35 @@ export async function getFinancialSeries(
     throw new Error(`OpenMarket API returned ${response.status} for ${metric}`);
   }
   return (await response.json()) as FinancialSeries;
+}
+
+export async function getIndicatorSummary(ticker: string): Promise<IndicatorSummary> {
+  const response = await fetch(
+    `${apiBase}/api/v1/assets/${encodeURIComponent(ticker)}/indicator-summary?frequency=annual`,
+    { next: { revalidate: 60 } },
+  );
+  if (!response.ok) {
+    throw new Error(`OpenMarket API returned ${response.status} for indicator summary`);
+  }
+  return (await response.json()) as IndicatorSummary;
+}
+
+export async function getIndicatorHistory(
+  ticker: string,
+  slug: string,
+  years = 5,
+): Promise<IndicatorHistory | null> {
+  const response = await fetch(
+    `${apiBase}/api/v1/assets/${encodeURIComponent(ticker)}/indicators/${encodeURIComponent(slug)}/history?years=${years}&frequency=annual`,
+    { next: { revalidate: 60 } },
+  );
+  if (response.status === 404) {
+    return null;
+  }
+  if (!response.ok) {
+    throw new Error(`OpenMarket API returned ${response.status} for indicator ${slug}`);
+  }
+  return (await response.json()) as IndicatorHistory;
 }
 
 export async function getScreener(filters?: {
