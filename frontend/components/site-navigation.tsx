@@ -17,6 +17,20 @@ type NavGroup = {
   links: NavLink[];
 };
 
+type MegaItem = {
+  label: string;
+  detail: string;
+  icon?: IconName;
+  href?: string;
+  activePrefixes?: string[];
+  planned?: boolean;
+};
+
+type MegaColumn = {
+  label: string;
+  items: MegaItem[];
+};
+
 const links = {
   home: { href: "/", label: "Início", icon: "home", activePrefixes: ["/"] } satisfies NavLink,
   assets: { href: "/ativos/PETR4", label: "Ativos", icon: "assets", activePrefixes: ["/ativos"] } satisfies NavLink,
@@ -34,15 +48,73 @@ const sideGroups: NavGroup[] = [
   { label: "Ferramentas", links: [links.calculator, links.reports] },
 ];
 
-const topGroups: NavGroup[] = [
-  { label: "Mercado", links: [links.macro, links.analysis] },
-  { label: "Ferramentas", links: [links.calculator] },
+const marketColumns: MegaColumn[] = [
+  {
+    label: "Empresas",
+    items: [
+      { label: "Visão de empresa", detail: "Fundamentos, histórico e documentos", href: links.assets.href, icon: "assets", activePrefixes: ["/ativos"] },
+      { label: "Listas", detail: "Pesquisa e seleção de companhias", href: links.lists.href, icon: "lists", activePrefixes: ["/listas"] },
+      { label: "Comparar", detail: "Coloque empresas lado a lado", href: links.compare.href, icon: "compare", activePrefixes: ["/comparar"] },
+    ],
+  },
+  {
+    label: "Descobrir",
+    items: [
+      { label: "Setores", detail: "Empresas organizadas por atividade", planned: true },
+      { label: "Rankings", detail: "Crescimento, retorno, margens e dívida", planned: true },
+      { label: "Últimos resultados", detail: "DFP e ITR publicados recentemente", planned: true },
+    ],
+  },
+  {
+    label: "Economia",
+    items: [
+      { label: "Macroeconomia", detail: "BCB, Focus e séries oficiais", href: links.macro.href, icon: "macro", activePrefixes: ["/macroeconomia"] },
+      { label: "Análises", detail: "Consumo, atividade e contexto econômico", href: links.analysis.href, icon: "analysis", activePrefixes: ["/analises"] },
+    ],
+  },
+  {
+    label: "Fontes",
+    items: [
+      { label: "Documentos", detail: "Hub de relatórios e arquivos oficiais", href: links.reports.href, icon: "reports", activePrefixes: ["/relatorios"] },
+      { label: "Agenda de resultados", detail: "Calendário de divulgações", planned: true },
+    ],
+  },
 ];
 
-function isActive(pathname: string, link: NavLink) {
+const toolColumns: MegaColumn[] = [
+  {
+    label: "Análise",
+    items: [
+      { label: "Listas", detail: "Base atual para filtros e descoberta", href: links.lists.href, icon: "lists", activePrefixes: ["/listas"] },
+      { label: "Comparar empresas", detail: "Compare fundamentos em paralelo", href: links.compare.href, icon: "compare", activePrefixes: ["/comparar"] },
+      { label: "Screener avançado", detail: "Filtros combinados por indicador", planned: true },
+    ],
+  },
+  {
+    label: "Utilidades",
+    items: [
+      { label: "Calculadoras", detail: "Simulações financeiras", href: links.calculator.href, icon: "calculator", activePrefixes: ["/calculadoras"] },
+      { label: "Document Hub", detail: "Pesquisa em documentos públicos", href: links.reports.href, icon: "reports", activePrefixes: ["/relatorios"] },
+    ],
+  },
+  {
+    label: "Transparência",
+    items: [
+      { label: "Proveniência", detail: "Origem preservada em cada série e cálculo", href: links.assets.href, icon: "assets", activePrefixes: ["/ativos"] },
+      { label: "Metodologia global", detail: "Catálogo de fórmulas e fontes", planned: true },
+    ],
+  },
+];
+
+function isActive(pathname: string, link: Pick<NavLink, "href" | "activePrefixes">) {
   if (!link.activePrefixes?.length) return false;
   if (link.href === "/") return pathname === "/";
   return link.activePrefixes.some((prefix) => pathname.startsWith(prefix));
+}
+
+function isMegaItemActive(pathname: string, item: MegaItem) {
+  if (!item.href || !item.activePrefixes?.length) return false;
+  return item.activePrefixes.some((prefix) => pathname.startsWith(prefix));
 }
 
 function Icon({ name }: { name: IconName }) {
@@ -82,28 +154,46 @@ function Icon({ name }: { name: IconName }) {
   return <svg {...common}><path d="M6 3h8l4 4v14H6z" /><path d="M14 3v4h4" /><path d="M8 12h8" /><path d="M8 16h8" /></svg>;
 }
 
-function Group({ group, pathname }: { group: NavGroup; pathname: string }) {
-  const active = group.links.some((link) => isActive(pathname, link));
+function MegaMenu({ label, columns, pathname }: { label: string; columns: MegaColumn[]; pathname: string }) {
+  const active = columns.some((column) => column.items.some((item) => isMegaItemActive(pathname, item)));
 
   return (
-    <div className={`nav-group ${active ? "nav-group-active" : ""}`}>
+    <div className={`nav-group nav-mega-group ${active ? "nav-group-active" : ""}`}>
       <button type="button" className="nav-group-trigger" aria-haspopup="true">
-        {group.label}
+        {label}
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="m7 10 5 5 5-5" />
         </svg>
       </button>
-      <div className="nav-dropdown" role="menu">
-        {group.links.map((link) => (
-          <Link
-            key={link.href}
-            href={link.href}
-            role="menuitem"
-            className={isActive(pathname, link) ? "nav-dropdown-active" : undefined}
-          >
-            <Icon name={link.icon} />
-            <span>{link.label}</span>
-          </Link>
+      <div className="nav-dropdown nav-mega" role="menu">
+        {columns.map((column) => (
+          <section className="nav-mega-column" key={column.label}>
+            <span className="nav-mega-eyebrow">{column.label}</span>
+            <div className="nav-mega-items">
+              {column.items.map((item) => item.href ? (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  role="menuitem"
+                  className={isMegaItemActive(pathname, item) ? "nav-mega-item nav-dropdown-active" : "nav-mega-item"}
+                >
+                  {item.icon ? <span className="nav-mega-icon"><Icon name={item.icon} /></span> : null}
+                  <span className="nav-mega-copy">
+                    <strong>{item.label}</strong>
+                    <small>{item.detail}</small>
+                  </span>
+                </Link>
+              ) : (
+                <div className="nav-mega-item nav-mega-planned" key={item.label} aria-disabled="true">
+                  <span className="nav-mega-copy">
+                    <strong>{item.label}</strong>
+                    <small>{item.detail}</small>
+                  </span>
+                  <span className="nav-planned-badge">Planejado</span>
+                </div>
+              ))}
+            </div>
+          </section>
         ))}
       </div>
     </div>
@@ -176,8 +266,8 @@ export function SiteNavigation() {
       <Link className={isActive(pathname, links.assets) ? "nav-link-active" : undefined} href={links.assets.href}>Ativos</Link>
       <Link className={isActive(pathname, links.lists) ? "nav-link-active" : undefined} href={links.lists.href}>Listas</Link>
       <Link className={isActive(pathname, links.compare) ? "nav-link-active" : undefined} href={links.compare.href}>Comparar</Link>
-      <Group group={topGroups[0]} pathname={pathname} />
-      <Group group={topGroups[1]} pathname={pathname} />
+      <MegaMenu label="Mercado" columns={marketColumns} pathname={pathname} />
+      <MegaMenu label="Ferramentas" columns={toolColumns} pathname={pathname} />
       <Link className={isActive(pathname, links.reports) ? "nav-link-active" : undefined} href={links.reports.href}>Relatórios</Link>
     </nav>
   );

@@ -2,168 +2,202 @@ import Link from "next/link";
 
 import { AssetSearch } from "./asset-search";
 
-const quickLinks = [
-  { label: "Listas", detail: "Screener compacto", href: "/listas" },
-  { label: "Análises", detail: "Consumo e atividade", href: "/analises" },
-  { label: "Macroeconomia", detail: "BCB + Focus", href: "/macroeconomia" },
-  { label: "Calculadoras", detail: "Simulações financeiras", href: "/calculadoras" },
-  { label: "Relatórios", detail: "Document Hub", href: "/relatorios" },
+const workspaceLinks = [
+  { label: "Empresas", detail: "Abra uma companhia e siga do indicador até a fonte.", href: "/ativos/PETR4", meta: "CVM" },
+  { label: "Macroeconomia", detail: "Selic, Focus e séries oficiais em contexto.", href: "/macroeconomia", meta: "BCB" },
+  { label: "Documentos", detail: "DFP, ITR e arquivos públicos organizados por empresa.", href: "/relatorios", meta: "CVM · IPE" },
 ];
 
-const rankingCards = [
+const discoveryModules = [
   {
-    title: "Crescimento",
-    metric: "Receita e lucro",
-    description: "Evolução anual e trimestral a partir dos fatos publicados na CVM.",
-  },
-  {
-    title: "Rentabilidade",
-    metric: "Margens e ROE",
-    description: "Eficiência operacional e retorno reunidos em uma leitura comparável.",
-  },
-  {
-    title: "Balanço",
-    metric: "Caixa e dívida",
-    description: "Liquidez, dívida bruta e dívida líquida no mesmo fechamento contábil.",
-  },
-  {
-    title: "Documentos",
-    metric: "Eventos e resultados",
-    description: "Comunicados, apresentações e documentos oficiais organizados por empresa.",
-  },
-];
-
-const productCards = [
-  {
-    kicker: "ATIVOS",
-    title: "Empresa em uma única tela",
-    text: "Resultados, balanço, caixa, margens e documentos com origem preservada.",
+    kicker: "EMPRESAS",
+    title: "Visão de empresa",
+    text: "Fundamentos, histórico, documentos e proveniência em uma única tela.",
     href: "/ativos/PETR4",
-    link: "Abrir PETR4",
+    action: "Abrir PETR4",
+    status: "Disponível",
   },
   {
-    kicker: "LISTAS",
-    title: "Compare muitas empresas",
-    text: "Escolha listas prontas ou monte sua própria combinação de indicadores.",
+    kicker: "PESQUISA",
+    title: "Listas",
+    text: "Navegue pela base atual e use métricas financeiras para reduzir o universo de análise.",
     href: "/listas",
-    link: "Abrir listas",
+    action: "Abrir listas",
+    status: "Disponível",
+  },
+  {
+    kicker: "DESCUBERTA",
+    title: "Setores",
+    text: "Empresas agrupadas por atividade, com leitura comparável e benchmark futuro.",
+    status: "Planejado",
+  },
+  {
+    kicker: "DESCUBERTA",
+    title: "Rankings",
+    text: "Crescimento, retorno, margens e estrutura de capital com metodologia rastreável.",
+    status: "Planejado",
+  },
+  {
+    kicker: "RESULTADOS",
+    title: "Últimos resultados",
+    text: "Central de DFP e ITR recentes conectada aos demonstrativos e documentos originais.",
+    status: "Planejado",
+  },
+  {
+    kicker: "COMPARAÇÃO",
+    title: "Comparar empresas",
+    text: "Coloque companhias lado a lado sem perder período, unidade e origem do dado.",
+    href: "/comparar",
+    action: "Comparar",
+    status: "Disponível",
+  },
+];
+
+const contextModules = [
+  {
+    kicker: "ECONOMIA",
+    title: "Macroeconomia",
+    text: "Séries do Banco Central e expectativas Focus para ler o ambiente econômico.",
+    href: "/macroeconomia",
+    action: "Abrir macro",
   },
   {
     kicker: "ANÁLISES",
-    title: "Economia real no contexto",
-    text: "Consumo, atividade, inflação e séries oficiais do IBGE em painéis compactos.",
+    title: "Economia real",
+    text: "Consumo, atividade e séries oficiais do IBGE organizadas para pesquisa aplicada.",
     href: "/analises",
-    link: "Ver análises",
+    action: "Ver análises",
   },
   {
-    kicker: "DOCUMENTOS",
-    title: "Fonte primária sempre perto",
-    text: "Navegue pelos documentos públicos por ticker, período e tipo sem perder a proveniência.",
-    href: "/relatorios?ticker=PETR4",
-    link: "Explorar documentos",
+    kicker: "FONTES",
+    title: "Document Hub",
+    text: "Pesquise documentos públicos e volte rapidamente da evidência ao dado estruturado.",
+    href: "/relatorios",
+    action: "Explorar documentos",
+  },
+  {
+    kicker: "FERRAMENTAS",
+    title: "Calculadoras",
+    text: "Simulações financeiras separadas da base factual para manter contexto e metodologia claros.",
+    href: "/calculadoras",
+    action: "Abrir ferramentas",
   },
 ];
 
 export default function Home() {
   return (
     <main className="home-page home-dashboard-page">
-      <section className="home-overview">
+      <section className="home-overview home-workspace-overview">
         <div className="hero-copy home-hero-copy">
-          <span className="eyebrow">MERCADO BRASILEIRO • DADOS RASTREÁVEIS</span>
-          <h1>Dados para investir com contexto.</h1>
+          <span className="eyebrow">OPEN FINANCIAL INTELLIGENCE · BRASIL</span>
+          <h1>Pesquise a empresa. Entenda o número. Chegue à fonte.</h1>
           <p>
-            Fundamentos, documentos oficiais, macroeconomia e análises econômicas em uma interface feita para
-            pesquisar rápido e aprofundar quando necessário.
+            O OpenMarket BR reúne fundamentos, documentos oficiais e contexto econômico em um fluxo de pesquisa
+            orientado por proveniência, período e metodologia.
           </p>
           <AssetSearch />
           <div className="hero-trust-row">
             <span>CVM</span>
-            <span>B3</span>
             <span>Banco Central</span>
             <span>IBGE</span>
+            <span>dados públicos</span>
           </div>
         </div>
 
-        <aside className="home-coverage-panel">
-          <div className="home-panel-heading">
+        <aside className="home-workspace-panel" aria-label="Entradas principais de pesquisa">
+          <div className="home-workspace-heading">
             <div>
-              <span className="eyebrow">PESQUISA CONECTADA</span>
-              <h2>Do dado primário ao contexto.</h2>
+              <span className="eyebrow">COMEÇAR PESQUISA</span>
+              <h2>Escolha o ponto de entrada.</h2>
             </div>
-            <span className="live-dot">open source</span>
+            <span className="home-status-badge available">ativo</span>
           </div>
-          <div className="home-coverage-grid">
-            <div>
-              <span>Fundamentos</span>
-              <strong>DFP + ITR</strong>
-              <small>CVM</small>
-            </div>
-            <div>
-              <span>Economia</span>
-              <strong>BCB + IBGE</strong>
-              <small>Macro e atividade</small>
-            </div>
-            <div>
-              <span>Documentos</span>
-              <strong>IPE</strong>
-              <small>Fonte oficial</small>
-            </div>
+          <div className="home-workspace-list">
+            {workspaceLinks.map((item, index) => (
+              <Link href={item.href} className="home-workspace-link" key={item.href}>
+                <span className="home-workspace-index">0{index + 1}</span>
+                <span className="home-workspace-copy">
+                  <strong>{item.label}</strong>
+                  <small>{item.detail}</small>
+                </span>
+                <span className="home-workspace-meta">{item.meta}</span>
+                <b aria-hidden="true">→</b>
+              </Link>
+            ))}
           </div>
-          <Link className="market-card-link" href="/ativos/PETR4">
-            Abrir visão de uma empresa →
-          </Link>
         </aside>
       </section>
 
-      <nav className="home-quick-links" aria-label="Atalhos do OpenMarket">
-        {quickLinks.map((item) => (
-          <Link href={item.href} key={item.href}>
-            <strong>{item.label}</strong>
-            <span>{item.detail}</span>
-            <b aria-hidden="true">→</b>
-          </Link>
-        ))}
-      </nav>
-
-      <section className="market-section home-ranking-section" id="rankings">
-        <div className="market-section-heading home-section-heading">
+      <section className="home-discovery-section" aria-labelledby="home-discovery-title">
+        <div className="home-discovery-heading">
           <div>
-            <span className="eyebrow">RANKINGS</span>
-            <h2>Fundamentos para descobrir e comparar</h2>
+            <span className="eyebrow">DESCOBERTA</span>
+            <h2 id="home-discovery-title">Do universo de empresas até a análise individual</h2>
+            <p>O que já está disponível aparece separado do que está previsto para os próximos blocos.</p>
           </div>
-          <Link href="/listas">Abrir screener →</Link>
+          <Link href="/listas">Explorar base atual →</Link>
         </div>
-        <div className="ranking-grid home-ranking-grid">
-          {rankingCards.map((card, index) => (
-            <Link className="ranking-card home-ranking-card" href="/listas" key={card.title}>
-              <span className="home-ranking-index">0{index + 1}</span>
-              <div>
-                <span className="ranking-metric">{card.metric}</span>
-                <h3>{card.title}</h3>
-                <p>{card.description}</p>
-              </div>
-              <span className="home-ranking-action">Explorar →</span>
+
+        <div className="home-discovery-grid">
+          {discoveryModules.map((module) => {
+            const content = (
+              <>
+                <div className="home-module-topline">
+                  <span className="eyebrow">{module.kicker}</span>
+                  <span className={`home-status-badge ${module.status === "Disponível" ? "available" : "planned"}`}>
+                    {module.status}
+                  </span>
+                </div>
+                <h3>{module.title}</h3>
+                <p>{module.text}</p>
+                {module.action ? <span className="home-module-action">{module.action} →</span> : <span className="home-module-action muted">Próximo ciclo</span>}
+              </>
+            );
+
+            return module.href ? (
+              <Link className="home-module-card" href={module.href} key={module.title}>
+                {content}
+              </Link>
+            ) : (
+              <article className="home-module-card planned" key={module.title} aria-label={`${module.title}: planejado`}>
+                {content}
+              </article>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="home-context-section" aria-labelledby="home-context-title">
+        <div className="home-discovery-heading compact">
+          <div>
+            <span className="eyebrow">CONTEXTO E FONTES</span>
+            <h2 id="home-context-title">Complete a leitura sem sair do fluxo</h2>
+          </div>
+        </div>
+        <div className="home-context-grid">
+          {contextModules.map((module) => (
+            <Link className="home-context-card" href={module.href} key={module.title}>
+              <span className="eyebrow">{module.kicker}</span>
+              <h3>{module.title}</h3>
+              <p>{module.text}</p>
+              <span>{module.action} →</span>
             </Link>
           ))}
         </div>
       </section>
 
-      <section className="market-section home-products-section">
-        <div className="market-section-heading compact-heading home-section-heading">
-          <div>
-            <span className="eyebrow">PESQUISA</span>
-            <h2>Escolha o nível de profundidade</h2>
-          </div>
+      <section className="home-principle-strip" aria-label="Princípios de dados do OpenMarket BR">
+        <div>
+          <strong>Oficial</strong>
+          <span>Dado primário identificado pela fonte pública.</span>
         </div>
-        <div className="home-product-grid">
-          {productCards.map((card) => (
-            <article className="product-card home-product-card" key={card.title}>
-              <span className="eyebrow">{card.kicker}</span>
-              <h3>{card.title}</h3>
-              <p>{card.text}</p>
-              <Link href={card.href}>{card.link} →</Link>
-            </article>
-          ))}
+        <div>
+          <strong>Calculado</strong>
+          <span>Indicador derivado com fórmula e dependências explícitas.</span>
+        </div>
+        <div>
+          <strong>Mercado</strong>
+          <span>Espaço reservado para dados licenciados quando houver integração adequada.</span>
         </div>
       </section>
     </main>
