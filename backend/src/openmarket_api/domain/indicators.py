@@ -4,7 +4,12 @@ from enum import StrEnum
 
 from pydantic import BaseModel
 
-from openmarket_api.domain.analytics import FinancialMetric, SeriesFrequency, SeriesUnit
+from openmarket_api.domain.analytics import (
+    FinancialMetric,
+    FinancialSeriesPoint,
+    SeriesFrequency,
+    SeriesUnit,
+)
 from openmarket_api.domain.common import SourceMetadata
 
 
@@ -56,3 +61,14 @@ class IndicatorSummary(BaseModel):
     ticker: str
     frequency: SeriesFrequency
     groups: list[IndicatorGroupSummary]
+
+
+class IndicatorHistory(BaseModel):
+    ticker: str
+    definition: IndicatorDefinition
+    frequency: SeriesFrequency
+    years: int
+    current_value: Decimal | None = None
+    current_period: date | None = None
+    historical_average: Decimal | None = None
+    points: list[FinancialSeriesPoint]
