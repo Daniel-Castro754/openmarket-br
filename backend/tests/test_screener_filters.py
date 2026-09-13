@@ -37,11 +37,11 @@ def test_parse_filter_rejects_invalid_expressions(raw_filter: str, message: str)
 @pytest.mark.parametrize(
     ("value", "expression", "expected"),
     [
-        (Decimal("20"), "roe:gt:15", True),
-        (Decimal("15"), "roe:gt:15", False),
-        (Decimal("15"), "roe:gte:15", True),
-        (Decimal("9"), "roe:lt:10", True),
-        (Decimal("10"), "roe:lte:10", True),
+        (Decimal(20), "roe:gt:15", True),
+        (Decimal(15), "roe:gt:15", False),
+        (Decimal(15), "roe:gte:15", True),
+        (Decimal(9), "roe:lt:10", True),
+        (Decimal(10), "roe:lte:10", True),
         (None, "roe:gte:0", False),
     ],
 )
