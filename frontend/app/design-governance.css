@@ -1,0 +1,248 @@
+/* D1 — Design governance layer
+   Loaded last on purpose. It keeps the product dense, flat and operational,
+   reducing generic AI/SaaS visual patterns without changing page semantics. */
+
+:root {
+  --font-xs: .68rem;
+  --font-sm: .76rem;
+  --font-md: .86rem;
+  --font-lg: .98rem;
+  --font-xl: 1.18rem;
+  --font-2xl: 1.55rem;
+  --font-3xl: 2.15rem;
+  --font-hero: clamp(2.15rem, 3.7vw, 3.25rem);
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+
+  --shadow-soft: none;
+  --shadow-card: none;
+
+  --page-section-gap: 28px;
+  --panel-padding: 14px;
+}
+
+[data-mode="light"],
+[data-mode="dark"] {
+  --shadow-soft: none;
+  --shadow-card: none;
+}
+
+body {
+  background: var(--bg);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+/* Brand stays recognizable without relying on editorial serif styling. */
+.brand-copy strong,
+.side-brand-copy strong {
+  font-family: inherit;
+  font-style: normal;
+  font-weight: 760;
+  letter-spacing: -.025em;
+}
+
+.brand-copy small,
+.side-brand-copy small,
+.eyebrow,
+.side-nav-eyebrow,
+.appearance-panel-kicker {
+  letter-spacing: .07em;
+}
+
+/* Depth is expressed through borders and spacing, not floating cards. */
+.site-header {
+  background: color-mix(in srgb, var(--bg) 97%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+.nav-dropdown,
+.appearance-panel,
+.asset-search,
+.hero-market-card,
+.ranking-card,
+.product-card,
+.panel,
+.headline-metrics article,
+.home-coverage-panel,
+.home-quick-links a,
+.series-card,
+.ranking-methodology-card,
+.discovery-table-panel,
+.discovery-toolbar,
+.discovery-footnote {
+  box-shadow: none;
+}
+
+.nav-dropdown,
+.appearance-panel {
+  border-radius: var(--radius-md);
+}
+
+.header-asset-search,
+.appearance-summary,
+.mode-quick-actions,
+.appearance-segment,
+.side-nav-item,
+.rail-expand-button {
+  border-radius: var(--radius-md);
+}
+
+/* Avoid pill-heavy interfaces. Pills remain for status/chips only. */
+.side-nav-open-source {
+  border-radius: var(--radius-md);
+}
+
+/* Typography: page titles remain strong, but never become landing-page heroes. */
+.hero-copy h1 {
+  max-width: 620px;
+  margin-top: 8px;
+  margin-bottom: 12px;
+  font-size: var(--font-hero);
+  line-height: 1.01;
+  letter-spacing: -.04em;
+}
+
+.hero-copy > p {
+  max-width: 620px;
+  font-size: .9rem;
+  line-height: 1.5;
+}
+
+.market-section-heading h2,
+.discovery-header h1 {
+  letter-spacing: -.035em;
+}
+
+.market-section-heading h2 {
+  font-size: clamp(1.28rem, 2vw, 1.7rem);
+}
+
+.discovery-header h1 {
+  font-size: clamp(2rem, 3.2vw, 2.75rem);
+  line-height: 1.04;
+}
+
+.asset-title-row h1 {
+  font-size: clamp(1.75rem, 3vw, 2.4rem);
+  line-height: 1.03;
+}
+
+/* Home: less showcase, more workspace. */
+.home-page {
+  padding-top: 30px;
+}
+
+.market-hero {
+  min-height: 0;
+  gap: 24px;
+}
+
+.asset-search {
+  margin-top: 18px;
+  border-radius: var(--radius-lg);
+}
+
+.asset-search button {
+  border-radius: var(--radius-md);
+}
+
+.hero-market-card,
+.ranking-card,
+.product-card {
+  border-radius: var(--radius-lg);
+}
+
+.market-section {
+  margin-top: 34px;
+}
+
+.ranking-card {
+  min-height: 164px;
+}
+
+.ranking-number {
+  font-size: 2.55rem;
+}
+
+/* Tables and analytical panels should feel structural rather than decorative. */
+.panel,
+.headline-metrics article,
+.series-card,
+.discovery-table-panel,
+.ranking-methodology-card,
+.home-coverage-panel {
+  border-radius: var(--radius-lg);
+}
+
+.panel,
+.headline-metrics article,
+.series-card,
+.discovery-table-panel,
+.ranking-methodology-card,
+.home-coverage-panel,
+.ranking-card,
+.product-card {
+  border-color: var(--border);
+}
+
+/* Controls stay compact. */
+.site-nav > a,
+.nav-group-trigger {
+  font-weight: 600;
+}
+
+.nav-dropdown a,
+.side-nav-item {
+  font-weight: 590;
+}
+
+.appearance-segment button {
+  min-height: 34px;
+}
+
+.appearance-panel {
+  width: 252px;
+  padding: 12px;
+}
+
+/* Reduce ornamental transitions; keep only interaction feedback. */
+.ranking-card,
+.product-card,
+.panel,
+.series-card,
+.home-quick-links a {
+  transition: border-color .12s ease, background-color .12s ease, color .12s ease;
+}
+
+/* A flatter terminal theme is intentional, but the same rule applies to all themes. */
+[data-color-theme="terminal"] .site-header,
+[data-color-theme="terminal"] .nav-dropdown,
+[data-color-theme="terminal"] .appearance-panel,
+[data-color-theme="terminal"] .panel {
+  box-shadow: none;
+}
+
+@media (max-width: 900px) {
+  .home-page {
+    padding-top: 22px;
+  }
+
+  .hero-copy h1 {
+    font-size: clamp(1.95rem, 8vw, 2.65rem);
+  }
+
+  .market-section {
+    margin-top: 28px;
+  }
+}
