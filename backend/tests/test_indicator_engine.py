@@ -1,6 +1,7 @@
 from datetime import date
 from decimal import Decimal
 
+import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
@@ -85,6 +86,10 @@ def _seed(session: Session) -> None:
 
     facts: list[FinancialStatementItem] = []
     for year, revenue, gross, operating, net_income, equity, short_debt, long_debt, cash in (
+        (2020, 80, 32, 16, 8, 40, 16, 24, 8),
+        (2021, 90, 36, 18, 9, 45, 18, 27, 9),
+        (2022, 100, 40, 20, 10, 50, 20, 30, 10),
+        (2023, 110, 44, 22, 11, 55, 22, 33, 11),
         (2024, 100, 40, 20, 10, 50, 20, 30, 10),
         (2025, 120, 60, 30, 15, 70, 25, 35, 15),
     ):
@@ -164,6 +169,54 @@ def test_indicator_summary_uses_existing_financial_series_engine() -> None:
     assert values["gross-debt"].value == Decimal(60)
     assert values["net-debt"].value == Decimal(45)
     assert values["revenue-growth-yoy"].value == Decimal(20)
-    assert values["gross-margin"].history_points == 2
-    assert values["roe"].history_points == 1
+    assert values["gross-margin"].history_points == 6
+    assert values["roe"].history_points == 5
     assert values["gross-margin"].source is not None
+
+
+def test_indicator_history_applies_calendar_window_and_average() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+
+    with Session(engine) as session:
+        _seed(session)
+        history = IndicatorEngine(session).get_history(
+            "PETR4",
+            "gross-margin",
+            years=5,
+        )
+
+    assert history.ticker == "PETR4"
+    assert history.years == 5
+    assert history.frequency == SeriesFrequency.ANNUAL
+    assert [point.period_end.year for point in history.points] == [2021, 2022, 2023, 2024, 2025]
+    assert [point.value for point in history.points] == [
+        Decimal(40),
+        Decimal(40),
+        Decimal(40),
+        Decimal(40),
+        Decimal(50),
+    ]
+    assert history.current_value == Decimal(50)
+    assert history.current_period == date(2025, 12, 31)
+    assert history.historical_average == Decimal(42)
+    assert history.definition.formula == "gross_profit / revenue * 100"
+    assert history.points[-1].source.provider == "openmarket-derived"
+    assert history.points[-1].derived is True
+
+
+def test_indicator_history_supports_one_year_and_unknown_slug() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+
+    with Session(engine) as session:
+        _seed(session)
+        service = IndicatorEngine(session)
+        history = service.get_history("petr4", "net-margin", years=1)
+
+        with pytest.raises(LookupError, match="indicator not found"):
+            service.get_history("PETR4", "price-to-earnings", years=5)
+
+    assert len(history.points) == 1
+    assert history.current_value == Decimal("12.5")
+    assert history.historical_average == Decimal("12.5")
