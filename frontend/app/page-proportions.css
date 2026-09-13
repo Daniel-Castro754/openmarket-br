@@ -1,0 +1,226 @@
+/* Block 2 — page proportions and responsive density.
+   The shell owns positioning; pages only declare how wide their content should be. */
+
+:root {
+  --page-max-width: var(--content-analytics);
+}
+
+.home-dashboard-page {
+  --page-max-width: 1280px;
+}
+
+.asset-page {
+  --page-max-width: 1520px;
+}
+
+html[data-navigation="sidebar"] main,
+html[data-navigation="rail"] main {
+  width: min(
+    var(--page-max-width, var(--content-analytics)),
+    calc(100vw - var(--shell-offset) - (var(--shell-gutter) * 2))
+  );
+  max-width: none;
+  margin-left: calc(
+    var(--shell-offset) +
+    max(
+      var(--shell-gutter),
+      (100vw - var(--shell-offset) - var(--page-max-width, var(--content-analytics))) / 2
+    )
+  );
+  margin-right: auto;
+}
+
+html[data-navigation="topbar"] main {
+  width: min(
+    var(--page-max-width, 1480px),
+    calc(100vw - (var(--shell-gutter) * 2))
+  );
+  max-width: none;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Home: editorial content should stay readable instead of stretching with the shell. */
+.home-dashboard-page {
+  padding: 26px 0 50px;
+}
+
+.home-overview {
+  grid-template-columns: minmax(0, 1.28fr) minmax(310px, .72fr);
+  gap: clamp(18px, 2vw, 28px);
+  min-height: 290px;
+}
+
+.home-hero-copy {
+  max-width: 660px;
+}
+
+.home-hero-copy h1 {
+  max-width: 640px;
+  font-size: clamp(2.45rem, 3.7vw, 3.35rem);
+  line-height: 1.01;
+}
+
+.home-hero-copy > p {
+  max-width: 620px;
+}
+
+.home-coverage-panel {
+  min-width: 0;
+}
+
+.home-quick-links {
+  grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+}
+
+.home-ranking-grid {
+  grid-template-columns: repeat(auto-fit, minmax(235px, 1fr));
+}
+
+.home-product-grid {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+/* Company pages can use more horizontal room, but compact cards must not become oversized. */
+.asset-page {
+  padding-top: 16px;
+}
+
+.asset-overview {
+  gap: clamp(14px, 1.5vw, 22px);
+}
+
+.headline-metrics {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.headline-metrics article {
+  min-width: 0;
+}
+
+.overview-dashboard {
+  grid-template-columns: minmax(0, 1.7fr) minmax(250px, .58fr);
+}
+
+.insight-grid {
+  grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+}
+
+.series-grid {
+  align-items: stretch;
+}
+
+.series-card,
+.panel,
+.dashboard-main,
+.research-consensus-card {
+  min-width: 0;
+}
+
+/* A full sidebar consumes enough width that container-aware reductions are needed
+   before the generic mobile breakpoint is reached. */
+@media (max-width: 1380px) {
+  html[data-navigation="sidebar"] .home-overview {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  html[data-navigation="sidebar"] .home-coverage-panel {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+@media (max-width: 1240px) {
+  html[data-navigation="rail"] .home-overview {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  html[data-navigation="sidebar"] .overview-dashboard {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1180px) {
+  html[data-navigation="sidebar"] .headline-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  html[data-navigation="sidebar"] .headline-metrics article:nth-child(2) {
+    border-right: 0;
+  }
+
+  html[data-navigation="sidebar"] .headline-metrics article:nth-child(-n+2) {
+    border-bottom: 1px solid var(--border);
+  }
+}
+
+@media (max-width: 1040px) {
+  html[data-navigation="rail"] .overview-dashboard {
+    grid-template-columns: 1fr;
+  }
+
+  html[data-navigation="rail"] .headline-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  html[data-navigation="rail"] .headline-metrics article:nth-child(2) {
+    border-right: 0;
+  }
+
+  html[data-navigation="rail"] .headline-metrics article:nth-child(-n+2) {
+    border-bottom: 1px solid var(--border);
+  }
+}
+
+@media (max-width: 900px) {
+  html[data-navigation="sidebar"] main,
+  html[data-navigation="rail"] main,
+  html[data-navigation="topbar"] main {
+    width: calc(100% - 24px);
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .home-dashboard-page,
+  .asset-page {
+    --page-max-width: var(--content-analytics);
+  }
+
+  .home-overview {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .home-coverage-panel {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+@media (max-width: 620px) {
+  .home-dashboard-page {
+    padding-top: 20px;
+  }
+
+  .home-hero-copy h1 {
+    font-size: clamp(2.1rem, 10vw, 2.7rem);
+  }
+
+  .home-quick-links,
+  .home-ranking-grid,
+  .home-product-grid,
+  .headline-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .headline-metrics article {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .headline-metrics article:last-child {
+    border-bottom: 0;
+  }
+}
