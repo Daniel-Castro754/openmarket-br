@@ -1,79 +1,89 @@
+# ruff: noqa: I001
+
 from sqlalchemy.orm import Session
 
-from openmarket_api.domain import analytics, indicators
-from openmarket_api.services import asset_read, financial_series
+from openmarket_api.domain.analytics import FinancialMetric, SeriesFrequency, SeriesUnit
+from openmarket_api.domain.indicators import (
+    IndicatorDefinition,
+    IndicatorGroup,
+    IndicatorGroupSummary,
+    IndicatorSummary,
+    IndicatorValue,
+)
+from openmarket_api.services.asset_read import AssetReadService
+from openmarket_api.services.financial_series import FinancialSeriesService
 
 
-GROUP_LABELS: dict[indicators.IndicatorGroup, str] = {
-    indicators.IndicatorGroup.EFFICIENCY: "Eficiência",
-    indicators.IndicatorGroup.PROFITABILITY: "Rentabilidade",
-    indicators.IndicatorGroup.LEVERAGE: "Endividamento",
-    indicators.IndicatorGroup.GROWTH: "Crescimento",
+GROUP_LABELS: dict[IndicatorGroup, str] = {
+    IndicatorGroup.EFFICIENCY: "Eficiência",
+    IndicatorGroup.PROFITABILITY: "Rentabilidade",
+    IndicatorGroup.LEVERAGE: "Endividamento",
+    IndicatorGroup.GROWTH: "Crescimento",
 }
 
 
-INDICATOR_CATALOG: tuple[indicators.IndicatorDefinition, ...] = (
-    indicators.IndicatorDefinition(
+INDICATOR_CATALOG: tuple[IndicatorDefinition, ...] = (
+    IndicatorDefinition(
         slug="gross-margin",
-        metric=analytics.FinancialMetric.GROSS_MARGIN,
+        metric=FinancialMetric.GROSS_MARGIN,
         label="Margem Bruta",
-        group=indicators.IndicatorGroup.EFFICIENCY,
+        group=IndicatorGroup.EFFICIENCY,
         description="Lucro bruto como percentual da receita líquida.",
-        unit=analytics.SeriesUnit.PERCENT,
+        unit=SeriesUnit.PERCENT,
         formula="gross_profit / revenue * 100",
     ),
-    indicators.IndicatorDefinition(
+    IndicatorDefinition(
         slug="operating-margin",
-        metric=analytics.FinancialMetric.OPERATING_MARGIN,
+        metric=FinancialMetric.OPERATING_MARGIN,
         label="Margem Operacional",
-        group=indicators.IndicatorGroup.EFFICIENCY,
+        group=IndicatorGroup.EFFICIENCY,
         description="Resultado operacional como percentual da receita líquida.",
-        unit=analytics.SeriesUnit.PERCENT,
+        unit=SeriesUnit.PERCENT,
         formula="operating_result / revenue * 100",
     ),
-    indicators.IndicatorDefinition(
+    IndicatorDefinition(
         slug="net-margin",
-        metric=analytics.FinancialMetric.NET_MARGIN,
+        metric=FinancialMetric.NET_MARGIN,
         label="Margem Líquida",
-        group=indicators.IndicatorGroup.EFFICIENCY,
+        group=IndicatorGroup.EFFICIENCY,
         description="Lucro líquido como percentual da receita líquida.",
-        unit=analytics.SeriesUnit.PERCENT,
+        unit=SeriesUnit.PERCENT,
         formula="net_income / revenue * 100",
     ),
-    indicators.IndicatorDefinition(
+    IndicatorDefinition(
         slug="roe",
-        metric=analytics.FinancialMetric.ROE,
+        metric=FinancialMetric.ROE,
         label="ROE",
-        group=indicators.IndicatorGroup.PROFITABILITY,
+        group=IndicatorGroup.PROFITABILITY,
         description="Retorno sobre o patrimônio líquido médio do período.",
-        unit=analytics.SeriesUnit.PERCENT,
+        unit=SeriesUnit.PERCENT,
         formula="annual_net_income / average_equity * 100",
     ),
-    indicators.IndicatorDefinition(
+    IndicatorDefinition(
         slug="gross-debt",
-        metric=analytics.FinancialMetric.GROSS_DEBT,
+        metric=FinancialMetric.GROSS_DEBT,
         label="Dívida Bruta",
-        group=indicators.IndicatorGroup.LEVERAGE,
+        group=IndicatorGroup.LEVERAGE,
         description="Soma das dívidas financeiras de curto e longo prazo mapeadas.",
-        unit=analytics.SeriesUnit.CURRENCY,
+        unit=SeriesUnit.CURRENCY,
         formula="short_term_debt + long_term_debt",
     ),
-    indicators.IndicatorDefinition(
+    IndicatorDefinition(
         slug="net-debt",
-        metric=analytics.FinancialMetric.NET_DEBT,
+        metric=FinancialMetric.NET_DEBT,
         label="Dívida Líquida",
-        group=indicators.IndicatorGroup.LEVERAGE,
+        group=IndicatorGroup.LEVERAGE,
         description="Dívida bruta menos caixa e equivalentes.",
-        unit=analytics.SeriesUnit.CURRENCY,
+        unit=SeriesUnit.CURRENCY,
         formula="gross_debt - cash",
     ),
-    indicators.IndicatorDefinition(
+    IndicatorDefinition(
         slug="revenue-growth-yoy",
-        metric=analytics.FinancialMetric.REVENUE_GROWTH_YOY,
+        metric=FinancialMetric.REVENUE_GROWTH_YOY,
         label="Crescimento da Receita",
-        group=indicators.IndicatorGroup.GROWTH,
+        group=IndicatorGroup.GROWTH,
         description="Variação da receita contra o mesmo período do ano anterior.",
-        unit=analytics.SeriesUnit.PERCENT,
+        unit=SeriesUnit.PERCENT,
         formula="(current / same_period_previous_year - 1) * 100",
     ),
 )
@@ -81,23 +91,23 @@ INDICATOR_CATALOG: tuple[indicators.IndicatorDefinition, ...] = (
 
 class IndicatorEngine:
     def __init__(self, session: Session) -> None:
-        self.assets = asset_read.AssetReadService(session)
-        self.series = financial_series.FinancialSeriesService(session)
+        self.assets = AssetReadService(session)
+        self.series = FinancialSeriesService(session)
 
     @staticmethod
-    def get_catalog() -> list[indicators.IndicatorDefinition]:
+    def get_catalog() -> list[IndicatorDefinition]:
         return [definition.model_copy(deep=True) for definition in INDICATOR_CATALOG]
 
     def get_summary(
         self,
         ticker: str,
         *,
-        frequency: analytics.SeriesFrequency = analytics.SeriesFrequency.ANNUAL,
-    ) -> indicators.IndicatorSummary:
+        frequency: SeriesFrequency = SeriesFrequency.ANNUAL,
+    ) -> IndicatorSummary:
         normalized_ticker = ticker.strip().upper()
         self.assets.get_asset(normalized_ticker)
 
-        grouped: dict[indicators.IndicatorGroup, list[indicators.IndicatorValue]] = {
+        grouped: dict[IndicatorGroup, list[IndicatorValue]] = {
             group: [] for group in GROUP_LABELS
         }
 
@@ -111,7 +121,7 @@ class IndicatorEngine:
             payload = definition.model_dump()
             payload["formula"] = series.formula or definition.formula
             grouped[definition.group].append(
-                indicators.IndicatorValue(
+                IndicatorValue(
                     **payload,
                     value=latest.value if latest else None,
                     period_end=latest.period_end if latest else None,
@@ -121,11 +131,11 @@ class IndicatorEngine:
                 )
             )
 
-        return indicators.IndicatorSummary(
+        return IndicatorSummary(
             ticker=normalized_ticker,
             frequency=frequency,
             groups=[
-                indicators.IndicatorGroupSummary(
+                IndicatorGroupSummary(
                     group=group,
                     label=label,
                     indicators=grouped[group],
