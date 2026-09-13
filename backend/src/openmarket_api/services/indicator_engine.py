@@ -1,10 +1,6 @@
 from sqlalchemy.orm import Session
 
-from openmarket_api.domain.analytics import (
-    FinancialMetric,
-    SeriesFrequency,
-    SeriesUnit,
-)
+from openmarket_api.domain.analytics import FinancialMetric, SeriesFrequency, SeriesUnit
 from openmarket_api.domain.indicators import (
     IndicatorDefinition,
     IndicatorGroup,
