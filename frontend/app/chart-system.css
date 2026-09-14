@@ -1,0 +1,95 @@
+/* OpenMarket BR — shared chart presentation.
+   Indicator history already consumes the canonical --chart-* tokens directly;
+   this layer brings Home and Financeiro onto the same visual vocabulary. */
+
+.home-v2-interactive-chart {
+  outline: none;
+}
+
+.home-v2-interactive-chart:focus-visible {
+  border-radius: var(--radius-sm);
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
+}
+
+.home-v2-interactive-chart .home-v2-chart-baseline {
+  stroke: var(--chart-grid);
+}
+
+.home-v2-interactive-chart .home-v2-chart-line {
+  stroke: var(--chart-primary);
+}
+
+.home-v2-interactive-chart .home-v2-chart-guide {
+  stroke: color-mix(in srgb, var(--chart-secondary) 55%, var(--chart-grid));
+}
+
+.home-v2-interactive-chart .home-v2-chart-active-point {
+  fill: var(--surface);
+  stroke: var(--chart-primary);
+}
+
+.home-v2-interactive-chart .home-v2-chart-months span,
+.home-v2-interactive-chart .home-v2-chart-hint,
+.home-v2-interactive-chart .home-v2-chart-empty {
+  color: var(--chart-axis);
+}
+
+.home-v2-interactive-chart .home-v2-chart-tooltip {
+  z-index: var(--z-tooltip);
+  border-color: color-mix(in srgb, var(--chart-axis) 42%, transparent);
+  background: var(--chart-tooltip-bg);
+  color: var(--chart-tooltip-text);
+  box-shadow: none;
+}
+
+.home-v2-interactive-chart .home-v2-chart-tooltip span {
+  color: color-mix(in srgb, var(--chart-tooltip-text) 72%, transparent);
+}
+
+.financial-workspace .series-year,
+.financial-workspace .series-footer {
+  color: var(--chart-axis);
+}
+
+.financial-workspace .series-track {
+  background: var(--chart-grid);
+}
+
+.financial-workspace .series-bar {
+  background: var(--chart-primary);
+}
+
+.financial-workspace .series-bar-negative {
+  background: var(--chart-negative);
+}
+
+.financial-workspace .derived-mark {
+  border: 1px solid color-mix(in srgb, var(--chart-secondary) 34%, var(--border));
+  background: color-mix(in srgb, var(--chart-secondary) 10%, var(--surface));
+  color: var(--chart-secondary);
+}
+
+.financial-workspace .series-row {
+  border-radius: 3px;
+}
+
+.financial-workspace .series-row:hover {
+  background: color-mix(in srgb, var(--surface-hover) 70%, transparent);
+}
+
+.financial-workspace .series-row:hover .series-track {
+  background: color-mix(in srgb, var(--chart-axis) 18%, transparent);
+}
+
+.financial-workspace .series-single-point:hover {
+  border-color: var(--border-strong);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-v2-interactive-chart,
+  .financial-workspace .series-row,
+  .financial-workspace .series-bar {
+    transition: none;
+  }
+}

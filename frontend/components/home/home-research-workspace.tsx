@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { getDocuments, type DocumentSummary } from "../../lib/api";
+import { formatDateShortPtBr, formatMacroValue } from "../../lib/format";
 import { getMacroSnapshot, type MacroIndicator } from "../../lib/macro-api";
 
 const shortcuts = [
@@ -11,16 +12,6 @@ const shortcuts = [
   { label: "Resultados", detail: "DFP e ITR recentes", href: "/resultados", meta: "CVM · IPE" },
   { label: "Relatórios", detail: "Documentos oficiais", href: "/relatorios", meta: "fontes oficiais" },
 ];
-
-function formatDate(value?: string | null) {
-  if (!value) return "—";
-  return new Intl.DateTimeFormat("pt-BR", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    timeZone: "UTC",
-  }).format(new Date(`${value.slice(0, 10)}T00:00:00Z`));
-}
 
 function periodLabel(value?: string | null) {
   if (!value) return "—";
@@ -38,18 +29,6 @@ function sortDocuments(documents: DocumentSummary[]) {
     const bTime = b.published_at ? Date.parse(b.published_at) : 0;
     return bTime - aTime;
   });
-}
-
-function valueLabel(indicator: MacroIndicator) {
-  const numeric = Number(indicator.latest_value);
-  if (!Number.isFinite(numeric)) return indicator.latest_value;
-  const formatted = new Intl.NumberFormat("pt-BR", {
-    maximumFractionDigits: 2,
-    minimumFractionDigits: indicator.unit.includes("R$/") ? 2 : 1,
-  }).format(numeric);
-  if (indicator.unit.startsWith("%")) return `${formatted}%`;
-  if (indicator.unit.includes("R$/")) return `R$ ${formatted}`;
-  return formatted;
 }
 
 function macroByKey(indicators: MacroIndicator[], key: string) {
@@ -122,7 +101,7 @@ export async function HomeResearchWorkspace() {
                     </span>
                     <span className="home-v2-result-type">{document.document_type.toUpperCase()}</span>
                     <span className="home-v2-result-period">{periodLabel(document.reference_period)}</span>
-                    <span className="home-v2-result-date">{formatDate(document.published_at)}</span>
+                    <span className="home-v2-result-date">{formatDateShortPtBr(document.published_at)}</span>
                     <span className="home-v2-result-arrow" aria-hidden="true">→</span>
                   </Link>
                 );
@@ -150,9 +129,9 @@ export async function HomeResearchWorkspace() {
                 <div className="home-v2-panorama-row" key={indicator.key}>
                   <span>
                     <strong>{indicator.label}</strong>
-                    <small>{formatDate(indicator.reference_date)}</small>
+                    <small>{formatDateShortPtBr(indicator.reference_date)}</small>
                   </span>
-                  <b>{valueLabel(indicator)}</b>
+                  <b>{formatMacroValue(indicator.latest_value, indicator.unit)}</b>
                 </div>
               ))
             )}

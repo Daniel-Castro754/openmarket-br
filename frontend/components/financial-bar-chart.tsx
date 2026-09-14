@@ -21,6 +21,19 @@ function DerivedMark({ point }: { point: FinancialSeriesPoint }) {
   );
 }
 
+function pointValueLabel(series: FinancialSeries, point: FinancialSeriesPoint) {
+  return formatFinancialValue(point.value, series.unit, {
+    currency: point.currency,
+    percentDigits: 1,
+  });
+}
+
+function pointInspectionLabel(series: FinancialSeries, point: FinancialSeriesPoint) {
+  const period = formatPeriod(point.period_end, series.frequency);
+  const provenance = provenanceLabel(provenanceKind({ derived: point.derived || Boolean(series.formula), source: point.source }));
+  return `${period} · ${pointValueLabel(series, point)} · ${provenance}`;
+}
+
 export function FinancialBarChart({ series }: { series: FinancialSeries }) {
   const limit = series.frequency === "annual" ? 6 : 8;
   const points = series.points.slice(-limit);
@@ -62,7 +75,11 @@ export function FinancialBarChart({ series }: { series: FinancialSeries }) {
       {points.length === 0 ? (
         <p className="series-empty">Nenhum dado comparável disponível para esta métrica.</p>
       ) : singlePoint ? (
-        <div className="series-single-point" aria-label={`Valor ${series.frequency} de ${series.label}`}>
+        <div
+          className="series-single-point"
+          aria-label={pointInspectionLabel(series, singlePoint)}
+          title={pointInspectionLabel(series, singlePoint)}
+        >
           <div className="series-single-copy">
             <span>
               {formatPeriod(singlePoint.period_end, series.frequency)}
@@ -70,36 +87,32 @@ export function FinancialBarChart({ series }: { series: FinancialSeries }) {
             </span>
             <small>1 período disponível</small>
           </div>
-          <strong>
-            {formatFinancialValue(singlePoint.value, series.unit, {
-              currency: singlePoint.currency,
-              percentDigits: 1,
-            })}
-          </strong>
+          <strong>{pointValueLabel(series, singlePoint)}</strong>
         </div>
       ) : (
         <div className="series-chart" aria-label={`Série ${series.frequency} de ${series.label}`}>
           {points.map((point) => {
             const numeric = Number(point.value);
             const width = Math.max((Math.abs(numeric) / maxValue) * 100, 2);
+            const inspectionLabel = pointInspectionLabel(series, point);
             return (
-              <div className="series-row" key={`${point.period_end}-${point.filing_version ?? 0}-${point.derived}`}>
+              <div
+                className="series-row"
+                key={`${point.period_end}-${point.filing_version ?? 0}-${point.derived}`}
+                aria-label={inspectionLabel}
+                title={inspectionLabel}
+              >
                 <span className="series-year">
                   {formatPeriod(point.period_end, series.frequency)}
                   <DerivedMark point={point} />
                 </span>
-                <div className="series-track">
+                <div className="series-track" aria-hidden="true">
                   <span
                     className={`series-bar ${numeric < 0 ? "series-bar-negative" : ""}`}
                     style={{ width: `${width}%` }}
                   />
                 </div>
-                <strong>
-                  {formatFinancialValue(point.value, series.unit, {
-                    currency: point.currency,
-                    percentDigits: 1,
-                  })}
-                </strong>
+                <strong>{pointValueLabel(series, point)}</strong>
               </div>
             );
           })}

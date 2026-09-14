@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 
+import { formatDateShortPtBr, formatMacroValue, formatMonthShortPtBr } from "../../lib/format";
 import type { MacroSeriesPoint } from "../../lib/macro-api";
 
 type ChartPoint = MacroSeriesPoint & {
@@ -10,42 +11,13 @@ type ChartPoint = MacroSeriesPoint & {
   y: number;
 };
 
-function formatValue(value: number, unit: string) {
-  const formatted = new Intl.NumberFormat("pt-BR", {
-    minimumFractionDigits: unit.startsWith("%") ? 2 : 1,
-    maximumFractionDigits: 2,
-  }).format(value);
-
-  if (unit.startsWith("%")) return `${formatted}%`;
-  if (unit.includes("R$/")) return `R$ ${formatted}`;
-  return formatted;
-}
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("pt-BR", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    timeZone: "UTC",
-  }).format(new Date(`${value}T00:00:00Z`));
-}
-
-function monthLabel(value: string) {
-  return new Intl.DateTimeFormat("pt-BR", {
-    month: "short",
-    timeZone: "UTC",
-  })
-    .format(new Date(`${value}T00:00:00Z`))
-    .replace(".", "");
-}
-
 function buildMonthTicks(points: ChartPoint[]) {
   const unique: Array<{ index: number; key: string; label: string }> = [];
 
   points.forEach((point, index) => {
     const key = point.reference_date.slice(0, 7);
     if (unique.at(-1)?.key !== key) {
-      unique.push({ index, key, label: monthLabel(point.reference_date) });
+      unique.push({ index, key, label: formatMonthShortPtBr(point.reference_date) });
     }
   });
 
@@ -108,14 +80,40 @@ export function HomeMacroInteractiveChart({
     return Math.round(ratio * (chartPoints.length - 1));
   }
 
+  function moveSelection(delta: number) {
+    setSelectedIndex((current) => {
+      const base = current ?? chartPoints.length - 1;
+      return Math.min(chartPoints.length - 1, Math.max(0, base + delta));
+    });
+  }
+
   return (
     <div
       className="home-v2-interactive-chart"
       role="img"
-      aria-label={`Histórico recente de ${label}. Passe ou clique sobre a linha para consultar os valores.`}
+      tabIndex={0}
+      aria-label={`Histórico recente de ${label}. Passe, clique ou use as setas para consultar os valores.`}
       onPointerMove={(event) => setHoveredIndex(indexFromPointer(event.clientX, event.currentTarget))}
       onPointerLeave={() => setHoveredIndex(null)}
       onClick={(event) => setSelectedIndex(indexFromPointer(event.clientX, event.currentTarget))}
+      onFocus={() => setSelectedIndex((current) => current ?? chartPoints.length - 1)}
+      onKeyDown={(event) => {
+        if (event.key === "ArrowLeft") {
+          event.preventDefault();
+          moveSelection(-1);
+        } else if (event.key === "ArrowRight") {
+          event.preventDefault();
+          moveSelection(1);
+        } else if (event.key === "Home") {
+          event.preventDefault();
+          setSelectedIndex(0);
+        } else if (event.key === "End") {
+          event.preventDefault();
+          setSelectedIndex(chartPoints.length - 1);
+        } else if (event.key === "Escape") {
+          setSelectedIndex(null);
+        }
+      }}
     >
       <svg viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true">
         <line className="home-v2-chart-baseline" x1="3" y1="29" x2="97" y2="29" />
@@ -148,17 +146,19 @@ export function HomeMacroInteractiveChart({
       {activePoint ? (
         <div
           className="home-v2-chart-tooltip"
+          role="status"
+          aria-live="polite"
           style={{
             left: `${Math.min(91, Math.max(9, activePoint.x))}%`,
             top: `${Math.max(8, (activePoint.y / 32) * 76)}%`,
           }}
         >
-          <strong>{formatValue(activePoint.numericValue, unit)}</strong>
-          <span>{formatDate(activePoint.reference_date)}</span>
+          <strong>{formatMacroValue(activePoint.numericValue, unit, { minimumFractionDigits: unit.startsWith("%") ? 2 : 1 })}</strong>
+          <span>{formatDateShortPtBr(activePoint.reference_date)}</span>
         </div>
       ) : null}
 
-      <span className="home-v2-chart-hint">Passe ou clique para ver o valor</span>
+      <span className="home-v2-chart-hint">Passe, clique ou use ← →</span>
     </div>
   );
 }
