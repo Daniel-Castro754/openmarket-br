@@ -29,6 +29,7 @@ import "./visual-qa-d9.css";
 import "./asset-overview-v2.css";
 import "./home-v2-h1.css";
 import "./home-v2-h2.css";
+import "./home-v2-h3.css";
 
 export const metadata: Metadata = {
   title: "OpenMarket BR",
