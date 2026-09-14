@@ -1,3 +1,7 @@
+/* OpenMarket BR — canonical visual foundation.
+   Theme values live here. Page-level CSS should consume these tokens instead of
+   redefining typography, radius, density, status, focus or layering scales. */
+
 :root,
 [data-theme="dark"] {
   color-scheme: dark;
@@ -7,8 +11,10 @@
   --surface-strong: #151e29;
   --surface-soft: #0d141c;
   --surface-hover: #1a2532;
+  --surface-selected: #13251f;
   --table-header: #151d27;
   --border: #253140;
+  --border-subtle: color-mix(in srgb, var(--border) 68%, transparent);
   --border-strong: #344358;
   --text: #f3f6fa;
   --text-strong: #ffffff;
@@ -16,6 +22,7 @@
   --soft: #b7c1ce;
   --accent: #44d69a;
   --accent-strong: #24b979;
+  --accent-readable: #44d69a;
   --accent-contrast: #062419;
   --accent-soft: rgba(68, 214, 154, .12);
   --accent-border: rgba(68, 214, 154, .30);
@@ -25,19 +32,27 @@
   --positive: #39c98d;
   --negative: #ef7d89;
   --focus: rgba(118, 173, 247, .20);
-  --shadow-soft: 0 12px 34px rgba(0, 0, 0, .16);
-  --shadow-card: 0 20px 48px rgba(0, 0, 0, .18);
+  --control-primary-bg: #24b979;
+  --control-primary-hover: #1fa56b;
+  --control-primary-text: #062419;
+  --shadow-soft: none;
+  --shadow-card: none;
   --body-background: radial-gradient(circle at 82% -12%, rgba(44, 112, 88, .11), transparent 24%), #090d12;
 
+  /* Typography — compact research/workstation scale. */
   --font-xs: .68rem;
   --font-sm: .76rem;
-  --font-md: .88rem;
-  --font-lg: 1rem;
-  --font-xl: 1.28rem;
-  --font-2xl: 1.7rem;
-  --font-3xl: 2.35rem;
-  --font-hero: clamp(3.1rem, 5.2vw, 4.5rem);
+  --font-md: .86rem;
+  --font-lg: .98rem;
+  --font-xl: 1.18rem;
+  --font-2xl: 1.55rem;
+  --font-3xl: 2.15rem;
+  --font-hero: clamp(2.15rem, 3.7vw, 3.25rem);
+  --line-height-body: 1.45;
+  --line-height-tight: 1.15;
+  --line-height-caption: 1.35;
 
+  /* Spacing — one scale for page and component composition. */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -46,11 +61,80 @@
   --space-6: 24px;
   --space-7: 32px;
   --space-8: 40px;
+  --page-section-gap: 28px;
+  --panel-padding: 14px;
 
-  --radius-sm: 7px;
-  --radius-md: 10px;
-  --radius-lg: 13px;
-  --radius-xl: 16px;
+  /* Shape — deliberately restrained for financial surfaces. */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+
+  /* Density — use compact for analytical tools/tables, default elsewhere. */
+  --control-height-compact: 32px;
+  --control-height-default: 36px;
+  --density-compact-cell-padding-y: 6px;
+  --density-compact-cell-padding-x: 10px;
+  --density-default-cell-padding-y: 10px;
+  --density-default-cell-padding-x: 12px;
+
+  /* Focus and interactive states. */
+  --focus-outline: 2px solid var(--info);
+  --focus-outline-offset: 2px;
+  --focus-ring: 0 0 0 3px var(--focus);
+
+  /* Semantic status. Provenance uses a separate namespace below. */
+  --status-positive-text: var(--positive);
+  --status-positive-bg: color-mix(in srgb, var(--positive) 11%, transparent);
+  --status-positive-border: color-mix(in srgb, var(--positive) 28%, transparent);
+  --status-negative-text: var(--negative);
+  --status-negative-bg: color-mix(in srgb, var(--negative) 11%, transparent);
+  --status-negative-border: color-mix(in srgb, var(--negative) 28%, transparent);
+  --status-warning-text: var(--warning);
+  --status-warning-bg: color-mix(in srgb, var(--warning) 10%, transparent);
+  --status-warning-border: color-mix(in srgb, var(--warning) 26%, transparent);
+  --status-info-text: var(--info);
+  --status-info-bg: color-mix(in srgb, var(--info) 10%, transparent);
+  --status-info-border: color-mix(in srgb, var(--info) 26%, transparent);
+
+  /* Provenance — source/derivation, never investment sentiment. */
+  --provenance-official-text: var(--info);
+  --provenance-calculated-text: var(--accent-readable);
+  --provenance-market-text: var(--warning);
+  --provenance-bg: var(--surface-soft);
+  --provenance-border: var(--border);
+
+  /* Data states. Zero remains a real value; these tokens are only for absence. */
+  --data-missing-text: var(--muted);
+  --data-unavailable-text: var(--muted);
+  --freshness-text: var(--muted);
+  --freshness-stale-text: var(--warning);
+
+  /* Charts. Keep semantic positive/negative separate from categorical series. */
+  --chart-primary: var(--accent);
+  --chart-positive: var(--positive);
+  --chart-negative: var(--negative);
+  --chart-neutral: var(--muted);
+  --chart-secondary: var(--info);
+  --chart-grid: color-mix(in srgb, var(--text) 10%, transparent);
+  --chart-axis: var(--muted);
+  --chart-tooltip-bg: var(--text-strong);
+  --chart-tooltip-text: var(--bg);
+  --chart-series-1: #44d69a;
+  --chart-series-2: #76adf7;
+  --chart-series-3: #e6bd67;
+  --chart-series-4: #a98bd8;
+  --chart-series-5: #62c8c0;
+  --chart-series-6: #df8fa5;
+
+  /* Layering — no arbitrary z-index values in new components. */
+  --z-base: 0;
+  --z-sticky: 20;
+  --z-dropdown: 40;
+  --z-tooltip: 50;
+  --z-toast: 60;
+  --z-modal-backdrop: 70;
+  --z-modal: 80;
 
   --content-editorial: 1280px;
   --content-analytics: 1440px;
@@ -65,8 +149,10 @@
   --surface-strong: #f1f4f7;
   --surface-soft: #f8fafb;
   --surface-hover: #edf2f5;
+  --surface-selected: #edf6f1;
   --table-header: #edf1f4;
   --border: #d8e0e7;
+  --border-subtle: rgba(23, 32, 42, .08);
   --border-strong: #c1ccd6;
   --text: #17202a;
   --text-strong: #0a1118;
@@ -74,6 +160,7 @@
   --soft: #445365;
   --accent: #159c68;
   --accent-strong: #0e7e54;
+  --accent-readable: #0e7e54;
   --accent-contrast: #f4fff9;
   --accent-soft: rgba(21, 156, 104, .09);
   --accent-border: rgba(21, 156, 104, .24);
@@ -83,8 +170,11 @@
   --positive: #15875c;
   --negative: #c54b58;
   --focus: rgba(47, 111, 185, .16);
-  --shadow-soft: 0 10px 28px rgba(31, 45, 61, .07);
-  --shadow-card: 0 16px 36px rgba(31, 45, 61, .09);
+  --control-primary-bg: #0e7e54;
+  --control-primary-hover: #0a6845;
+  --control-primary-text: #f4fff9;
+  --shadow-soft: none;
+  --shadow-card: none;
   --body-background: linear-gradient(180deg, #fbfcfd 0%, #f5f7f9 36%, #f5f7f9 100%);
 }
 
@@ -96,6 +186,7 @@
   --surface-strong: #101610;
   --surface-soft: #090d09;
   --surface-hover: #151d16;
+  --surface-selected: #101b12;
   --table-header: #0f160f;
   --border: #243126;
   --border-strong: #3b4d3d;
@@ -105,6 +196,7 @@
   --soft: #b9c7bb;
   --accent: #70e58c;
   --accent-strong: #47bf65;
+  --accent-readable: #70e58c;
   --accent-contrast: #031207;
   --accent-soft: rgba(112, 229, 140, .10);
   --accent-border: rgba(112, 229, 140, .28);
@@ -114,6 +206,9 @@
   --positive: #70e58c;
   --negative: #ff7482;
   --focus: rgba(112, 229, 140, .16);
+  --control-primary-bg: #47bf65;
+  --control-primary-hover: #3aa854;
+  --control-primary-text: #031207;
   --shadow-soft: none;
   --shadow-card: none;
   --body-background: #070907;
@@ -130,6 +225,7 @@
   --surface-strong: #112433;
   --surface-soft: #09151f;
   --surface-hover: #173044;
+  --surface-selected: #102a31;
   --table-header: #102434;
   --border: #20394a;
   --border-strong: #31556b;
@@ -139,6 +235,7 @@
   --soft: #bed2da;
   --accent: #42d4bd;
   --accent-strong: #21ac99;
+  --accent-readable: #42d4bd;
   --accent-contrast: #05231f;
   --accent-soft: rgba(66, 212, 189, .12);
   --accent-border: rgba(66, 212, 189, .28);
@@ -148,8 +245,11 @@
   --positive: #42d4bd;
   --negative: #f07f8f;
   --focus: rgba(109, 184, 255, .18);
-  --shadow-soft: 0 14px 38px rgba(0, 8, 18, .20);
-  --shadow-card: 0 20px 52px rgba(0, 8, 18, .24);
+  --control-primary-bg: #21ac99;
+  --control-primary-hover: #198d7e;
+  --control-primary-text: #05231f;
+  --shadow-soft: none;
+  --shadow-card: none;
   --body-background: radial-gradient(circle at 75% -10%, rgba(37, 128, 143, .17), transparent 28%), #071019;
 }
 
@@ -161,8 +261,8 @@ body {
 
 body {
   background: var(--body-background);
-  font-size: 15px;
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: var(--line-height-body);
   transition: background-color .16s ease, color .16s ease;
 }
 
@@ -176,12 +276,57 @@ input,
 select,
 textarea {
   color: var(--text);
+  font-family: inherit;
 }
 
 :focus-visible {
-  outline: 2px solid var(--info);
-  outline-offset: 2px;
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
 }
+
+/* Foundation primitives. They are intentionally opt-in while legacy screens migrate. */
+.ui-control {
+  min-height: var(--control-height-default);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+  color: var(--text);
+  padding: 0 var(--space-3);
+  font: inherit;
+}
+
+.ui-control--compact {
+  min-height: var(--control-height-compact);
+  padding-inline: var(--space-2);
+}
+
+.ui-button {
+  min-height: var(--control-height-default);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: 0 var(--space-3);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.ui-button--compact { min-height: var(--control-height-compact); }
+.ui-button--primary {
+  border-color: var(--control-primary-bg);
+  background: var(--control-primary-bg);
+  color: var(--control-primary-text);
+}
+.ui-button--primary:hover { border-color: var(--control-primary-hover); background: var(--control-primary-hover); }
+.ui-button--secondary:hover { border-color: var(--accent-border); background: var(--surface-hover); }
+.ui-button:disabled,
+.ui-control:disabled { opacity: .55; cursor: not-allowed; }
 
 .site-header {
   border-bottom-color: var(--border);
@@ -228,7 +373,7 @@ textarea {
   padding: 7px 10px;
   border-color: var(--accent-border);
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-readable);
   border-radius: var(--radius-md);
   font-size: .68rem;
 }
@@ -310,7 +455,7 @@ textarea {
 .market-stat-list span { color: var(--muted); font-size: .66rem; }
 .market-stat-list strong { margin: 3px 0; font-size: 1.08rem; }
 .market-stat-list small { color: var(--muted); font-size: .63rem; }
-.market-card-link { margin-top: 12px; color: var(--accent); font-size: .72rem; }
+.market-card-link { margin-top: 12px; color: var(--accent-readable); font-size: .72rem; }
 .market-section { margin-top: 46px; }
 .market-section-heading { margin-bottom: 14px; }
 .market-section-heading h2 { margin-top: 5px; font-size: clamp(1.45rem, 2.5vw, 2.05rem); }
@@ -320,14 +465,14 @@ textarea {
 .product-card { border-color: var(--border); background: var(--surface); border-radius: var(--radius-lg); }
 .ranking-card { min-height: 188px; padding: 16px; }
 .ranking-number { font-size: 3.2rem; color: color-mix(in srgb, var(--text) 4%, transparent); }
-.ranking-metric { color: var(--accent); font-size: .64rem; }
+.ranking-metric { color: var(--accent-readable); font-size: .64rem; }
 .ranking-card h3,
 .product-card h3 { margin: 8px 0; font-size: 1rem; }
 .ranking-card p,
 .product-card p { color: var(--muted); font-size: .75rem; line-height: 1.48; }
 .ranking-state { left: 16px; bottom: 14px; color: var(--muted); font-size: .62rem; }
 .product-card { padding: 17px; }
-.product-card a { color: var(--accent); font-size: .72rem; }
+.product-card a { color: var(--accent-readable); font-size: .72rem; }
 
 .asset-page { padding: 26px 0 64px; }
 .asset-breadcrumb { margin-bottom: 18px; color: var(--muted); font-size: .68rem; }
@@ -364,7 +509,6 @@ textarea {
 }
 
 @media (max-width: 720px) {
-  body { font-size: 14px; }
   .site-header-inner { min-height: 52px; gap: 10px; }
   .brand-copy { display: none; }
   .site-header-actions { margin-left: auto; }
@@ -374,4 +518,15 @@ textarea {
   .home-page { padding-top: 28px; }
   .hero-copy h1 { font-size: clamp(2.4rem, 12vw, 3.35rem); }
   .market-section { margin-top: 34px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
 }

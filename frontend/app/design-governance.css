@@ -1,47 +1,6 @@
 /* D1 — Design governance layer
-   Loaded last on purpose. It keeps the product dense, flat and operational,
-   reducing generic AI/SaaS visual patterns without changing page semantics. */
-
-:root {
-  --font-xs: .68rem;
-  --font-sm: .76rem;
-  --font-md: .86rem;
-  --font-lg: .98rem;
-  --font-xl: 1.18rem;
-  --font-2xl: 1.55rem;
-  --font-3xl: 2.15rem;
-  --font-hero: clamp(2.15rem, 3.7vw, 3.25rem);
-
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
-  --radius-xl: 10px;
-
-  --shadow-soft: none;
-  --shadow-card: none;
-
-  --page-section-gap: 28px;
-  --panel-padding: 14px;
-}
-
-[data-mode="light"],
-[data-mode="dark"] {
-  --shadow-soft: none;
-  --shadow-card: none;
-}
-
-body {
-  background: var(--bg);
-  font-size: 14px;
-  line-height: 1.45;
-}
-
-button,
-input,
-select,
-textarea {
-  font-family: inherit;
-}
+   Visual rules only. Canonical tokens now live in design-system.css so this file
+   no longer redefines typography, radius, shadows, spacing or focus values. */
 
 /* Brand stays recognizable without relying on editorial serif styling. */
 .brand-copy strong,
