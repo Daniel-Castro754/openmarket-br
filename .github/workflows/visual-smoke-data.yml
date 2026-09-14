@@ -1,0 +1,179 @@
+name: visual-smoke-data
+
+on:
+  workflow_dispatch:
+    inputs:
+      ticker:
+        description: B3 ticker used by the visual matrix
+        required: true
+        default: PETR4
+        type: string
+      financial_start:
+        description: First CVM financial reference date
+        required: true
+        default: "2021-01-01"
+        type: string
+      financial_end:
+        description: Last CVM financial reference date
+        required: true
+        default: "2026-12-31"
+        type: string
+      documents_start:
+        description: First CVM document delivery date
+        required: true
+        default: "2025-01-01"
+        type: string
+      documents_end:
+        description: Last CVM document delivery date
+        required: true
+        default: "2026-12-31"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  playwright-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      OPENMARKET_ENV: development
+      OPENMARKET_DATABASE_URL: postgresql+psycopg://openmarket:openmarket@localhost:5432/openmarket
+      OPENMARKET_CORS_ORIGINS: http://localhost:3000
+      OPENMARKET_API_URL: http://localhost:8000
+      QA_REQUIRE_DATA: "1"
+      QA_ASSET_TICKER: ${{ inputs.ticker || 'PETR4' }}
+      FINANCIAL_START: ${{ inputs.financial_start || '2021-01-01' }}
+      FINANCIAL_END: ${{ inputs.financial_end || '2026-12-31' }}
+      DOCUMENTS_START: ${{ inputs.documents_start || '2025-01-01' }}
+      DOCUMENTS_END: ${{ inputs.documents_end || '2026-12-31' }}
+
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: openmarket
+          POSTGRES_USER: openmarket
+          POSTGRES_PASSWORD: openmarket
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U openmarket -d openmarket"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ./backend
+
+      - name: Migrate database
+        working-directory: backend
+        run: alembic upgrade head
+
+      - name: Synchronize official financial data
+        working-directory: backend
+        run: >-
+          python -m openmarket_api.cli sync-asset "$QA_ASSET_TICKER"
+          --start "$FINANCIAL_START"
+          --end "$FINANCIAL_END"
+
+      - name: Synchronize official document metadata
+        working-directory: backend
+        run: >-
+          python -m openmarket_api.cli sync-documents "$QA_ASSET_TICKER"
+          --start "$DOCUMENTS_START"
+          --end "$DOCUMENTS_END"
+
+      - name: Start API
+        working-directory: backend
+        run: |
+          nohup uvicorn openmarket_api.main:app --host 127.0.0.1 --port 8000 > "$RUNNER_TEMP/openmarket-api.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/openmarket-api.pid"
+
+      - name: Wait for API
+        run: |
+          for attempt in {1..40}; do
+            if curl -fsS http://localhost:8000/health >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          cat "$RUNNER_TEMP/openmarket-api.log"
+          exit 1
+
+      - name: Verify synchronized data
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from urllib.parse import quote
+          from urllib.request import urlopen
+
+          ticker = os.environ["QA_ASSET_TICKER"]
+          base = os.environ["OPENMARKET_API_URL"].rstrip("/")
+
+          def get(path: str):
+              with urlopen(f"{base}{path}", timeout=30) as response:
+                  return json.load(response)
+
+          asset = get(f"/api/v1/assets/{quote(ticker)}")
+          if int(asset.get("financial_item_count", 0)) <= 0:
+              raise SystemExit("synchronized asset has no financial items")
+
+          summary = get(f"/api/v1/assets/{quote(ticker)}/indicator-summary?frequency=annual")
+          indicators = [item for group in summary.get("groups", []) for item in group.get("indicators", [])]
+          if not any(item.get("value") is not None for item in indicators):
+              raise SystemExit("indicator summary has no available values")
+
+          documents = get(f"/api/v1/documents?ticker={quote(ticker)}&limit=1")
+          if not documents:
+              raise SystemExit("synchronized ticker has no document metadata in the selected window")
+
+          print(
+              f"validated {ticker}: financial_items={asset['financial_item_count']} "
+              f"indicators_with_value={sum(item.get('value') is not None for item in indicators)} "
+              f"documents_sample={len(documents)}"
+          )
+          PY
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm install
+
+      - name: Install Chromium
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Run data-backed visual smoke matrix
+        working-directory: frontend
+        run: npm run qa:visual
+
+      - name: Upload Playwright report and API log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-smoke-data-report
+          path: |
+            frontend/playwright-report
+            frontend/test-results
+            ${{ runner.temp }}/openmarket-api.log
+          if-no-files-found: ignore
+          retention-days: 7

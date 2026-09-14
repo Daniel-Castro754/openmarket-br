@@ -15,6 +15,7 @@ type VisualCase = {
 };
 
 const ticker = process.env.QA_ASSET_TICKER ?? "PETR4";
+const requireData = process.env.QA_REQUIRE_DATA === "1";
 const desktop = { width: 1440, height: 1000 };
 const notebook = { width: 1180, height: 860 };
 const mobile = { width: 390, height: 844 };
@@ -172,7 +173,7 @@ async function openCase(page: Page, visualCase: VisualCase) {
   expect(response, `Sem resposta HTTP para ${visualCase.path}`).not.toBeNull();
 
   const status = response?.status() ?? 0;
-  if (visualCase.requiresData && status >= 400) {
+  if (visualCase.requiresData && status >= 400 && !requireData) {
     test.skip(true, `${visualCase.path} depende de backend/dados locais disponíveis; status ${status}.`);
   }
 
