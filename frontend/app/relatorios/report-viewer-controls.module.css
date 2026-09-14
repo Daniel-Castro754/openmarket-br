@@ -1,0 +1,61 @@
+.documentPaneActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.pageControls {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: var(--control-height-compact);
+  padding: 2px 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
+}
+
+.pageControls a,
+.pageControls span {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.pageControls a:hover {
+  background: var(--surface-hover);
+}
+
+.pageControls span {
+  color: var(--data-missing-text);
+}
+
+.pageControls strong {
+  min-width: 72px;
+  text-align: center;
+  color: var(--soft);
+  font-size: .54rem;
+  font-weight: 750;
+}
+
+.pageLink {
+  color: var(--accent-readable);
+  text-decoration: none;
+}
+
+.pageLink:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 780px) {
+  .documentPaneActions {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
