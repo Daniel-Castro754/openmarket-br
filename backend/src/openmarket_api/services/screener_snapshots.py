@@ -8,7 +8,11 @@ from sqlalchemy.dialects.postgresql import insert as postgresql_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import Session
 
-from openmarket_api.domain.analytics import SeriesFrequency
+from openmarket_api.domain.analytics import (
+    FinancialMetric,
+    FinancialSeries,
+    SeriesFrequency,
+)
 from openmarket_api.domain.screener import DerivedScreenerMetric, ScreenerMetric
 from openmarket_api.persistence.models import (
     CompanyRecord,
@@ -24,6 +28,29 @@ from openmarket_api.services.liquidity_series import LiquidityFinancialSeriesSer
 SnapshotValue = tuple[Decimal | None, date | None]
 SnapshotMap = dict[tuple[UUID, ScreenerMetric], SnapshotValue]
 SnapshotRow = dict[str, object]
+SeriesCacheKey = tuple[str, FinancialMetric, SeriesFrequency]
+
+
+class _MemoizedLiquidityFinancialSeriesService(LiquidityFinancialSeriesService):
+    """Request-local memoization for financial series shared by screener indicators."""
+
+    def __init__(self, session: Session) -> None:
+        super().__init__(session)
+        self._series_cache: dict[SeriesCacheKey, FinancialSeries] = {}
+
+    def get_series(
+        self,
+        ticker: str,
+        metric: FinancialMetric,
+        *,
+        frequency: SeriesFrequency = SeriesFrequency.ANNUAL,
+    ) -> FinancialSeries:
+        key = (ticker.upper(), metric, frequency)
+        series = self._series_cache.get(key)
+        if series is None:
+            series = super().get_series(ticker, metric, frequency=frequency)
+            self._series_cache[key] = series
+        return series
 
 
 class ScreenerSnapshotService:
@@ -31,7 +58,7 @@ class ScreenerSnapshotService:
 
     def __init__(self, session: Session) -> None:
         self.session = session
-        self.financial_service = LiquidityFinancialSeriesService(session)
+        self.financial_service = _MemoizedLiquidityFinancialSeriesService(session)
         self.cash_service = CashFlowSeriesService(session)
         self.derived_service = DerivedIndicatorSeriesService(self.financial_service)
 
