@@ -1,9 +1,11 @@
 from collections.abc import Iterable
 from datetime import date
 from decimal import Decimal
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from sqlalchemy import func, select
+from sqlalchemy.dialects.postgresql import insert as postgresql_insert
+from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import Session
 
 from openmarket_api.domain.analytics import FinancialMetric, SeriesFrequency
@@ -18,6 +20,7 @@ from openmarket_api.services.financial_series import FinancialSeriesService
 
 SnapshotValue = tuple[Decimal | None, date | None]
 SnapshotMap = dict[tuple[UUID, FinancialMetric], SnapshotValue]
+SnapshotRow = dict[str, object]
 
 
 class ScreenerSnapshotService:
@@ -58,7 +61,7 @@ class ScreenerSnapshotService:
         }
 
         values: SnapshotMap = {}
-        changed = False
+        pending_rows: list[SnapshotRow] = []
         for instrument, _ in materialized_records:
             source_latest_period = (
                 latest_periods.get(instrument.company_id)
@@ -70,24 +73,52 @@ class ScreenerSnapshotService:
                 snapshot = existing_by_key.get(key)
                 if snapshot is None or snapshot.source_latest_period != source_latest_period:
                     value, period_end = self._latest_metric(instrument.ticker, metric)
-                    if snapshot is None:
-                        snapshot = ScreenerMetricSnapshotRecord(
-                            instrument_id=instrument.id,
-                            metric=metric.value,
-                            frequency=SeriesFrequency.ANNUAL.value,
-                        )
-                        self.session.add(snapshot)
-                        existing_by_key[key] = snapshot
-                    snapshot.value = value
-                    snapshot.period_end = period_end
-                    snapshot.source_latest_period = source_latest_period
-                    changed = True
+                    pending_rows.append(
+                        {
+                            "id": snapshot.id if snapshot is not None else uuid4(),
+                            "instrument_id": instrument.id,
+                            "metric": metric.value,
+                            "frequency": SeriesFrequency.ANNUAL.value,
+                            "value": value,
+                            "period_end": period_end,
+                            "source_latest_period": source_latest_period,
+                        }
+                    )
+                    values[(instrument.id, metric)] = (value, period_end)
+                else:
+                    values[(instrument.id, metric)] = (snapshot.value, snapshot.period_end)
 
-                values[(instrument.id, metric)] = (snapshot.value, snapshot.period_end)
-
-        if changed:
+        if pending_rows:
+            self._upsert_rows(pending_rows)
             self.session.commit()
         return values
+
+    def _upsert_rows(self, rows: list[SnapshotRow]) -> None:
+        """Atomically insert or refresh snapshot rows on supported databases."""
+
+        if not rows:
+            return
+
+        table = ScreenerMetricSnapshotRecord.__table__
+        dialect_name = self.session.get_bind().dialect.name
+        if dialect_name == "postgresql":
+            statement = postgresql_insert(table).values(rows)
+        elif dialect_name == "sqlite":
+            statement = sqlite_insert(table).values(rows)
+        else:
+            raise RuntimeError(
+                f"Atomic screener snapshot upsert is not implemented for {dialect_name!r}"
+            )
+
+        statement = statement.on_conflict_do_update(
+            index_elements=[table.c.instrument_id, table.c.metric, table.c.frequency],
+            set_={
+                "value": statement.excluded.value,
+                "period_end": statement.excluded.period_end,
+                "source_latest_period": statement.excluded.source_latest_period,
+            },
+        )
+        self.session.execute(statement)
 
     def _latest_company_periods(self, company_ids: list[UUID]) -> dict[UUID, date | None]:
         if not company_ids:
