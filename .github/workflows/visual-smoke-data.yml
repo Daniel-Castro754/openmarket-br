@@ -1,9 +1,6 @@
 name: visual-smoke-data
 
-# Pull-request trigger is temporary while validating the snapshot race fix on PostgreSQL.
 on:
-  pull_request:
-    branches: [main]
   workflow_dispatch:
     inputs:
       ticker:
