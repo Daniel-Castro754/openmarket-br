@@ -299,7 +299,7 @@
 }
 
 html[data-navigation="sidebar"] .research-home {
-  width: min(var(--content-dense), 97vw);
+  width: 100%;
 }
 
 html[data-navigation="sidebar"] .research-home-intro {
