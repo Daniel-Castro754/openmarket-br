@@ -18,13 +18,14 @@ from openmarket_api.services.derived_indicator_series import (
     DerivedIndicatorSeriesService,
     IndicatorSeriesResult,
 )
-from openmarket_api.services.financial_series import FinancialSeriesService
+from openmarket_api.services.liquidity_series import LiquidityFinancialSeriesService
 
 
 GROUP_LABELS: dict[IndicatorGroup, str] = {
     IndicatorGroup.EFFICIENCY: "Eficiência",
     IndicatorGroup.PROFITABILITY: "Rentabilidade",
     IndicatorGroup.LEVERAGE: "Endividamento",
+    IndicatorGroup.LIQUIDITY: "Liquidez",
     IndicatorGroup.GROWTH: "Crescimento",
 }
 
@@ -143,6 +144,21 @@ INDICATOR_CATALOG: tuple[IndicatorDefinition, ...] = (
         dependencies=[FinancialMetric.EQUITY, FinancialMetric.TOTAL_ASSETS],
     ),
     IndicatorDefinition(
+        slug="current-ratio",
+        metric=FinancialMetric.CURRENT_RATIO,
+        label="Liquidez Corrente",
+        group=IndicatorGroup.LIQUIDITY,
+        description=(
+            "Ativo circulante dividido pelo passivo circulante no fechamento do período; "
+            "só é publicado quando as contas CVM 1.01 e 2.01 também têm os rótulos "
+            "Ativo Circulante e Passivo Circulante."
+        ),
+        unit=SeriesUnit.MULTIPLE,
+        format="multiple_2",
+        formula="current_assets / current_liabilities",
+        dependencies=[FinancialMetric.CURRENT_ASSETS, FinancialMetric.CURRENT_LIABILITIES],
+    ),
+    IndicatorDefinition(
         slug="revenue-growth-yoy",
         metric=FinancialMetric.REVENUE_GROWTH_YOY,
         label="Crescimento da Receita",
@@ -172,7 +188,7 @@ INDICATOR_CATALOG: tuple[IndicatorDefinition, ...] = (
 class IndicatorEngine:
     def __init__(self, session: Session) -> None:
         self.assets = AssetReadService(session)
-        self.series = FinancialSeriesService(session)
+        self.series = LiquidityFinancialSeriesService(session)
         self.derived_series = DerivedIndicatorSeriesService(self.series)
 
     @staticmethod
