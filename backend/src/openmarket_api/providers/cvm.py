@@ -25,15 +25,38 @@ class CVMCompanyProvider(CompanyProvider):
 
     name = "cvm-company-registry"
 
-    def __init__(self, *, cache_ttl_seconds: int = 6 * 60 * 60) -> None:
+    def __init__(
+        self,
+        *,
+        cache_ttl_seconds: int = 6 * 60 * 60,
+        request_timeout_seconds: float = 60.0,
+        max_attempts: int = 3,
+        retry_backoff_seconds: float = 1.0,
+        transport: httpx.AsyncBaseTransport | None = None,
+    ) -> None:
+        if request_timeout_seconds <= 0:
+            raise ValueError("request_timeout_seconds must be greater than zero")
+        if max_attempts < 1:
+            raise ValueError("max_attempts must be at least one")
+        if retry_backoff_seconds < 0:
+            raise ValueError("retry_backoff_seconds cannot be negative")
+
         self.cache_ttl_seconds = cache_ttl_seconds
+        self.request_timeout_seconds = request_timeout_seconds
+        self.max_attempts = max_attempts
+        self.retry_backoff_seconds = retry_backoff_seconds
+        self.transport = transport
         self._cache: list[Company] = []
         self._cache_loaded_at = 0.0
         self._lock = asyncio.Lock()
 
     async def healthcheck(self) -> bool:
         try:
-            async with httpx.AsyncClient(timeout=10, follow_redirects=True) as client:
+            async with httpx.AsyncClient(
+                timeout=10,
+                follow_redirects=True,
+                transport=self.transport,
+            ) as client:
                 response = await client.get(CVM_COMPANY_CSV_URL, headers={"Range": "bytes=0-64"})
                 return response.status_code in {200, 206}
         except httpx.HTTPError:
@@ -71,9 +94,25 @@ class CVMCompanyProvider(CompanyProvider):
             return self._cache
 
     async def _download(self) -> list[Company]:
-        async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
-            response = await client.get(CVM_COMPANY_CSV_URL)
-            response.raise_for_status()
+        async with httpx.AsyncClient(
+            timeout=self.request_timeout_seconds,
+            follow_redirects=True,
+            transport=self.transport,
+        ) as client:
+            for attempt in range(1, self.max_attempts + 1):
+                try:
+                    response = await client.get(CVM_COMPANY_CSV_URL)
+                    response.raise_for_status()
+                    break
+                except httpx.TransportError:
+                    if attempt >= self.max_attempts:
+                        raise
+                except httpx.HTTPStatusError as exc:
+                    if exc.response.status_code < 500 or attempt >= self.max_attempts:
+                        raise
+
+                if self.retry_backoff_seconds:
+                    await asyncio.sleep(self.retry_backoff_seconds * attempt)
 
         # CVM cadastral files historically use a Latin-1-compatible encoding.
         text = response.content.decode("latin-1")
