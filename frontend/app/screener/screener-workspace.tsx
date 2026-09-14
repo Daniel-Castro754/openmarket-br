@@ -9,7 +9,11 @@ import styles from "./screener.module.css";
 
 type MetricKey =
   | "revenue"
+  | "gross_profit"
+  | "operating_result"
   | "net_income"
+  | "total_assets"
+  | "equity"
   | "revenue_growth_yoy"
   | "gross_margin"
   | "operating_margin"
@@ -18,7 +22,11 @@ type MetricKey =
   | "current_ratio"
   | "cash"
   | "gross_debt"
-  | "net_debt";
+  | "net_debt"
+  | "operating_cash_flow"
+  | "investing_cash_flow"
+  | "financing_cash_flow"
+  | "net_change_in_cash";
 
 type Operator = "gt" | "gte" | "lt" | "lte";
 type SortableKey = "ticker" | "company" | MetricKey;
@@ -47,10 +55,18 @@ const metricOptions: Array<{ key: MetricKey; label: string; unit: "%" | "R$" | "
   { key: "operating_margin", label: "Margem operacional", unit: "%", group: "Margens" },
   { key: "net_margin", label: "Margem líquida", unit: "%", group: "Margens" },
   { key: "revenue", label: "Receita", unit: "R$", group: "Resultados" },
+  { key: "gross_profit", label: "Lucro bruto", unit: "R$", group: "Resultados" },
+  { key: "operating_result", label: "Resultado operacional", unit: "R$", group: "Resultados" },
   { key: "net_income", label: "Lucro líquido", unit: "R$", group: "Resultados" },
+  { key: "total_assets", label: "Ativos totais", unit: "R$", group: "Balanço" },
+  { key: "equity", label: "Patrimônio líquido", unit: "R$", group: "Balanço" },
   { key: "cash", label: "Caixa", unit: "R$", group: "Balanço" },
   { key: "gross_debt", label: "Dívida bruta", unit: "R$", group: "Balanço" },
   { key: "net_debt", label: "Dívida líquida", unit: "R$", group: "Balanço" },
+  { key: "operating_cash_flow", label: "Fluxo de caixa operacional", unit: "R$", group: "Fluxo de caixa" },
+  { key: "investing_cash_flow", label: "Fluxo de caixa de investimentos", unit: "R$", group: "Fluxo de caixa" },
+  { key: "financing_cash_flow", label: "Fluxo de caixa de financiamentos", unit: "R$", group: "Fluxo de caixa" },
+  { key: "net_change_in_cash", label: "Variação líquida de caixa", unit: "R$", group: "Fluxo de caixa" },
 ];
 
 const metricKeys = new Set<MetricKey>(metricOptions.map((item) => item.key));
@@ -67,6 +83,8 @@ const columns: ColumnDefinition[] = [
   { key: "ticker", label: "Ticker", kind: "text", sortable: true },
   { key: "company", label: "Empresa", kind: "text", sortable: true },
   { key: "revenue", label: "Receita", kind: "currency", metric: "revenue", sortable: true },
+  { key: "gross_profit", label: "Lucro bruto", kind: "currency", metric: "gross_profit", sortable: true },
+  { key: "operating_result", label: "Resultado op.", kind: "currency", metric: "operating_result", sortable: true },
   { key: "revenue_growth_yoy", label: "Receita YoY", kind: "percent", metric: "revenue_growth_yoy", sortable: true },
   { key: "net_income", label: "Lucro líquido", kind: "currency", metric: "net_income", sortable: true },
   { key: "roe", label: "ROE", kind: "percent", metric: "roe", sortable: true },
@@ -74,9 +92,15 @@ const columns: ColumnDefinition[] = [
   { key: "gross_margin", label: "Margem bruta", kind: "percent", metric: "gross_margin", sortable: true },
   { key: "operating_margin", label: "Margem op.", kind: "percent", metric: "operating_margin", sortable: true },
   { key: "net_margin", label: "Margem líquida", kind: "percent", metric: "net_margin", sortable: true },
+  { key: "total_assets", label: "Ativos", kind: "currency", metric: "total_assets", sortable: true },
+  { key: "equity", label: "Patrimônio", kind: "currency", metric: "equity", sortable: true },
   { key: "cash", label: "Caixa", kind: "currency", metric: "cash", sortable: true },
   { key: "gross_debt", label: "Dívida bruta", kind: "currency", metric: "gross_debt", sortable: true },
   { key: "net_debt", label: "Dívida líquida", kind: "currency", metric: "net_debt", sortable: true },
+  { key: "operating_cash_flow", label: "FCO", kind: "currency", metric: "operating_cash_flow", sortable: true },
+  { key: "investing_cash_flow", label: "FC investimentos", kind: "currency", metric: "investing_cash_flow", sortable: true },
+  { key: "financing_cash_flow", label: "FC financiamentos", kind: "currency", metric: "financing_cash_flow", sortable: true },
+  { key: "net_change_in_cash", label: "Variação caixa", kind: "currency", metric: "net_change_in_cash", sortable: true },
   { key: "latest_period", label: "Último período", kind: "date" },
 ];
 
