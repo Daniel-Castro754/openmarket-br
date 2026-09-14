@@ -86,7 +86,7 @@ export function HomeMacroInteractiveChart({
     return valid.map((point, index) => ({
       ...point,
       x: 3 + (index / (valid.length - 1)) * 94,
-      y: 5 + (1 - (point.numericValue - min) / spread) * 23,
+      y: 4 + (1 - (point.numericValue - min) / spread) * 23,
     }));
   }, [points]);
 
@@ -117,40 +117,40 @@ export function HomeMacroInteractiveChart({
       onPointerLeave={() => setHoveredIndex(null)}
       onClick={(event) => setSelectedIndex(indexFromPointer(event.clientX, event.currentTarget))}
     >
-      <svg viewBox="0 0 100 42" preserveAspectRatio="none" aria-hidden="true">
-        <line className="home-v2-chart-baseline" x1="3" y1="30" x2="97" y2="30" />
-        {ticks.map((tick) => {
-          const point = chartPoints[tick.index];
-          return (
-            <g key={tick.key}>
-              <line className="home-v2-chart-tick" x1={point.x} y1="30" x2={point.x} y2="31.2" />
-              <text className="home-v2-chart-month" x={point.x} y="39" textAnchor="middle">
-                {tick.label}
-              </text>
-            </g>
-          );
-        })}
+      <svg viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true">
+        <line className="home-v2-chart-baseline" x1="3" y1="29" x2="97" y2="29" />
         <polyline className="home-v2-chart-line" points={polyline} />
         {activePoint ? (
           <>
             <line
               className="home-v2-chart-guide"
               x1={activePoint.x}
-              y1="3"
+              y1="2"
               x2={activePoint.x}
-              y2="30"
+              y2="29"
             />
             <circle className="home-v2-chart-active-point" cx={activePoint.x} cy={activePoint.y} r="1.55" />
           </>
         ) : null}
       </svg>
 
+      <div className="home-v2-chart-months" aria-hidden="true">
+        {ticks.map((tick) => {
+          const point = chartPoints[tick.index];
+          return (
+            <span key={tick.key} style={{ left: `${point.x}%` }}>
+              {tick.label}
+            </span>
+          );
+        })}
+      </div>
+
       {activePoint ? (
         <div
           className="home-v2-chart-tooltip"
           style={{
             left: `${Math.min(91, Math.max(9, activePoint.x))}%`,
-            top: `${Math.max(8, (activePoint.y / 42) * 100)}%`,
+            top: `${Math.max(8, (activePoint.y / 32) * 76)}%`,
           }}
         >
           <strong>{formatValue(activePoint.numericValue, unit)}</strong>
