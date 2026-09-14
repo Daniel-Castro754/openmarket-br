@@ -2,215 +2,162 @@ import Link from "next/link";
 
 import { AssetSearch } from "./asset-search";
 
-const workspaceLinks = [
-  { label: "Empresas", detail: "Abra uma companhia e siga do indicador até a fonte.", href: "/ativos/PETR4", meta: "CVM" },
-  { label: "Screener", detail: "Combine filtros fundamentalistas sobre o universo sincronizado.", href: "/screener", meta: "CVM · cálculo" },
-  { label: "Rankings", detail: "Ordene empresas pelos indicadores fundamentalistas disponíveis.", href: "/rankings", meta: "CVM · cálculo" },
-  { label: "Últimos resultados", detail: "DFP e ITR recentes conectados ao documento original.", href: "/resultados", meta: "CVM · IPE" },
-  { label: "Macroeconomia", detail: "Selic, Focus e séries oficiais em contexto.", href: "/macroeconomia", meta: "BCB" },
-];
-
-const discoveryModules = [
+const researchTools = [
   {
-    kicker: "EMPRESAS",
-    title: "Visão de empresa",
-    text: "Fundamentos, histórico, documentos e proveniência em uma única tela.",
+    label: "Empresas",
+    detail: "Abra uma companhia e siga dos indicadores até os documentos de origem.",
     href: "/ativos/PETR4",
-    action: "Abrir PETR4",
-    status: "Disponível",
+    meta: "CVM",
   },
   {
-    kicker: "PESQUISA",
-    title: "Listas",
-    text: "Navegue pela base atual e use métricas financeiras para reduzir o universo de análise.",
+    label: "Listas de ativos",
+    detail: "Navegue pelo universo sincronizado com visões financeiras compactas.",
     href: "/listas",
-    action: "Abrir listas",
-    status: "Disponível",
+    meta: "CVM",
   },
   {
-    kicker: "PESQUISA",
-    title: "Screener avançado",
-    text: "Combine crescimento, margens, ROE, resultados e balanço com lógica E e colunas configuráveis.",
+    label: "Screener",
+    detail: "Combine filtros de crescimento, margem, retorno, dívida e resultados.",
     href: "/screener",
-    action: "Montar filtros",
-    status: "Disponível",
+    meta: "CVM · cálculo",
   },
   {
-    kicker: "DESCUBERTA",
-    title: "Setores",
-    text: "A tela e a metodologia estão preparadas, mas a classificação setorial aguarda uma fonte rastreável.",
-    href: "/setores",
-    action: "Ver status",
-    status: "Fonte pendente",
-  },
-  {
-    kicker: "DESCUBERTA",
-    title: "Rankings",
-    text: "Crescimento, retorno e margens ordenados com período e fórmula explícitos.",
-    href: "/rankings",
-    action: "Abrir rankings",
-    status: "Disponível",
-  },
-  {
-    kicker: "RESULTADOS",
-    title: "Últimos resultados",
-    text: "Central de DFP e ITR recentes conectada aos documentos originais e às páginas das empresas.",
-    href: "/resultados",
-    action: "Ver resultados",
-    status: "Disponível",
-  },
-  {
-    kicker: "COMPARAÇÃO",
-    title: "Comparar empresas",
-    text: "Coloque companhias lado a lado sem perder período, unidade e origem do dado.",
+    label: "Comparar",
+    detail: "Coloque até quatro empresas na mesma régua contábil e no mesmo período.",
     href: "/comparar",
-    action: "Comparar",
-    status: "Disponível",
+    meta: "CVM · cálculo",
+  },
+  {
+    label: "Rankings",
+    detail: "Ordene empresas por indicadores com fórmula, período e fonte explícitos.",
+    href: "/rankings",
+    meta: "CVM · cálculo",
+  },
+  {
+    label: "Setores",
+    detail: "Classificação setorial será ativada apenas quando houver fonte rastreável adequada.",
+    href: "/setores",
+    meta: "fonte pendente",
+    pending: true,
   },
 ];
 
-const contextModules = [
+const contextTools = [
   {
-    kicker: "ECONOMIA",
-    title: "Macroeconomia",
-    text: "Séries do Banco Central e expectativas Focus para ler o ambiente econômico.",
-    href: "/macroeconomia",
-    action: "Abrir macro",
+    label: "Últimos resultados",
+    detail: "DFP e ITR recentes ligados à empresa e ao documento original.",
+    href: "/resultados",
+    meta: "CVM · IPE",
   },
   {
-    kicker: "ANÁLISES",
-    title: "Economia real",
-    text: "Consumo, atividade e séries oficiais do IBGE organizadas para pesquisa aplicada.",
-    href: "/analises",
-    action: "Ver análises",
-  },
-  {
-    kicker: "FONTES",
-    title: "Document Hub",
-    text: "Pesquise documentos públicos e volte rapidamente da evidência ao dado estruturado.",
+    label: "Document Hub",
+    detail: "Pesquise relatórios, fatos relevantes e outros documentos públicos.",
     href: "/relatorios",
-    action: "Explorar documentos",
+    meta: "fontes oficiais",
   },
   {
-    kicker: "FERRAMENTAS",
-    title: "Calculadoras",
-    text: "Simulações financeiras separadas da base factual para manter contexto e metodologia claros.",
+    label: "Macroeconomia",
+    detail: "Selic, Focus e séries do Banco Central para contextualizar a análise.",
+    href: "/macroeconomia",
+    meta: "BCB",
+  },
+  {
+    label: "Economia real",
+    detail: "Séries oficiais do IBGE organizadas para pesquisa aplicada.",
+    href: "/analises",
+    meta: "IBGE",
+  },
+  {
+    label: "Calculadoras",
+    detail: "Ferramentas de simulação separadas da base factual do produto.",
     href: "/calculadoras",
-    action: "Abrir ferramentas",
+    meta: "ferramentas",
   },
 ];
+
+function ToolRow({
+  item,
+  index,
+}: {
+  item: { label: string; detail: string; href: string; meta: string; pending?: boolean };
+  index: number;
+}) {
+  return (
+    <Link className={`research-home-row${item.pending ? " pending" : ""}`} href={item.href}>
+      <span className="research-home-index">{String(index + 1).padStart(2, "0")}</span>
+      <span className="research-home-row-copy">
+        <strong>{item.label}</strong>
+        <small>{item.detail}</small>
+      </span>
+      <span className="research-home-row-meta">{item.meta}</span>
+      <span className="research-home-row-arrow" aria-hidden="true">→</span>
+    </Link>
+  );
+}
 
 export default function Home() {
   return (
-    <main className="home-page home-dashboard-page">
-      <section className="home-overview home-workspace-overview">
-        <div className="hero-copy home-hero-copy">
-          <span className="eyebrow">OPEN FINANCIAL INTELLIGENCE · BRASIL</span>
-          <h1>Pesquise a empresa. Entenda o número. Chegue à fonte.</h1>
+    <main className="research-home">
+      <section className="research-home-intro" aria-labelledby="research-home-title">
+        <div className="research-home-intro-copy">
+          <span className="eyebrow">OPENMARKET BR · PESQUISA FINANCEIRA</span>
+          <h1 id="research-home-title">Pesquise empresas e confira a origem de cada número.</h1>
           <p>
-            O OpenMarket BR reúne fundamentos, documentos oficiais e contexto econômico em um fluxo de pesquisa
-            orientado por proveniência, período e metodologia.
+            Fundamentos, documentos oficiais e contexto econômico em um fluxo orientado por período, metodologia e proveniência.
           </p>
+        </div>
+        <div className="research-home-search">
           <AssetSearch />
-          <div className="hero-trust-row">
-            <span>CVM</span>
-            <span>Banco Central</span>
-            <span>IBGE</span>
-            <span>dados públicos</span>
-          </div>
         </div>
+      </section>
 
-        <aside className="home-workspace-panel" aria-label="Entradas principais de pesquisa">
-          <div className="home-workspace-heading">
+      <section className="research-home-source-strip" aria-label="Fontes e tratamento dos dados">
+        <div><strong>CVM</strong><span>demonstrações e documentos corporativos</span></div>
+        <div><strong>BCB</strong><span>macroeconomia e expectativas</span></div>
+        <div><strong>IBGE</strong><span>atividade e economia real</span></div>
+        <div><strong>OpenMarket</strong><span>indicadores calculados com fórmula explícita</span></div>
+      </section>
+
+      <section className="research-home-workspace" aria-label="Áreas de pesquisa">
+        <div className="research-home-panel">
+          <header className="research-home-panel-heading">
             <div>
-              <span className="eyebrow">COMEÇAR PESQUISA</span>
-              <h2>Escolha o ponto de entrada.</h2>
+              <span className="eyebrow">EMPRESAS</span>
+              <h2>Pesquisa fundamentalista</h2>
             </div>
-            <span className="home-status-badge available">ativo</span>
+            <span>universo sincronizado</span>
+          </header>
+          <div className="research-home-list">
+            {researchTools.map((item, index) => <ToolRow item={item} index={index} key={item.href} />)}
           </div>
-          <div className="home-workspace-list">
-            {workspaceLinks.map((item, index) => (
-              <Link href={item.href} className="home-workspace-link" key={item.href}>
-                <span className="home-workspace-index">0{index + 1}</span>
-                <span className="home-workspace-copy">
-                  <strong>{item.label}</strong>
-                  <small>{item.detail}</small>
-                </span>
-                <span className="home-workspace-meta">{item.meta}</span>
-                <b aria-hidden="true">→</b>
-              </Link>
-            ))}
-          </div>
-        </aside>
-      </section>
-
-      <section className="home-discovery-section" aria-labelledby="home-discovery-title">
-        <div className="home-discovery-heading">
-          <div>
-            <span className="eyebrow">DESCOBERTA</span>
-            <h2 id="home-discovery-title">Do universo de empresas até a análise individual</h2>
-            <p>Recursos ativos usam apenas dados que a base consegue sustentar; lacunas metodológicas ficam explícitas.</p>
-          </div>
-          <Link href="/screener">Abrir screener →</Link>
         </div>
 
-        <div className="home-discovery-grid">
-          {discoveryModules.map((module) => {
-            const available = module.status === "Disponível";
-            const content = (
-              <>
-                <div className="home-module-topline">
-                  <span className="eyebrow">{module.kicker}</span>
-                  <span className={`home-status-badge ${available ? "available" : "planned"}`}>
-                    {module.status}
-                  </span>
-                </div>
-                <h3>{module.title}</h3>
-                <p>{module.text}</p>
-                <span className={`home-module-action ${available ? "" : "muted"}`}>{module.action} →</span>
-              </>
-            );
-
-            return (
-              <Link className={`home-module-card ${available ? "" : "planned"}`} href={module.href} key={module.title}>
-                {content}
-              </Link>
-            );
-          })}
+        <div className="research-home-panel">
+          <header className="research-home-panel-heading">
+            <div>
+              <span className="eyebrow">CONTEXTO E FONTES</span>
+              <h2>Documentos e economia</h2>
+            </div>
+            <span>fontes públicas</span>
+          </header>
+          <div className="research-home-list">
+            {contextTools.map((item, index) => <ToolRow item={item} index={index} key={item.href} />)}
+          </div>
         </div>
       </section>
 
-      <section className="home-context-section" aria-labelledby="home-context-title">
-        <div className="home-discovery-heading compact">
-          <div>
-            <span className="eyebrow">CONTEXTO E FONTES</span>
-            <h2 id="home-context-title">Complete a leitura sem sair do fluxo</h2>
-          </div>
-        </div>
-        <div className="home-context-grid">
-          {contextModules.map((module) => (
-            <Link className="home-context-card" href={module.href} key={module.title}>
-              <span className="eyebrow">{module.kicker}</span>
-              <h3>{module.title}</h3>
-              <p>{module.text}</p>
-              <span>{module.action} →</span>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      <section className="home-principle-strip" aria-label="Princípios de dados do OpenMarket BR">
+      <section className="research-home-method" aria-label="Política de proveniência">
         <div>
-          <strong>Oficial</strong>
-          <span>Dado primário identificado pela fonte pública.</span>
+          <span className="research-home-method-label official">Oficial</span>
+          <p>Dado primário identificado com a fonte pública e o período correspondente.</p>
         </div>
         <div>
-          <strong>Calculado</strong>
-          <span>Indicador derivado com fórmula e dependências explícitas.</span>
+          <span className="research-home-method-label calculated">Calculado</span>
+          <p>Indicador derivado pelo OpenMarket com fórmula e dependências rastreáveis.</p>
         </div>
         <div>
-          <strong>Mercado</strong>
-          <span>Espaço reservado para dados licenciados quando houver integração adequada.</span>
+          <span className="research-home-method-label market">Mercado</span>
+          <p>Dados de preço e consenso só entram quando existir integração licenciada adequada.</p>
         </div>
       </section>
     </main>
