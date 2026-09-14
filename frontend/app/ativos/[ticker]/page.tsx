@@ -119,7 +119,7 @@ export default async function AssetOverviewPage({ params }: { params: Promise<{ 
   const [series, indicatorSummary, recentDocuments] = await Promise.all([
     Promise.all(overviewMetrics.map((metric) => getFinancialSeries(ticker, metric, "annual"))),
     getIndicatorSummary(ticker),
-    getDocuments({ ticker, limit: 3 }),
+    getDocuments({ ticker, limit: 4 }),
   ]);
 
   const revenue = metricSeries(series, "revenue");
@@ -197,54 +197,90 @@ export default async function AssetOverviewPage({ params }: { params: Promise<{ 
     <>
       <AssetSummaryStrip metrics={summaryMetrics} />
 
+      <section className="asset-overview-intro" aria-labelledby="asset-overview-intro-title">
+        <div>
+          <span className="eyebrow">VISÃO GERAL</span>
+          <h2 id="asset-overview-intro-title">Fundamentos em um olhar</h2>
+          <p>
+            Uma leitura curta dos dados anuais mais recentes. O detalhamento permanece separado nas abas de
+            Indicadores, Financeiro, Eventos e Relatórios.
+          </p>
+        </div>
+        <span>CVM · dados anuais</span>
+      </section>
+
       <section className="asset-overview-research-grid">
         <FundamentalsChecklist items={checklistItems} />
         <AssetComparePanel ticker={ticker} />
       </section>
 
-      <section className="asset-overview-links" aria-label="Aprofundar análise">
-        <div>
-          <span className="eyebrow">APROFUNDE A ANÁLISE</span>
-          <h2>Detalhes separados por área</h2>
-          <p>A visão geral resume os fundamentos; indicadores, demonstrações e publicações ficam nas abas dedicadas.</p>
+      <section className="asset-overview-debt-note" aria-label="Contexto de endividamento">
+        <span>Dívida líquida</span>
+        <strong>{formatSeriesValue(netDebt)}</strong>
+        <p>Calculada apenas quando caixa e componentes da dívida pertencem ao mesmo fechamento.</p>
+      </section>
+
+      <section className="asset-analysis-shortcuts" aria-labelledby="asset-analysis-shortcuts-title">
+        <div className="asset-analysis-shortcuts-header">
+          <div>
+            <span className="eyebrow">APROFUNDE A ANÁLISE</span>
+            <h2 id="asset-analysis-shortcuts-title">Escolha a próxima leitura</h2>
+          </div>
+          <p>Cada área mantém período, fórmula e origem dos dados sem duplicar toda a análise nesta página.</p>
         </div>
-        <nav>
-          <Link href={`/ativos/${ticker}/indicadores`}>Indicadores →</Link>
-          <Link href={`/ativos/${ticker}/financeiro`}>Financeiro →</Link>
-          <Link href={`/ativos/${ticker}/eventos`}>Eventos →</Link>
-          <Link href={`/ativos/${ticker}/relatorios`}>Relatórios →</Link>
+        <nav aria-label="Áreas de análise do ativo">
+          <Link href={`/ativos/${ticker}/indicadores`}>
+            <strong>Indicadores</strong>
+            <span>Margens, retorno, liquidez e dívida</span>
+            <b>Abrir →</b>
+          </Link>
+          <Link href={`/ativos/${ticker}/financeiro`}>
+            <strong>Financeiro</strong>
+            <span>Resultados, balanço e fluxo de caixa</span>
+            <b>Abrir →</b>
+          </Link>
+          <Link href={`/ativos/${ticker}/eventos`}>
+            <strong>Eventos</strong>
+            <span>Fatos, ITR, DFP e publicações recentes</span>
+            <b>Abrir →</b>
+          </Link>
+          <Link href={`/ativos/${ticker}/relatorios`}>
+            <strong>Relatórios</strong>
+            <span>Documentos oficiais no Document Hub</span>
+            <b>Abrir →</b>
+          </Link>
         </nav>
       </section>
 
-      <section className="events-section" id="eventos-recentes">
+      <section className="asset-publications" id="eventos-recentes" aria-labelledby="asset-publications-title">
         <div className="section-title-row">
           <div>
             <span className="eyebrow">PUBLICAÇÕES</span>
-            <h2>Documentos recentes</h2>
+            <h2 id="asset-publications-title">Documentos recentes</h2>
           </div>
-          <Link href={`/ativos/${ticker}/eventos`}>Ver eventos →</Link>
+          <Link href={`/ativos/${ticker}/eventos`}>Ver todos →</Link>
         </div>
-        <div className="events-grid">
-          {recentDocuments.map((document) => (
-            <Link className="event-card" href={`/relatorios/${document.id}`} key={document.id}>
-              <div>
-                <span className="event-type">{documentTypeLabel(document.document_type)}</span>
-                <span className="event-date">{formatDate(document.published_at)}</span>
-              </div>
-              <h3>{document.title}</h3>
-              <small>{document.source.source_name}</small>
-            </Link>
-          ))}
-          {recentDocuments.length === 0 && (
-            <div className="event-empty">Nenhum documento sincronizado para este ticker.</div>
-          )}
-        </div>
-      </section>
 
-      <section className="asset-overview-debt-note">
-        <span>Dívida líquida</span>
-        <strong>{formatSeriesValue(netDebt)}</strong>
-        <p>Valor calculado apenas quando caixa e componentes da dívida pertencem ao mesmo fechamento.</p>
+        {recentDocuments.length > 0 ? (
+          <div className="asset-publications-list">
+            {recentDocuments.map((document) => (
+              <Link className="asset-publication-row" href={`/relatorios/${document.id}`} key={document.id}>
+                <div className="asset-publication-meta">
+                  <strong>{documentTypeLabel(document.document_type)}</strong>
+                  <span>{formatDate(document.published_at)}</span>
+                </div>
+                <div className="asset-publication-copy">
+                  <strong>{document.title}</strong>
+                  <span>{document.reference_period ? `Referência: ${document.reference_period}` : "Período não informado"}</span>
+                </div>
+                <span className="asset-publication-source">{document.source.source_name}</span>
+                <span className="asset-publication-arrow" aria-hidden="true">→</span>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <p className="asset-publications-empty">Nenhum documento sincronizado para este ticker.</p>
+        )}
       </section>
     </>
   );
