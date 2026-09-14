@@ -96,7 +96,7 @@ def test_screener_snapshot_upsert_updates_conflicting_key_atomically() -> None:
                 {
                     "id": uuid4(),
                     **key,
-                    "value": Decimal("10"),
+                    "value": Decimal(10),
                     "period_end": date(2024, 12, 31),
                     "source_latest_period": date(2024, 12, 31),
                 }
@@ -108,7 +108,7 @@ def test_screener_snapshot_upsert_updates_conflicting_key_atomically() -> None:
                 {
                     "id": uuid4(),
                     **key,
-                    "value": Decimal("20"),
+                    "value": Decimal(20),
                     "period_end": date(2025, 12, 31),
                     "source_latest_period": date(2025, 12, 31),
                 }
