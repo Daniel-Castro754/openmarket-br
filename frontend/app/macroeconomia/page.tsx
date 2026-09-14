@@ -24,9 +24,9 @@ function formatNumber(value: string, unit: string, maximumFractionDigits = 2) {
 }
 
 function changeLabel(indicator: MacroIndicator) {
-  if (indicator.change == null) return "Sem comparação anterior";
+  if (indicator.change == null) return "sem comparação";
   const delta = Number(indicator.change);
-  if (!Number.isFinite(delta)) return "Sem comparação anterior";
+  if (!Number.isFinite(delta)) return "sem comparação";
   const sign = delta > 0 ? "+" : "";
   const suffix = indicator.unit.startsWith("%") ? " p.p." : "";
   return `${sign}${new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 }).format(delta)}${suffix}`;
@@ -54,7 +54,7 @@ function movementSentence(indicator?: MacroIndicator) {
   const previous = Number(indicator.previous_value);
   if (!Number.isFinite(current) || !Number.isFinite(previous)) return null;
   const direction = current > previous ? "subiu" : current < previous ? "caiu" : "ficou estável";
-  return `${indicator.label} ${direction} na última leitura (${formatNumber(indicator.latest_value, indicator.unit)}).`;
+  return `${indicator.label} ${direction}: ${formatNumber(indicator.latest_value, indicator.unit)}.`;
 }
 
 export default async function MacroPage() {
@@ -77,77 +77,66 @@ export default async function MacroPage() {
         <strong>Macroeconomia</strong>
       </div>
 
-      <section className={styles.hero}>
+      <header className={styles.header}>
         <div>
-          <span className={styles.kicker}>PAINEL MACROECONÔMICO</span>
-          <h1>O cenário que move os ativos brasileiros</h1>
-          <p>
-            Juros, inflação, atividade e câmbio em uma única leitura, com séries oficiais do Banco
-            Central e expectativas da Pesquisa Focus. Cada número mantém fonte e data de referência.
-          </p>
+          <span className={styles.kicker}>MACROECONOMIA · BRASIL</span>
+          <h1>Indicadores macroeconômicos</h1>
+          <p>Últimas leituras oficiais e expectativas Focus, com data, frequência e fonte preservadas.</p>
         </div>
-        <div className={styles.heroSource}>
-          <span>Fontes primárias</span>
-          <strong>BCB SGS + Focus</strong>
-          <small>Atualização conforme cada série oficial</small>
+        <div className={styles.headerMeta}>
+          <span>BCB SGS</span>
+          <span>Pesquisa Focus</span>
+          <strong>Fonte oficial</strong>
         </div>
-      </section>
+      </header>
 
       {snapshot.indicators.length === 0 ? (
         <section className={styles.empty}>
-          Os indicadores macroeconômicos estão temporariamente indisponíveis. A API mantém a fonte oficial
-          como única origem; nenhum valor substituto é inventado.
+          Os indicadores macroeconômicos estão temporariamente indisponíveis. Nenhum valor substituto é inventado.
         </section>
       ) : (
         <>
-          <section className={styles.kpiGrid} aria-label="Indicadores macroeconômicos">
-            {snapshot.indicators.map((indicator) => (
-              <article className={styles.kpiCard} key={indicator.key}>
-                <div className={styles.kpiHeading}>
-                  <div>
+          <section className={styles.snapshotPanel} aria-labelledby="macro-snapshot-title">
+            <div className={styles.sectionHeading}>
+              <div>
+                <span className={styles.kicker}>BRASIL AGORA</span>
+                <h2 id="macro-snapshot-title">Últimas leituras</h2>
+              </div>
+              <span className={styles.sectionMeta}>{snapshot.indicators.length} séries disponíveis</span>
+            </div>
+
+            <div className={styles.kpiGrid} aria-label="Indicadores macroeconômicos">
+              {snapshot.indicators.map((indicator) => (
+                <article className={styles.kpiRow} key={indicator.key}>
+                  <div className={styles.kpiIdentity}>
                     <span>{indicator.label}</span>
                     <strong>{formatNumber(indicator.latest_value, indicator.unit)}</strong>
                   </div>
+                  <svg className={styles.sparkline} viewBox="0 0 240 72" preserveAspectRatio="none" role="img" aria-label={`Histórico de ${indicator.label}`}>
+                    <polyline points={sparkline(indicator.points)} fill="none" vectorEffect="non-scaling-stroke" />
+                  </svg>
                   <span className={Number(indicator.change ?? 0) > 0 ? styles.up : Number(indicator.change ?? 0) < 0 ? styles.down : styles.flat}>
                     {changeLabel(indicator)}
                   </span>
-                </div>
-                <svg className={styles.sparkline} viewBox="0 0 240 72" preserveAspectRatio="none" role="img" aria-label={`Histórico de ${indicator.label}`}>
-                  <polyline points={sparkline(indicator.points)} fill="none" vectorEffect="non-scaling-stroke" />
-                </svg>
-                <div className={styles.kpiMeta}>
-                  <span>{formatDate(indicator.reference_date)}</span>
-                  <span>{indicator.frequency}</span>
-                  <span>{indicator.source.provider}</span>
-                </div>
-                <p>{indicator.description}</p>
-              </article>
-            ))}
+                  <div className={styles.kpiMeta}>
+                    <span>{formatDate(indicator.reference_date)}</span>
+                    <span>{indicator.frequency}</span>
+                    <span>{indicator.source.provider}</span>
+                  </div>
+                </article>
+              ))}
+            </div>
           </section>
 
-          <section className={styles.readingGrid}>
-            <article className={styles.readingCard}>
-              <span className={styles.kicker}>LEITURA DO MOMENTO</span>
-              <h2>O que mudou na última divulgação</h2>
-              <div className={styles.factList}>
-                {facts.map((fact) => <p key={fact}>{fact}</p>)}
+          {facts.length ? (
+            <section className={styles.movementStrip} aria-label="Mudanças na última leitura">
+              <strong>Última divulgação</strong>
+              <div>
+                {facts.map((fact) => <span key={fact}>{fact}</span>)}
               </div>
-              <small>
-                São descrições mecânicas da variação observada, não previsão nem recomendação de investimento.
-              </small>
-            </article>
-
-            <article className={styles.readingCard}>
-              <span className={styles.kicker}>COMO USAR</span>
-              <h2>Conecte macro e fundamentos</h2>
-              <div className={styles.guideList}>
-                <div><strong>Juros</strong><span>Custo de capital, crédito e valuation.</span></div>
-                <div><strong>Inflação</strong><span>Preços, margens, contratos e renda real.</span></div>
-                <div><strong>Atividade</strong><span>Demanda agregada e ciclo de receitas.</span></div>
-                <div><strong>Câmbio</strong><span>Exportadores, importadores e dívida em moeda estrangeira.</span></div>
-              </div>
-            </article>
-          </section>
+              <small>Descrição mecânica da variação observada; não é previsão.</small>
+            </section>
+          ) : null}
         </>
       )}
 
@@ -155,9 +144,9 @@ export default async function MacroPage() {
         <div className={styles.sectionHeading}>
           <div>
             <span className={styles.kicker}>PESQUISA FOCUS</span>
-            <h2>Expectativas do mercado</h2>
+            <h2>Expectativas anuais</h2>
           </div>
-          <p>Medianas anuais publicadas pelo Banco Central, com faixa mínima/máxima quando disponível.</p>
+          <p>Medianas publicadas pelo Banco Central; faixa mínima/máxima e respondentes quando disponíveis.</p>
         </div>
 
         {years.length === 0 ? (
@@ -203,19 +192,6 @@ export default async function MacroPage() {
             </table>
           </div>
         )}
-      </section>
-
-      <section className={styles.nextFeatures}>
-        <div>
-          <span className={styles.kicker}>PRÓXIMAS CAMADAS</span>
-          <h2>Do macro para a decisão de investimento</h2>
-          <p>
-            A arquitetura agora permite cruzar o cenário macro com empresas e setores. Isso abre espaço para
-            comparação entre ativos, cotações ajustadas/dolarizadas, agenda de proventos e gráficos de preço
-            versus lucro sem depender de scraping de sites terceiros.
-          </p>
-        </div>
-        <Link href="/ativos/PETR4">Ver exemplo em um ativo →</Link>
       </section>
     </main>
   );

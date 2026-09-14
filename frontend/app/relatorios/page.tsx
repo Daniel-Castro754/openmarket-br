@@ -5,6 +5,7 @@ import {
   type DocumentProcessingStatus,
   type DocumentType,
 } from "../../lib/api";
+import d8 from "./document-hub-d8.module.css";
 import styles from "./report-viewer.module.css";
 
 const PAGE_SIZE = 24;
@@ -21,7 +22,7 @@ const typeOptions: Array<{ value: DocumentType; label: string }> = [
 ];
 
 function formatDate(value?: string | null) {
-  if (!value) return "Data não informada";
+  if (!value) return "—";
   return new Intl.DateTimeFormat("pt-BR", {
     dateStyle: "medium",
     timeZone: "UTC",
@@ -39,9 +40,9 @@ function statusClass(status: DocumentProcessingStatus) {
 }
 
 function statusLabel(status: DocumentProcessingStatus) {
-  if (status === "ready") return "processado";
-  if (status === "failed") return "falhou";
-  return "metadados";
+  if (status === "ready") return "Pronto";
+  if (status === "failed") return "Falhou";
+  return "Metadados";
 }
 
 function firstValue(value?: string | string[]) {
@@ -103,27 +104,24 @@ export default async function ReportsPage({
   const hasFilters = Boolean(q || ticker || documentType);
 
   return (
-    <main className={`${styles.shell} ${styles.libraryShell}`}>
-      <nav className={styles.topbar}>
-        <Link href="/">← OpenMarket BR</Link>
-        <span>Document Hub / Relatórios</span>
-      </nav>
-
-      <header className={styles.header}>
+    <main className={`${styles.shell} ${styles.libraryShell} ${d8.workspace}`}>
+      <header className={`${styles.header} ${d8.header}`}>
         <div>
-          <span className={styles.eyebrow}>DOCUMENT HUB</span>
-          <h1>Relatórios</h1>
-          <p>
-            Biblioteca pública de documentos corporativos da CVM, com proveniência, filtros por ticker
-            e acesso ao documento oficial dentro do workspace.
-          </p>
+          <span className={styles.eyebrow}>DOCUMENT HUB · CVM</span>
+          <h1>Relatórios e documentos</h1>
+          <p>Pesquise a biblioteca sincronizada e abra a evidência original sem sair do fluxo de análise.</p>
+        </div>
+        <div className={d8.headerMeta}>
+          <span>{documents.length} nesta página</span>
+          <span>Página {page}</span>
+          <strong>Fonte oficial</strong>
         </div>
       </header>
 
-      <form className={styles.filters} method="get">
-        <input name="q" defaultValue={q} placeholder="Buscar por título ou período" />
-        <input name="ticker" defaultValue={ticker} placeholder="Ticker, ex.: PETR4" />
-        <select name="type" defaultValue={documentType ?? ""}>
+      <form className={`${styles.filters} ${d8.filters}`} method="get">
+        <input name="q" defaultValue={q} placeholder="Título ou período" aria-label="Buscar por título ou período" />
+        <input name="ticker" defaultValue={ticker} placeholder="Ticker, ex.: PETR4" aria-label="Filtrar por ticker" />
+        <select name="type" defaultValue={documentType ?? ""} aria-label="Filtrar por tipo">
           <option value="">Todos os tipos</option>
           {typeOptions.map((item) => (
             <option key={item.value} value={item.value}>
@@ -131,20 +129,9 @@ export default async function ReportsPage({
             </option>
           ))}
         </select>
-        <button type="submit">Filtrar</button>
+        <button type="submit">Aplicar</button>
+        {hasFilters ? <Link className={d8.clearFilters} href="/relatorios">Limpar</Link> : null}
       </form>
-
-      <div className={styles.librarySummary}>
-        <div>
-          <strong>{documents.length}</strong> documentos nesta página
-          {ticker ? <span> · {ticker}</span> : null}
-          {documentType ? <span> · {typeLabel(documentType)}</span> : null}
-        </div>
-        <div className={styles.summaryActions}>
-          <span>Página {page}</span>
-          {hasFilters ? <Link href="/relatorios">Limpar filtros</Link> : null}
-        </div>
-      </div>
 
       {documents.length === 0 ? (
         <section className={styles.empty}>
@@ -152,28 +139,41 @@ export default async function ReportsPage({
           {page > 1 ? " Volte uma página para continuar navegando." : ""}
         </section>
       ) : (
-        <section className={styles.libraryGrid}>
-          {documents.map((document) => (
-            <Link className={styles.card} href={`/relatorios/${document.id}`} key={document.id}>
-              <div className={styles.cardTop}>
-                <span className={styles.badge}>{typeLabel(document.document_type)}</span>
-                <span className={statusClass(document.processing_status)}>
-                  {statusLabel(document.processing_status)}
-                </span>
-              </div>
-              <h2>{document.title}</h2>
-              <p>
-                {document.company_name ?? "Companhia não vinculada"}
-                {document.tickers.length ? ` · ${document.tickers.join(" / ")}` : ""}
-              </p>
-              <div className={styles.cardMeta}>
-                <span>{formatDate(document.published_at)}</span>
-                {document.reference_period && <span>Referência {document.reference_period}</span>}
-                {document.page_count != null && <span>{document.page_count} páginas</span>}
-                <span>{document.source.source_name}</span>
-              </div>
-            </Link>
-          ))}
+        <section className={d8.tablePanel}>
+          <div className={d8.tableWrap}>
+            <table className={d8.table}>
+              <thead>
+                <tr>
+                  <th>Documento</th>
+                  <th>Tipo</th>
+                  <th>Referência</th>
+                  <th>Publicado</th>
+                  <th>Status</th>
+                  <th>Fonte</th>
+                  <th>Ação</th>
+                </tr>
+              </thead>
+              <tbody>
+                {documents.map((document) => (
+                  <tr key={document.id}>
+                    <td>
+                      <div className={d8.documentCell}>
+                        <strong>{document.tickers[0] ?? document.company_name ?? "—"}</strong>
+                        <span>{document.title}</span>
+                        {document.company_name ? <small>{document.company_name}</small> : null}
+                      </div>
+                    </td>
+                    <td><span className={styles.badge}>{typeLabel(document.document_type)}</span></td>
+                    <td>{document.reference_period ?? "—"}</td>
+                    <td>{formatDate(document.published_at)}</td>
+                    <td><span className={statusClass(document.processing_status)}>{statusLabel(document.processing_status)}</span></td>
+                    <td>{document.source.source_name}</td>
+                    <td><Link className={d8.openDocument} href={`/relatorios/${document.id}`}>Abrir</Link></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
       )}
 
