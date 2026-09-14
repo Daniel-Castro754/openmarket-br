@@ -4,29 +4,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import type { FinancialMetric, ScreenerResponse, ScreenerRow } from "../../lib/api";
+import type { ScreenerMetric, ScreenerResponse, ScreenerRow } from "../../lib/api";
 import styles from "./screener.module.css";
 
-type MetricKey =
-  | "revenue"
-  | "gross_profit"
-  | "operating_result"
-  | "net_income"
-  | "total_assets"
-  | "equity"
-  | "revenue_growth_yoy"
-  | "gross_margin"
-  | "operating_margin"
-  | "net_margin"
-  | "roe"
-  | "current_ratio"
-  | "cash"
-  | "gross_debt"
-  | "net_debt"
-  | "operating_cash_flow"
-  | "investing_cash_flow"
-  | "financing_cash_flow"
-  | "net_change_in_cash";
+type MetricKey = Exclude<
+  ScreenerMetric,
+  "current_assets" | "current_liabilities" | "short_term_debt" | "long_term_debt"
+>;
 
 type Operator = "gt" | "gte" | "lt" | "lte";
 type SortableKey = "ticker" | "company" | MetricKey;
@@ -49,8 +33,13 @@ type ColumnDefinition = {
 
 const metricOptions: Array<{ key: MetricKey; label: string; unit: "%" | "R$" | "x"; group: string }> = [
   { key: "revenue_growth_yoy", label: "Crescimento da receita", unit: "%", group: "Crescimento" },
+  { key: "net-income-growth-yoy", label: "Crescimento do lucro", unit: "%", group: "Crescimento" },
   { key: "roe", label: "ROE", unit: "%", group: "Rentabilidade" },
+  { key: "roa", label: "ROA", unit: "%", group: "Rentabilidade" },
   { key: "current_ratio", label: "Liquidez corrente", unit: "x", group: "Liquidez" },
+  { key: "net-debt-to-equity", label: "Dívida líquida / PL", unit: "%", group: "Endividamento" },
+  { key: "gross-debt-to-equity", label: "Dívida bruta / PL", unit: "%", group: "Endividamento" },
+  { key: "equity-to-assets", label: "Patrimônio / Ativos", unit: "%", group: "Endividamento" },
   { key: "gross_margin", label: "Margem bruta", unit: "%", group: "Margens" },
   { key: "operating_margin", label: "Margem operacional", unit: "%", group: "Margens" },
   { key: "net_margin", label: "Margem líquida", unit: "%", group: "Margens" },
@@ -86,9 +75,14 @@ const columns: ColumnDefinition[] = [
   { key: "gross_profit", label: "Lucro bruto", kind: "currency", metric: "gross_profit", sortable: true },
   { key: "operating_result", label: "Resultado op.", kind: "currency", metric: "operating_result", sortable: true },
   { key: "revenue_growth_yoy", label: "Receita YoY", kind: "percent", metric: "revenue_growth_yoy", sortable: true },
+  { key: "net-income-growth-yoy", label: "Lucro YoY", kind: "percent", metric: "net-income-growth-yoy", sortable: true },
   { key: "net_income", label: "Lucro líquido", kind: "currency", metric: "net_income", sortable: true },
   { key: "roe", label: "ROE", kind: "percent", metric: "roe", sortable: true },
+  { key: "roa", label: "ROA", kind: "percent", metric: "roa", sortable: true },
   { key: "current_ratio", label: "Liquidez corrente", kind: "multiple", metric: "current_ratio", sortable: true },
+  { key: "net-debt-to-equity", label: "Dív. líquida / PL", kind: "percent", metric: "net-debt-to-equity", sortable: true },
+  { key: "gross-debt-to-equity", label: "Dív. bruta / PL", kind: "percent", metric: "gross-debt-to-equity", sortable: true },
+  { key: "equity-to-assets", label: "PL / Ativos", kind: "percent", metric: "equity-to-assets", sortable: true },
   { key: "gross_margin", label: "Margem bruta", kind: "percent", metric: "gross_margin", sortable: true },
   { key: "operating_margin", label: "Margem op.", kind: "percent", metric: "operating_margin", sortable: true },
   { key: "net_margin", label: "Margem líquida", kind: "percent", metric: "net_margin", sortable: true },
@@ -124,7 +118,7 @@ function parseNumber(value: string) {
 }
 
 function metricNumber(row: ScreenerRow, metric: MetricKey) {
-  const raw = row.metrics[metric as FinancialMetric];
+  const raw = row.metrics[metric];
   if (raw == null) return null;
   const numeric = Number(raw);
   return Number.isFinite(numeric) ? numeric : null;
