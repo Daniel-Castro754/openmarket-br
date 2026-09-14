@@ -1,0 +1,236 @@
+/* Canonical company workstation shell.
+   Keeps company identity, overview density and reference panels compact without
+   styling the dedicated Indicators, Financeiro, Eventos or Relatórios workspaces. */
+
+.asset-page {
+  --asset-section-gap: 16px;
+  padding-top: 12px;
+}
+
+.asset-breadcrumb {
+  min-height: 20px;
+  margin-bottom: 5px;
+  font-size: .58rem;
+}
+
+.asset-overview {
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 0;
+  gap: 0;
+  padding: 8px 0 11px;
+}
+
+.asset-title-block {
+  gap: 10px;
+}
+
+.asset-symbol-mark {
+  width: 38px;
+  height: 38px;
+  border-color: var(--border-strong);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-strong);
+  font-size: .66rem;
+  letter-spacing: .01em;
+}
+
+.asset-title-row {
+  gap: 7px;
+}
+
+.asset-title-row h1 {
+  font-size: clamp(1.7rem, 2.2vw, 2.15rem);
+  letter-spacing: -.045em;
+}
+
+.exchange-tag {
+  min-height: 19px;
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-size: .5rem;
+}
+
+.asset-title-block h2 {
+  margin: 3px 0 1px;
+  font-size: .8rem;
+}
+
+.asset-title-block p {
+  font-size: .58rem;
+  line-height: 1.35;
+}
+
+/* Market-price chrome stays hidden until a traceable market source exists. */
+.quote-placeholder {
+  display: none;
+}
+
+.asset-tabs {
+  min-height: 37px;
+  margin-bottom: 0;
+  padding: 3px 0;
+  gap: 1px;
+}
+
+.asset-tabs a {
+  min-height: 27px;
+  padding: 0 8px;
+  border-radius: var(--radius-sm);
+  font-size: .58rem;
+}
+
+.asset-tabs a.active {
+  background: transparent;
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+/* Primary company KPIs behave like a compact data strip. */
+.headline-metrics {
+  margin: 0 0 14px;
+  border-width: 0 0 1px;
+  border-radius: 0;
+  background: transparent;
+}
+
+.headline-metrics article {
+  min-height: 64px;
+  padding: 9px 12px 10px;
+}
+
+.headline-metrics span {
+  font-size: .5rem;
+  letter-spacing: .055em;
+}
+
+.headline-metrics strong {
+  margin: 4px 0 2px;
+  font-size: .98rem;
+}
+
+.headline-metrics small {
+  font-size: .49rem;
+}
+
+.overview-dashboard {
+  display: block;
+  margin-top: 14px;
+}
+
+.dashboard-main {
+  padding: 0;
+  border-width: 1px 0;
+  background: transparent;
+}
+
+.dashboard-main > .section-title-row {
+  display: none;
+}
+
+.insight-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+}
+
+.insight-card,
+.insight-card.positive,
+.insight-card.attention,
+.insight-card.neutral {
+  min-height: 62px;
+  padding: 9px 11px;
+  border: 0;
+  border-right: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.insight-card:last-child {
+  border-right: 0;
+}
+
+.insight-card > span {
+  color: var(--muted);
+  font-size: .5rem;
+  font-weight: 700;
+  letter-spacing: .055em;
+  text-transform: uppercase;
+}
+
+.insight-card > strong {
+  display: block;
+  margin-top: 5px;
+  color: var(--text-strong);
+  font-size: .88rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.insight-card > p {
+  display: none;
+}
+
+/* Do not allocate visual space to analyst consensus before a valid source exists. */
+.research-consensus-card {
+  display: none !important;
+}
+
+/* Company reference/context blocks remain flat. */
+.asset-context-grid {
+  gap: 18px;
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.asset-context-grid > .panel {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.asset-context-grid .panel-heading {
+  padding-bottom: 7px;
+  border-bottom: 1px solid var(--border);
+}
+
+.coverage-row,
+.identity-panel dl {
+  margin-top: 0;
+}
+
+.asset-sources {
+  margin-top: 20px;
+  padding: 8px 0 0;
+  border: 0;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+}
+
+@media (max-width: 760px) {
+  .insight-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .insight-card:nth-child(2) {
+    border-right: 0;
+  }
+
+  .insight-card:nth-child(-n + 2) {
+    border-bottom: 1px solid var(--border);
+  }
+}
+
+@media (max-width: 520px) {
+  .asset-symbol-mark {
+    width: 34px;
+    height: 34px;
+  }
+
+  .headline-metrics article {
+    min-height: 56px;
+  }
+}
