@@ -4,11 +4,15 @@ import { MacroTickerBar } from "../components/macro-ticker-bar";
 import { SiteFooter } from "../components/site-footer";
 import { SiteHeader } from "../components/site-header";
 import { SiteSideNavigation } from "../components/site-navigation";
+
+/* Foundation and compatibility. */
 import "./styles.css";
 import "./derived.css";
 import "./design-system.css";
 import "./tooling-primitives.css";
 import "./theme-bridge.css";
+
+/* Shell and legacy-compatible global surfaces. */
 import "./visual-overrides.css";
 import "./shell-navigation.css";
 import "./home-dashboard.css";
@@ -27,13 +31,10 @@ import "./company-workstation-d5.css";
 import "./home-research-hub.css";
 import "./discovery-workspace-d7.css";
 import "./visual-qa-d9.css";
-import "./asset-overview-v2.css";
-import "./asset-overview-v3.css";
-import "./home-v2-h1.css";
-import "./home-v2-h2.css";
-import "./home-v2-h3.css";
-import "./home-v2-title-tuning.css";
-import "./home-v2-macro-interactive.css";
+
+/* Canonical current page workspaces. Keep after global QA guardrails. */
+import "./asset-overview.css";
+import "./home-research-workspace.css";
 import "./site-footer.css";
 import "./asset-documents-workspace.css";
 
