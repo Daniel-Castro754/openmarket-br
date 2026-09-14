@@ -59,22 +59,35 @@ export default async function ResultsPage({
   const documents = await loadResults(type, q);
 
   return (
-    <main className="discovery-page results-page">
+    <main className="discovery-page results-page d7-workspace">
       <header className="discovery-header">
         <div>
           <span className="eyebrow">RESULTADOS · DOCUMENTOS OFICIAIS</span>
           <h1>Últimos resultados</h1>
           <p>
-            Central de DFP e ITR sincronizados. Cada linha mantém o vínculo com o documento original e com a página da
-            companhia quando há ticker associado.
+            DFP e ITR sincronizados no Document Hub, com período, publicação, status e acesso direto ao documento.
           </p>
         </div>
-        <div className="discovery-header-stats" aria-label="Resumo dos resultados">
-          <div><strong>{documents.length.toLocaleString("pt-BR")}</strong><span>documentos exibidos</span></div>
-          <div><strong>DFP + ITR</strong><span>tipos incluídos</span></div>
-          <div><strong>CVM</strong><span>origem documental</span></div>
-        </div>
       </header>
+
+      <section className="d7-meta-strip" aria-label="Resumo dos resultados">
+        <div>
+          <strong>{documents.length.toLocaleString("pt-BR")}</strong>
+          <span>documentos exibidos</span>
+        </div>
+        <div>
+          <strong>{type === "all" ? "DFP + ITR" : type.toUpperCase()}</strong>
+          <span>tipo selecionado</span>
+        </div>
+        <div>
+          <strong>{q ?? "Todos"}</strong>
+          <span>filtro de busca</span>
+        </div>
+        <div>
+          <strong>CVM</strong>
+          <span>origem documental</span>
+        </div>
+      </section>
 
       <form className="results-filter-bar" method="get">
         <label>
@@ -89,17 +102,22 @@ export default async function ResultsPage({
             <option value="itr">ITR</option>
           </select>
         </label>
-        <button type="submit">Aplicar filtros</button>
+        <button type="submit">Aplicar</button>
         {(q || type !== "all") ? <Link href="/resultados">Limpar</Link> : null}
       </form>
+
+      <div className="results-context-line">
+        <span>Ordenação por publicação mais recente · limite de até 100 documentos nesta visão.</span>
+        <strong>Fonte oficial</strong>
+      </div>
 
       <section className="discovery-table-panel">
         <div className="discovery-table-heading">
           <div>
-            <span className="eyebrow">PUBLICAÇÕES SINCRONIZADAS</span>
+            <span className="eyebrow">PUBLICAÇÕES</span>
             <h2>{type === "all" ? "DFP e ITR" : type.toUpperCase()}</h2>
           </div>
-          <span className="source-pill">Fonte oficial</span>
+          <span className="source-pill">Oficial · CVM</span>
         </div>
 
         <div className="discovery-table-wrap">
@@ -159,8 +177,8 @@ export default async function ResultsPage({
       <footer className="discovery-footnote">
         <strong>Proveniência:</strong>
         <span>
-          esta página não reconstrói datas nem títulos. Ela exibe os metadados sincronizados no Document Hub e mantém
-          acesso ao documento correspondente.
+          datas, títulos, períodos e vínculos vêm dos metadados sincronizados no Document Hub; esta tela não fabrica
+          nem reconstrói informações ausentes.
         </span>
       </footer>
     </main>

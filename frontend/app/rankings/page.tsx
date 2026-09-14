@@ -88,22 +88,36 @@ export default async function RankingsPage({
   });
 
   return (
-    <main className="discovery-page">
+    <main className="discovery-page d7-workspace rankings-page">
       <header className="discovery-header">
         <div>
-          <span className="eyebrow">RANKINGS · DADOS CVM</span>
-          <h1>Rankings fundamentalistas</h1>
+          <span className="eyebrow">RANKINGS · FUNDAMENTOS</span>
+          <h1>Rankings</h1>
           <p>
-            Ordenação feita somente com indicadores disponíveis na base atual. Empresas sem dado comparável para o
-            indicador selecionado ficam fora da lista, sem estimativas ou preenchimento artificial.
+            Ordene empresas por métricas calculadas a partir da base CVM, mantendo período e fórmula visíveis.
+            Empresas sem dado comparável para a métrica selecionada não entram na lista exibida.
           </p>
         </div>
-        <div className="discovery-header-stats" aria-label="Resumo do ranking">
-          <div><strong>{screener.universe_total.toLocaleString("pt-BR")}</strong><span>ativos na base</span></div>
-          <div><strong>{rows.length.toLocaleString("pt-BR")}</strong><span>exibidos com dado válido</span></div>
-          <div><strong>CVM</strong><span>base financeira</span></div>
-        </div>
       </header>
+
+      <section className="d7-meta-strip" aria-label="Resumo do ranking">
+        <div>
+          <strong>{screener.universe_total.toLocaleString("pt-BR")}</strong>
+          <span>ativos no universo sincronizado</span>
+        </div>
+        <div>
+          <strong>{rows.length.toLocaleString("pt-BR")}</strong>
+          <span>linhas exibidas com dado válido</span>
+        </div>
+        <div>
+          <strong>{selected.label}</strong>
+          <span>métrica atual</span>
+        </div>
+        <div>
+          <strong>CVM</strong>
+          <span>fonte financeira</span>
+        </div>
+      </section>
 
       <section className="discovery-toolbar" aria-label="Selecionar ranking">
         <div className="ranking-selector">
@@ -119,23 +133,21 @@ export default async function RankingsPage({
         </div>
       </section>
 
-      <section className="ranking-methodology-card">
+      <section className="ranking-context-bar" aria-label="Metodologia do ranking">
         <div>
-          <span className="eyebrow">METODOLOGIA</span>
-          <h2>{selected.label}</h2>
-          <p>{selected.description}</p>
+          <strong>{selected.label}</strong>
+          <span>{selected.description}</span>
         </div>
-        <div className="ranking-formula">
-          <span>Fórmula</span>
-          <strong>{selected.methodology}</strong>
-          <small>Indicador calculado pelo OpenMarket BR a partir de fatos oficiais compatíveis da CVM.</small>
+        <div className="ranking-formula-inline">
+          <small>Fórmula · {selected.methodology}</small>
         </div>
+        <small className="ranking-source-inline">Calculado · CVM</small>
       </section>
 
       <section className="discovery-table-panel">
         <div className="discovery-table-heading">
           <div>
-            <span className="eyebrow">CLASSIFICAÇÃO ATUAL</span>
+            <span className="eyebrow">CLASSIFICAÇÃO</span>
             <h2>{selected.label}</h2>
           </div>
           <span className="source-pill">Calculado · CVM</span>
@@ -180,10 +192,10 @@ export default async function RankingsPage({
       </section>
 
       <footer className="discovery-footnote">
-        <strong>Leitura correta:</strong>
+        <strong>Metodologia:</strong>
         <span>
-          ranking não é recomendação de investimento. Ele apenas ordena o valor mais recente disponível da métrica,
-          mantendo período e metodologia visíveis.
+          o ranking ordena o valor mais recente disponível da métrica. Não é recomendação de investimento e não
+          preenche lacunas com estimativas.
         </span>
       </footer>
     </main>
