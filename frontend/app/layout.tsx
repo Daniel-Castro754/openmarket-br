@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { MacroTickerBar } from "../components/macro-ticker-bar";
+import { SiteFooter } from "../components/site-footer";
 import { SiteHeader } from "../components/site-header";
 import { SiteSideNavigation } from "../components/site-navigation";
 import "./styles.css";
@@ -32,6 +33,7 @@ import "./home-v2-h2.css";
 import "./home-v2-h3.css";
 import "./home-v2-title-tuning.css";
 import "./home-v2-macro-interactive.css";
+import "./site-footer.css";
 
 export const metadata: Metadata = {
   title: "OpenMarket BR",
@@ -82,6 +84,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <SiteHeader />
         <MacroTickerBar />
         {children}
+        <SiteFooter />
       </body>
     </html>
   );
