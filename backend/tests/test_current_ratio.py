@@ -311,8 +311,12 @@ def test_indicator_engine_exposes_liquidity_group_and_history() -> None:
 
         indicator_engine = IndicatorEngine(session)
         summary = indicator_engine.get_summary("PETR4")
-        liquidity_group = next(group for group in summary.groups if group.group == IndicatorGroup.LIQUIDITY)
-        current_ratio = next(item for item in liquidity_group.indicators if item.slug == "current-ratio")
+        liquidity_group = next(
+            group for group in summary.groups if group.group == IndicatorGroup.LIQUIDITY
+        )
+        current_ratio = next(
+            item for item in liquidity_group.indicators if item.slug == "current-ratio"
+        )
 
         assert current_ratio.value == Decimal("1.5")
         assert current_ratio.unit == SeriesUnit.MULTIPLE
@@ -326,4 +330,4 @@ def test_indicator_engine_exposes_liquidity_group_and_history() -> None:
         ]
         assert history.current_value == Decimal("1.5")
         assert history.historical_average == Decimal("1.75")
-        assert [point.value for point in history.points] == [Decimal("2"), Decimal("1.5")]
+        assert [point.value for point in history.points] == [Decimal(2), Decimal("1.5")]
