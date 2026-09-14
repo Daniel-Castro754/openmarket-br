@@ -8,7 +8,7 @@ from sqlalchemy.dialects.postgresql import insert as postgresql_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import Session
 
-from openmarket_api.domain.analytics import FinancialMetric, SeriesFrequency
+from openmarket_api.domain.analytics import SeriesFrequency
 from openmarket_api.domain.screener import DerivedScreenerMetric, ScreenerMetric
 from openmarket_api.persistence.models import (
     CompanyRecord,
