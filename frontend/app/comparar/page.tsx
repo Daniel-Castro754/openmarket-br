@@ -7,6 +7,7 @@ import {
   type FinancialMetric,
   type FinancialSeries,
 } from "../../lib/api";
+import { DATA_EMPTY, formatFinancialValue, formatYear } from "../../lib/format";
 import styles from "./compare.module.css";
 
 const comparisonMetrics: Array<{ metric: FinancialMetric; label: string; group: string }> = [
@@ -41,26 +42,16 @@ function latestValue(series?: FinancialSeries) {
 
 function valueLabel(series?: FinancialSeries) {
   const point = latestValue(series);
-  if (!series || !point) return "—";
-  const numeric = Number(point.value);
-  if (!Number.isFinite(numeric)) return point.value;
-  if (series.unit === "percent") {
-    return `${new Intl.NumberFormat("pt-BR", {
-      maximumFractionDigits: 1,
-      minimumFractionDigits: 1,
-    }).format(numeric)}%`;
-  }
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: point.currency ?? "BRL",
-    notation: "compact",
-    maximumFractionDigits: 1,
-  }).format(numeric);
+  if (!series || !point) return DATA_EMPTY;
+  return formatFinancialValue(point.value, series.unit, {
+    currency: point.currency,
+    percentDigits: 1,
+    fallback: DATA_EMPTY,
+  });
 }
 
 function periodLabel(series?: FinancialSeries) {
-  const point = latestValue(series);
-  return point?.period_end ? point.period_end.slice(0, 4) : "—";
+  return formatYear(latestValue(series)?.period_end, DATA_EMPTY);
 }
 
 async function loadAsset(ticker: string): Promise<ComparedAsset> {
@@ -208,7 +199,7 @@ function FragmentGroup({ group, assets }: { group: string; assets: ComparedAsset
                     <small>{periodLabel(item)}</small>
                   </>
                 ) : (
-                  "—"
+                  DATA_EMPTY
                 )}
               </td>
             );

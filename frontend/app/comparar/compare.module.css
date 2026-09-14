@@ -79,10 +79,10 @@
 }
 .form input {
   min-width: 0;
-  height: 28px;
+  height: var(--control-height-compact);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
-  padding: 0 8px;
+  padding: 0 var(--tool-cell-padding-x);
   background: var(--surface-soft);
   color: var(--text);
   font: inherit;
@@ -92,20 +92,21 @@
 }
 .form input:focus {
   border-color: var(--accent-border);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 10%, transparent);
+  box-shadow: var(--focus-ring);
 }
 .form button {
-  height: 28px;
-  border: 1px solid var(--text-strong);
+  height: var(--control-height-compact);
+  border: 1px solid var(--control-primary-bg);
   border-radius: var(--radius-sm);
-  padding: 0 9px;
-  background: var(--text-strong);
-  color: var(--bg);
+  padding: 0 10px;
+  background: var(--control-primary-bg);
+  color: var(--control-primary-text);
   font: inherit;
   font-size: .57rem;
   font-weight: 800;
   cursor: pointer;
 }
+.form button:hover { background: var(--control-primary-hover); }
 .form small {
   color: var(--muted);
   font-size: .52rem;
@@ -128,8 +129,8 @@
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 5px;
-  min-height: 28px;
-  padding: 0 7px;
+  min-height: var(--control-height-compact);
+  padding: 0 8px;
   border-left: 2px solid var(--accent-border);
   color: var(--text);
   text-decoration: none;
@@ -149,8 +150,8 @@
   white-space: nowrap;
 }
 .assetChip:hover { background: var(--surface-hover); }
-.assetChipMissing { border-left-color: var(--negative); }
-.assetChipMissing span { color: var(--negative); }
+.assetChipMissing { border-left-color: var(--border-strong); }
+.assetChipMissing span { color: var(--data-missing-text); }
 
 .tableWrap {
   width: 100%;
@@ -165,14 +166,14 @@
   min-width: 860px;
   border-collapse: separate;
   border-spacing: 0;
-  font-size: .62rem;
+  font-size: var(--tool-table-font-size);
   font-variant-numeric: tabular-nums;
 }
 .table th,
 .table td {
   min-width: 150px;
-  height: 34px;
-  padding: 5px 9px;
+  height: var(--tool-row-height);
+  padding: var(--tool-cell-padding-y) var(--tool-cell-padding-x);
   border-right: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
   text-align: left;
@@ -183,7 +184,7 @@
 .table td:first-child {
   position: sticky;
   left: 0;
-  z-index: 2;
+  z-index: var(--tool-sticky-cell-z);
   min-width: 165px;
   width: 165px;
   background: var(--surface);
@@ -194,15 +195,15 @@
 .table thead th {
   position: sticky;
   top: 0;
-  z-index: 4;
-  height: 42px;
+  z-index: var(--tool-sticky-header-z);
+  height: var(--tool-header-height);
   background: var(--table-header);
   color: var(--muted);
-  font-size: .51rem;
+  font-size: var(--tool-header-font-size);
   text-transform: uppercase;
   letter-spacing: .045em;
 }
-.table thead th:first-child { z-index: 5; background: var(--table-header); }
+.table thead th:first-child { z-index: var(--tool-sticky-corner-z); background: var(--table-header); }
 .table thead th a {
   display: block;
   color: var(--text-strong);
@@ -211,7 +212,7 @@
   text-decoration: none;
   letter-spacing: .01em;
 }
-.table thead th a:hover { color: var(--accent); }
+.table thead th a:hover { color: var(--accent-readable); }
 .table thead th small,
 .table td small {
   display: block;
@@ -219,7 +220,7 @@
   overflow: hidden;
   margin-top: 1px;
   color: var(--muted);
-  font-size: .52rem;
+  font-size: var(--tool-meta-font-size);
   font-weight: 500;
   text-overflow: ellipsis;
   text-transform: none;
@@ -245,8 +246,8 @@
 
 .groupRow th {
   position: static !important;
-  height: 26px;
-  padding: 4px 9px;
+  height: var(--tool-group-row-height);
+  padding: 4px var(--tool-cell-padding-x);
   border-right: 0;
   background: var(--surface-strong) !important;
   color: var(--muted);
@@ -257,8 +258,8 @@
 }
 
 .missing {
-  color: var(--negative);
-  font-size: .53rem;
+  color: var(--data-missing-text);
+  font-size: var(--tool-meta-font-size);
 }
 
 .methodologyNote {
@@ -267,7 +268,7 @@
   gap: 4px 14px;
   padding: 7px 1px 0;
   color: var(--muted);
-  font-size: .52rem;
+  font-size: var(--tool-meta-font-size);
   line-height: 1.4;
 }
 .methodologyNote span + span::before {

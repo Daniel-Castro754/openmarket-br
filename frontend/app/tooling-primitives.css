@@ -1,0 +1,53 @@
+/* Shared visual primitives for wide analytical tools.
+   Page modules keep their layout; repeated table/control semantics live here. */
+
+:root {
+  --tool-row-height: 34px;
+  --tool-row-height-compact: 32px;
+  --tool-header-height: 40px;
+  --tool-group-row-height: 28px;
+  --tool-cell-padding-y: 6px;
+  --tool-cell-padding-x: 9px;
+  --tool-table-font-size: .60rem;
+  --tool-header-font-size: .52rem;
+  --tool-meta-font-size: .54rem;
+  --tool-pagination-height: 32px;
+  --tool-sticky-cell-z: 10;
+  --tool-sticky-header-z: var(--z-sticky);
+  --tool-sticky-corner-z: 21;
+}
+
+.tool-table {
+  font-variant-numeric: tabular-nums;
+}
+
+.tool-table th,
+.tool-table td {
+  vertical-align: middle;
+}
+
+.tool-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: var(--tool-sticky-header-z);
+  background: var(--table-header);
+}
+
+.tool-numeric {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.tool-empty,
+.tool-missing {
+  color: var(--data-missing-text);
+}
+
+.tool-empty {
+  text-align: center;
+}
+
+.tool-pagination {
+  min-height: var(--tool-pagination-height);
+  color: var(--muted);
+}
