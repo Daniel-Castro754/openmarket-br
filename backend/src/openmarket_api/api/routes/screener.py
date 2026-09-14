@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from openmarket_api.api.dependencies import get_db_session
 from openmarket_api.domain.analytics import FinancialMetric
+from openmarket_api.domain.screener import DerivedScreenerMetric, ScreenerMetric
 from openmarket_api.persistence.models import (
     CompanyRecord,
     FinancialStatementRecord,
@@ -21,7 +22,7 @@ from openmarket_api.services.screener_snapshots import ScreenerSnapshotService, 
 
 router = APIRouter(prefix="/api/v1/screener", tags=["screener"])
 
-SCREENER_METRICS: tuple[FinancialMetric, ...] = (
+SCREENER_METRICS: tuple[ScreenerMetric, ...] = (
     FinancialMetric.REVENUE,
     FinancialMetric.GROSS_PROFIT,
     FinancialMetric.OPERATING_RESULT,
@@ -41,6 +42,11 @@ SCREENER_METRICS: tuple[FinancialMetric, ...] = (
     FinancialMetric.NET_MARGIN,
     FinancialMetric.REVENUE_GROWTH_YOY,
     FinancialMetric.ROE,
+    DerivedScreenerMetric.ROA,
+    DerivedScreenerMetric.NET_DEBT_TO_EQUITY,
+    DerivedScreenerMetric.GROSS_DEBT_TO_EQUITY,
+    DerivedScreenerMetric.EQUITY_TO_ASSETS,
+    DerivedScreenerMetric.NET_INCOME_GROWTH_YOY,
 )
 
 SCREENER_METRIC_BY_VALUE = {metric.value: metric for metric in SCREENER_METRICS}
@@ -50,7 +56,7 @@ CompanyStats = tuple[int, date | None, int]
 
 @dataclass(frozen=True)
 class ScreenerFilter:
-    metric: FinancialMetric
+    metric: ScreenerMetric
     operator: str
     value: Decimal
 
@@ -127,7 +133,7 @@ def _company_name(instrument: InstrumentRecord, company: CompanyRecord | None) -
 def _snapshot_value(
     values: SnapshotMap,
     instrument: InstrumentRecord,
-    metric: FinancialMetric,
+    metric: ScreenerMetric,
 ) -> tuple[Decimal | None, date | None]:
     return values.get((instrument.id, metric), (None, None))
 

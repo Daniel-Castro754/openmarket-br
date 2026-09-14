@@ -4,6 +4,7 @@ import pytest
 
 from openmarket_api.api.routes.screener import _matches_filter, _parse_filter
 from openmarket_api.domain.analytics import FinancialMetric
+from openmarket_api.domain.screener import DerivedScreenerMetric
 
 
 def test_parse_filter_accepts_supported_metric_and_operator() -> None:
@@ -20,6 +21,25 @@ def test_parse_filter_accepts_current_ratio() -> None:
     assert parsed.metric is FinancialMetric.CURRENT_RATIO
     assert parsed.operator == "gte"
     assert parsed.value == Decimal("1.25")
+
+
+@pytest.mark.parametrize(
+    ("expression", "metric"),
+    [
+        ("roa:gte:10", DerivedScreenerMetric.ROA),
+        ("net-debt-to-equity:lte:80", DerivedScreenerMetric.NET_DEBT_TO_EQUITY),
+        ("gross-debt-to-equity:lte:100", DerivedScreenerMetric.GROSS_DEBT_TO_EQUITY),
+        ("equity-to-assets:gte:30", DerivedScreenerMetric.EQUITY_TO_ASSETS),
+        ("net-income-growth-yoy:gte:5", DerivedScreenerMetric.NET_INCOME_GROWTH_YOY),
+    ],
+)
+def test_parse_filter_accepts_derived_metrics(
+    expression: str,
+    metric: DerivedScreenerMetric,
+) -> None:
+    parsed = _parse_filter(expression)
+
+    assert parsed.metric is metric
 
 
 def test_parse_filter_accepts_decimal_comma() -> None:
