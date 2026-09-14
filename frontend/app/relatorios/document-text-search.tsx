@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 
 import type { DocumentSection } from "../../lib/api";
-import styles from "./report-viewer.module.css";
+import styles from "./document-search.module.css";
 
 const MAX_RESULTS = 8;
 
