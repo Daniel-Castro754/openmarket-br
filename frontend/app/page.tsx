@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { HomeDiscoveryPolish } from "../components/home/home-discovery-polish";
 import { HomeMacroFocusPanel } from "../components/home/home-macro-focus-panel";
 import { HomeResearchWorkspace } from "../components/home/home-research-workspace";
 import { AssetSearch } from "./asset-search";
@@ -34,29 +35,8 @@ export default function Home() {
         <HomeMacroFocusPanel />
       </section>
 
-      <section className="research-home-source-strip" aria-label="Fontes e tratamento dos dados">
-        <div><strong>CVM</strong><span>demonstrações e documentos corporativos</span></div>
-        <div><strong>BCB</strong><span>macroeconomia e expectativas</span></div>
-        <div><strong>IBGE</strong><span>atividade e economia real</span></div>
-        <div><strong>OpenMarket</strong><span>indicadores calculados com fórmula explícita</span></div>
-      </section>
-
       <HomeResearchWorkspace />
-
-      <section className="research-home-method" aria-label="Política de proveniência">
-        <div>
-          <span className="research-home-method-label official">Oficial</span>
-          <p>Dado primário identificado com a fonte pública e o período correspondente.</p>
-        </div>
-        <div>
-          <span className="research-home-method-label calculated">Calculado</span>
-          <p>Indicador derivado pelo OpenMarket com fórmula e dependências rastreáveis.</p>
-        </div>
-        <div>
-          <span className="research-home-method-label market">Mercado</span>
-          <p>Dados de preço e consenso só entram quando existir integração licenciada adequada.</p>
-        </div>
-      </section>
+      <HomeDiscoveryPolish />
     </main>
   );
 }
