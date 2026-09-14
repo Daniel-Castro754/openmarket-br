@@ -1,5 +1,7 @@
 name: visual-smoke
 
+# Pull-request trigger is temporary for validating the harness. It will be
+# reduced to workflow_dispatch before merge.
 on:
   pull_request:
     branches: [main]
