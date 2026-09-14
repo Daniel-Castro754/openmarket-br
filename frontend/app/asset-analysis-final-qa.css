@@ -1,57 +1,5 @@
-/* Final visual QA for the asset Indicators and Financial workspaces.
-   Presentation only: protects density, wrapping and borders across breakpoints. */
-
-#indicadores-fundamentais {
-  min-width: 0;
-}
-
-#indicadores-fundamentais > div:first-child,
-#indicadores-fundamentais > div:nth-of-type(2) > section {
-  border-color: var(--border-strong);
-}
-
-#indicadores-fundamentais > div:nth-of-type(2) > section > div:first-child,
-#indicadores-fundamentais > div:nth-of-type(2) > section > div:nth-child(2) {
-  min-width: 0;
-}
-
-#indicadores-fundamentais article {
-  min-width: 0;
-  min-height: 96px;
-}
-
-#indicadores-fundamentais article > div:first-child > span:first-child {
-  min-width: 0;
-  max-width: calc(100% - 24px);
-  overflow-wrap: anywhere;
-}
-
-#indicadores-fundamentais article > div:nth-child(2) {
-  min-width: 0;
-  flex-wrap: wrap;
-}
-
-#indicadores-fundamentais article > div:last-child {
-  min-width: 0;
-  align-items: center;
-  flex-wrap: wrap;
-  row-gap: 5px;
-}
-
-#indicadores-fundamentais article > div:last-child > div {
-  min-width: 0;
-  flex: 1 1 120px;
-}
-
-#indicadores-fundamentais article > div:last-child > a {
-  flex: 0 0 auto;
-}
-
-#indicadores-fundamentais p,
-#indicadores-fundamentais small,
-#indicadores-fundamentais span {
-  overflow-wrap: anywhere;
-}
+/* Final visual QA for the asset Financial workspace.
+   Indicator QA now lives with indicator-dashboard.module.css. */
 
 .financial-workspace,
 .financial-workspace section,
@@ -70,10 +18,7 @@
 }
 
 .financial-workspace .section-heading,
-.financial-workspace .series-heading {
-  min-width: 0;
-}
-
+.financial-workspace .series-heading,
 .financial-workspace .section-heading > div,
 .financial-workspace .series-heading > div {
   min-width: 0;
@@ -114,20 +59,14 @@
 
 .financial-workspace .series-single-copy,
 .financial-workspace .series-single-copy > span,
-.financial-workspace .series-footer > span {
+.financial-workspace .series-footer > span,
+.financial-workspace .series-row,
+.financial-workspace .series-track {
   min-width: 0;
 }
 
 .financial-workspace .series-footer > span {
   overflow-wrap: anywhere;
-}
-
-.financial-workspace .series-row {
-  min-width: 0;
-}
-
-.financial-workspace .series-track {
-  min-width: 0;
 }
 
 .financial-view-annual .series-card-single {
@@ -139,35 +78,12 @@
 }
 
 @media (max-width: 900px) {
-  #indicadores-fundamentais > div:first-child,
-  #indicadores-fundamentais > div:nth-of-type(2) > section > div:first-child {
-    gap: 8px;
-  }
-
-  #indicadores-fundamentais article > div:last-child {
-    align-items: center;
-    flex-direction: row;
-  }
-
   .financial-workspace .series-account {
     max-width: 44%;
   }
 }
 
 @media (max-width: 680px) {
-  #indicadores-fundamentais article {
-    min-height: 92px;
-  }
-
-  #indicadores-fundamentais article > div:last-child {
-    align-items: center;
-    flex-direction: row;
-  }
-
-  #indicadores-fundamentais article > div:last-child > div {
-    flex-basis: auto;
-  }
-
   .financial-workspace .financial-headline-strip article {
     min-height: 64px;
   }
@@ -178,15 +94,6 @@
 }
 
 @media (max-width: 520px) {
-  #indicadores-fundamentais article > div:last-child {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  #indicadores-fundamentais article > div:last-child > a {
-    padding-left: 0;
-  }
-
   .financial-workspace .series-heading {
     align-items: flex-start;
     flex-direction: column;
