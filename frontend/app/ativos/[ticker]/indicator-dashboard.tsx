@@ -47,30 +47,16 @@ function formatChartValue(value: number, unit: SeriesUnit) {
 }
 
 function yearLabel(period?: string | null) {
-  if (!period) return "sem período";
-  return period.slice(0, 4);
+  return period ? period.slice(0, 4) : "sem período";
 }
 
-function historyHref(
-  ticker: string,
-  slug: string,
-  years: 5 | 10,
-  chartMode: ChartMode,
-  pageFrequency: SeriesFrequency,
-) {
+function historyHref(ticker: string, slug: string, years: 5 | 10, chartMode: ChartMode) {
   const params = new URLSearchParams({
     indicator: slug,
     years: String(years),
     chart: chartMode,
   });
-  if (pageFrequency === "quarterly") params.set("view", "quarterly");
-  return `/ativos/${ticker}?${params.toString()}#indicator-history`;
-}
-
-function closeHref(ticker: string, pageFrequency: SeriesFrequency) {
-  return pageFrequency === "quarterly"
-    ? `/ativos/${ticker}?view=quarterly#indicadores-fundamentais`
-    : `/ativos/${ticker}#indicadores-fundamentais`;
+  return `/ativos/${ticker}/indicadores?${params.toString()}#indicator-history`;
 }
 
 function groupDescription(label: string) {
@@ -100,14 +86,12 @@ function IndicatorCard({
   indicator,
   years,
   chartMode,
-  pageFrequency,
   selected,
 }: {
   ticker: string;
   indicator: IndicatorValue;
   years: 5 | 10;
   chartMode: ChartMode;
-  pageFrequency: SeriesFrequency;
   selected: boolean;
 }) {
   return (
@@ -127,7 +111,7 @@ function IndicatorCard({
         {indicator.supports_history ? (
           <Link
             className={styles.historyLink}
-            href={historyHref(ticker, indicator.slug, years, chartMode, pageFrequency)}
+            href={historyHref(ticker, indicator.slug, years, chartMode)}
             aria-label={`Ver histórico de ${indicator.label}`}
           >
             <ChartIcon />
@@ -157,6 +141,7 @@ function HistoricalChart({ history, mode }: { history: IndicatorHistory; mode: C
   const rawMax = Math.max(...values);
   let min = mode === "bar" ? Math.min(0, rawMin) : rawMin;
   let max = mode === "bar" ? Math.max(0, rawMax) : rawMax;
+
   if (min === max) {
     const pad = Math.abs(min) * 0.1 || 1;
     min -= pad;
@@ -178,12 +163,7 @@ function HistoricalChart({ history, mode }: { history: IndicatorHistory; mode: C
   const barWidth = Math.min(56, Math.max(18, plotWidth / Math.max(history.points.length * 1.8, 1)));
 
   return (
-    <svg
-      className={styles.chart}
-      viewBox={`0 0 ${width} ${height}`}
-      role="img"
-      aria-label={`Histórico de ${history.definition.label}`}
-    >
+    <svg className={styles.chart} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`Histórico de ${history.definition.label}`}>
       {gridValues.map((gridValue) => {
         const gridY = y(gridValue);
         return (
@@ -196,9 +176,7 @@ function HistoricalChart({ history, mode }: { history: IndicatorHistory; mode: C
         );
       })}
 
-      {mode === "bar" ? (
-        <line className={styles.zeroLine} x1={left} y1={zeroY} x2={width - right} y2={zeroY} />
-      ) : null}
+      {mode === "bar" ? <line className={styles.zeroLine} x1={left} y1={zeroY} x2={width - right} y2={zeroY} /> : null}
 
       {average != null && Number.isFinite(average) ? (
         <g>
@@ -266,14 +244,12 @@ function HistoryPanel({
   history,
   years,
   chartMode,
-  pageFrequency,
 }: {
   ticker: string;
   summary: IndicatorSummary;
   history: IndicatorHistory;
   years: 5 | 10;
   chartMode: ChartMode;
-  pageFrequency: SeriesFrequency;
 }) {
   const allIndicators = summary.groups.flatMap((group) => group.indicators).filter((indicator) => indicator.supports_history);
 
@@ -283,14 +259,13 @@ function HistoryPanel({
         <div>
           <span className="eyebrow">HISTÓRICO DE INDICADORES</span>
           <h2 id="indicator-history-title">{history.definition.label} · {ticker}</h2>
-          <p>Compare a evolução do fundamento ao longo do tempo sem sair da análise do ativo.</p>
+          <p>Compare a evolução do fundamento ao longo do tempo sem sair da aba de indicadores.</p>
         </div>
-        <Link className={styles.closeHistory} href={closeHref(ticker, pageFrequency)}>Fechar histórico</Link>
+        <Link className={styles.closeHistory} href={`/ativos/${ticker}/indicadores`}>Fechar histórico</Link>
       </header>
 
       <div className={styles.historyToolbar}>
-        <form className={styles.indicatorSelector} method="get" action={`/ativos/${ticker}`}>
-          {pageFrequency === "quarterly" ? <input type="hidden" name="view" value="quarterly" /> : null}
+        <form className={styles.indicatorSelector} method="get" action={`/ativos/${ticker}/indicadores`}>
           <input type="hidden" name="years" value={years} />
           <input type="hidden" name="chart" value={chartMode} />
           <label>
@@ -309,7 +284,7 @@ function HistoryPanel({
             {([5, 10] as const).map((window) => (
               <Link
                 className={years === window ? styles.activeToggle : ""}
-                href={historyHref(ticker, history.definition.slug, window, chartMode, pageFrequency)}
+                href={historyHref(ticker, history.definition.slug, window, chartMode)}
                 key={window}
               >
                 {window}A
@@ -320,7 +295,7 @@ function HistoryPanel({
             {(["line", "bar"] as const).map((mode) => (
               <Link
                 className={chartMode === mode ? styles.activeToggle : ""}
-                href={historyHref(ticker, history.definition.slug, years, mode, pageFrequency)}
+                href={historyHref(ticker, history.definition.slug, years, mode)}
                 key={mode}
               >
                 {mode === "line" ? "Linha" : "Barra"}
@@ -375,7 +350,6 @@ export function IndicatorDashboard({
   selectedSlug,
   years,
   chartMode,
-  pageFrequency,
 }: Props) {
   return (
     <section className={styles.section} id="indicadores-fundamentais">
@@ -383,7 +357,7 @@ export function IndicatorDashboard({
         <div>
           <span className="eyebrow">FUNDAMENTOS</span>
           <h2>Indicadores fundamentalistas {ticker}</h2>
-          <p>Leitura direta dos principais fundamentos, com histórico e metodologia rastreáveis.</p>
+          <p>Organizados por categoria, com histórico e metodologia rastreáveis.</p>
         </div>
         <div className={styles.headingMeta}>
           <span className={styles.sourceBadge}>Oficial + calculado</span>
@@ -408,7 +382,6 @@ export function IndicatorDashboard({
                   indicator={indicator}
                   years={years}
                   chartMode={chartMode}
-                  pageFrequency={pageFrequency}
                   selected={selectedSlug === indicator.slug}
                   key={indicator.slug}
                 />
@@ -427,14 +400,7 @@ export function IndicatorDashboard({
       </div>
 
       {history && selectedSlug ? (
-        <HistoryPanel
-          ticker={ticker}
-          summary={summary}
-          history={history}
-          years={years}
-          chartMode={chartMode}
-          pageFrequency={pageFrequency}
-        />
+        <HistoryPanel ticker={ticker} summary={summary} history={history} years={years} chartMode={chartMode} />
       ) : null}
     </section>
   );
