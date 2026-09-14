@@ -13,6 +13,7 @@ import {
   type SeriesFrequency,
   type SourceMetadata,
 } from "../../../lib/api";
+import { AssetOverviewHeader } from "./asset-overview-header";
 import { IndicatorDashboard } from "./indicator-dashboard";
 
 const fundamentalMetrics: FinancialMetric[] = [
@@ -82,6 +83,10 @@ function formatSeriesValue(series?: FinancialSeries) {
 
   if (series.unit === "percent") {
     return `${new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 1, minimumFractionDigits: 1 }).format(numeric)}%`;
+  }
+
+  if (series.unit === "multiple") {
+    return `${new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2, minimumFractionDigits: 2 }).format(numeric)}x`;
   }
 
   return new Intl.NumberFormat("pt-BR", {
@@ -189,6 +194,7 @@ export default async function AssetPage({
 
   const { instrument, company } = asset;
   const title = company?.trading_name || company?.legal_name || instrument.issuer_name || ticker;
+  const legalName = company?.legal_name ?? instrument.issuer_name ?? "Emissor ainda não identificado.";
   const revenue = metricSeries(fundamentalSeries, "revenue");
   const netIncome = metricSeries(fundamentalSeries, "net_income");
   const netMargin = metricSeries(analyticsSeries, "net_margin");
@@ -198,6 +204,51 @@ export default async function AssetPage({
   const operatingCashFlow = metricSeries(cashFlowSeries, "operating_cash_flow");
   const growthValue = Number(latestPoint(revenueGrowth)?.value ?? 0);
   const cashFlowValue = Number(latestPoint(operatingCashFlow)?.value ?? 0);
+  const currentRatio = indicatorSummary.groups
+    .flatMap((group) => group.indicators)
+    .find((indicator) => indicator.slug === "current-ratio");
+  const currentRatioValue = currentRatio?.value == null
+    ? "—"
+    : `${new Intl.NumberFormat("pt-BR", {
+        maximumFractionDigits: 2,
+        minimumFractionDigits: 2,
+      }).format(Number(currentRatio.value))}x`;
+  const currentRatioPeriod = currentRatio?.period_end
+    ? currentRatio.period_end.slice(0, 4)
+    : "Sem dado disponível";
+  const summaryMetrics = [
+    {
+      label: "Receita",
+      value: formatSeriesValue(revenue),
+      context: periodShort(revenue),
+      provenance: "CVM",
+    },
+    {
+      label: "Lucro líquido",
+      value: formatSeriesValue(netIncome),
+      context: periodShort(netIncome),
+      provenance: "CVM",
+    },
+    {
+      label: "Margem líquida",
+      value: formatSeriesValue(netMargin),
+      context: marginMovement(netMargin),
+      provenance: "Calculado",
+    },
+    isQuarterly
+      ? {
+          label: "Crescimento a/a",
+          value: formatSeriesValue(revenueGrowth),
+          context: periodShort(revenueGrowth),
+          provenance: "Calculado",
+        }
+      : {
+          label: "Liquidez corrente",
+          value: currentRatioValue,
+          context: currentRatioPeriod,
+          provenance: "Calculado",
+        },
+  ];
 
   return (
     <main className="asset-page">
@@ -209,56 +260,18 @@ export default async function AssetPage({
         <strong>{ticker}</strong>
       </div>
 
-      <section className="asset-overview" id="visao-geral">
-        <div className="asset-title-block">
-          <div className="asset-symbol-mark">{ticker.slice(0, 2)}</div>
-          <div>
-            <div className="asset-title-row">
-              <h1>{ticker}</h1>
-              <span className="exchange-tag">{instrument.exchange}</span>
-            </div>
-            <h2>{title}</h2>
-            <p>{company?.legal_name ?? instrument.issuer_name ?? "Emissor ainda não identificado."}</p>
-          </div>
-        </div>
-
-        <div className="quote-placeholder">
-          <span>Cotação</span>
-          <strong>—</strong>
-          <small>Fonte de preço ainda não integrada</small>
-        </div>
-      </section>
-
-      <nav className="asset-tabs" aria-label="Seções da ação">
-        <a className="active" href="#visao-geral">Visão geral</a>
-        <a href="#indicadores-fundamentais">Indicadores</a>
-        <a href="#financeiro">Financeiro</a>
-        <a href="#eventos">Eventos</a>
-        <Link href={`/relatorios?ticker=${ticker}`}>Relatórios</Link>
-      </nav>
-
-      <section className="headline-metrics" aria-label="Indicadores em destaque">
-        <article>
-          <span>Receita</span>
-          <strong>{formatSeriesValue(revenue)}</strong>
-          <small>{periodShort(revenue)}</small>
-        </article>
-        <article>
-          <span>Lucro líquido</span>
-          <strong>{formatSeriesValue(netIncome)}</strong>
-          <small>{periodShort(netIncome)}</small>
-        </article>
-        <article>
-          <span>Margem líquida</span>
-          <strong>{formatSeriesValue(netMargin)}</strong>
-          <small>{marginMovement(netMargin)}</small>
-        </article>
-        <article>
-          <span>{isQuarterly ? "Crescimento a/a" : "ROE"}</span>
-          <strong>{formatSeriesValue(isQuarterly ? revenueGrowth : roe)}</strong>
-          <small>{periodShort(isQuarterly ? revenueGrowth : roe)}</small>
-        </article>
-      </section>
+      <AssetOverviewHeader
+        ticker={ticker}
+        title={title}
+        legalName={legalName}
+        exchange={instrument.exchange}
+        securityCategory={instrument.security_category}
+        governanceLevel={instrument.governance_level}
+        latestPeriodLabel={formatDate(asset.latest_period)}
+        financialItemCount={asset.financial_item_count}
+        availablePeriods={asset.available_periods.length}
+        summaryMetrics={summaryMetrics}
+      />
 
       <IndicatorDashboard
         ticker={ticker}
