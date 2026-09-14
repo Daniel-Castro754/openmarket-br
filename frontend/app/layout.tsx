@@ -18,7 +18,6 @@ import "./redesign-shell.css";
 import "./sidebar-layout-fix.css";
 import "./page-proportions.css";
 import "./asset-company-refinement.css";
-import "./asset-indicator-refinement.css";
 import "./asset-financial-refinement.css";
 import "./asset-financial-workspace-v2.css";
 import "./market-discovery.css";
@@ -39,8 +38,6 @@ import "./home-v2-macro-interactive.css";
 import "./site-footer.css";
 import "./asset-analysis-final-qa.css";
 import "./asset-documents-workspace.css";
-import "./asset-indicator-structure-v4.css";
-import "./asset-indicator-category-v5.css";
 
 export const metadata: Metadata = {
   title: "OpenMarket BR",
