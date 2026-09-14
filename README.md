@@ -12,7 +12,11 @@ Plataforma open source brasileira para dados, pesquisa e visualização do merca
 
 ## Estado
 
-**Market Core pré-painel concluído em código.** O projeto possui providers oficiais CVM/B3, resolução de ticker para companhia, ingestão de DFP/ITR, PostgreSQL, migrations Alembic, read-model de ativos, séries financeiras, Document Hub, provider CVM IPE, API, frontend inicial, Docker Compose, testes e CI. O checkpoint operacional antes do trabalho focado no Report Viewer é a sincronização ponta a ponta de um ticker real.
+**Market Core e MVP do Report Viewer concluídos em código.** O projeto possui providers oficiais CVM/B3, resolução de ticker para companhia, ingestão de DFP/ITR, PostgreSQL, migrations Alembic, read-model de ativos, séries financeiras, indicadores derivados, Screener fundamentalista, Document Hub, provider CVM IPE, API, frontend, Docker Compose, testes e CI.
+
+O Report Viewer já cobre biblioteca e filtros, metadados/proveniência, visualização do documento oficial, seções extraídas, busca textual, navegação por seção/página e deep links por página. A próxima fronteira de produto é a camada de análise estruturada descrita em `docs/architecture/report-viewer.md`.
+
+**Checkpoint operacional ainda pendente:** validar o fluxo completo com documento real processado no ambiente PostgreSQL/Chromium, incluindo PDF incorporado, busca em seções extraídas e deep link por página. O código e o CI regular estão verdes, mas isso não substitui o QA data-backed do visualizador.
 
 ## Stack
 
