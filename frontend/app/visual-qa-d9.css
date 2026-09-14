@@ -2,10 +2,6 @@
    Loaded last. Keep mode, color theme and navigation independent while
    normalizing density, interaction states and responsive shell behavior. */
 
-:root {
-  --qa-control-height: 32px;
-}
-
 html {
   scrollbar-gutter: stable;
 }
@@ -67,12 +63,9 @@ table,
 .discovery-table-panel,
 .ranking-methodology-card,
 .home-workspace-panel,
-.home-module-card,
-.home-context-card,
 .headline-metrics article,
 .series-card,
-.sector-unavailable-panel,
-.sector-roadmap-grid article {
+.sector-unavailable-panel {
   box-shadow: none;
 }
 
@@ -112,8 +105,6 @@ table,
 }
 
 /* Old showcase hover motion is intentionally neutralized. */
-.home-module-card[href]:hover,
-.home-context-card:hover,
 .home-quick-links a:hover,
 .ranking-card:hover,
 .product-card:hover {
@@ -160,10 +151,8 @@ table,
   border-radius: 5px;
 }
 
-/* Keep table workspaces stable when content is wider than the viewport. */
-.discovery-table-wrap,
-.focusTableWrap,
-.reportTableWrap {
+/* Global data tables own their horizontal scroll instead of the page. */
+.discovery-table-wrap {
   overscroll-behavior-inline: contain;
   scrollbar-gutter: stable;
 }
