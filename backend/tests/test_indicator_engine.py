@@ -149,6 +149,7 @@ def test_indicator_catalog_has_stable_groups_and_formulas() -> None:
         "net-debt-to-equity",
         "gross-debt-to-equity",
         "equity-to-assets",
+        "current-ratio",
         "revenue-growth-yoy",
         "net-income-growth-yoy",
     ]
@@ -167,6 +168,15 @@ def test_indicator_catalog_has_stable_groups_and_formulas() -> None:
     assert roa.available_frequencies == [SeriesFrequency.ANNUAL]
     assert roa.dependencies == [FinancialMetric.NET_INCOME, FinancialMetric.TOTAL_ASSETS]
 
+    current_ratio = next(item for item in catalog if item.slug == "current-ratio")
+    assert current_ratio.group == IndicatorGroup.LIQUIDITY
+    assert current_ratio.metric == FinancialMetric.CURRENT_RATIO
+    assert current_ratio.format == "multiple_2"
+    assert current_ratio.dependencies == [
+        FinancialMetric.CURRENT_ASSETS,
+        FinancialMetric.CURRENT_LIABILITIES,
+    ]
+
 
 def test_indicator_summary_uses_existing_financial_series_engine() -> None:
     engine = create_engine("sqlite+pysqlite:///:memory:")
@@ -182,6 +192,7 @@ def test_indicator_summary_uses_existing_financial_series_engine() -> None:
         IndicatorGroup.EFFICIENCY,
         IndicatorGroup.PROFITABILITY,
         IndicatorGroup.LEVERAGE,
+        IndicatorGroup.LIQUIDITY,
         IndicatorGroup.GROWTH,
     ]
 
@@ -202,11 +213,13 @@ def test_indicator_summary_uses_existing_financial_series_engine() -> None:
     assert values["gross-debt-to-equity"].value is not None
     assert values["gross-debt-to-equity"].value.quantize(Decimal("0.01")) == Decimal("85.71")
     assert values["equity-to-assets"].value == Decimal(50)
+    assert values["current-ratio"].value is None
     assert values["revenue-growth-yoy"].value == Decimal(20)
     assert values["net-income-growth-yoy"].value == Decimal(50)
     assert values["gross-margin"].history_points == 6
     assert values["roe"].history_points == 5
     assert values["roa"].history_points == 5
+    assert values["current-ratio"].history_points == 0
     assert values["net-income-growth-yoy"].history_points == 5
     assert values["gross-margin"].source is not None
     assert values["roa"].source is not None
