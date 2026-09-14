@@ -5,12 +5,16 @@
   --tool-row-height: 34px;
   --tool-row-height-compact: 32px;
   --tool-header-height: 40px;
+  --tool-group-row-height: 28px;
   --tool-cell-padding-y: 6px;
   --tool-cell-padding-x: 9px;
   --tool-table-font-size: .60rem;
   --tool-header-font-size: .52rem;
   --tool-meta-font-size: .54rem;
   --tool-pagination-height: 32px;
+  --tool-sticky-cell-z: 10;
+  --tool-sticky-header-z: var(--z-sticky);
+  --tool-sticky-corner-z: 21;
 }
 
 .tool-table {
@@ -25,7 +29,7 @@
 .tool-table thead th {
   position: sticky;
   top: 0;
-  z-index: var(--z-sticky);
+  z-index: var(--tool-sticky-header-z);
   background: var(--table-header);
 }
 
