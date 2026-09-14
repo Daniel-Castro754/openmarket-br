@@ -35,6 +35,7 @@ import "./visual-qa-d9.css";
 /* Canonical current page workspaces. Keep after global QA guardrails. */
 import "./asset-overview.css";
 import "./home-research-workspace.css";
+import "./chart-system.css";
 import "./site-footer.css";
 import "./asset-documents-workspace.css";
 
