@@ -6,13 +6,21 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
 from openmarket_api.api.routes.screener import SCREENER_METRICS, get_screener
-from openmarket_api.domain.analytics import FinancialMetric, SeriesFrequency
+from openmarket_api.domain.analytics import (
+    FinancialMetric,
+    FinancialSeries,
+    SeriesFrequency,
+    SeriesUnit,
+)
 from openmarket_api.domain.entities import Company, Instrument, InstrumentType
 from openmarket_api.persistence.base import Base
 from openmarket_api.persistence.models import ScreenerMetricSnapshotRecord
 from openmarket_api.persistence.repositories import CompanyRepository, InstrumentRepository
 from openmarket_api.services.liquidity_series import LiquidityFinancialSeriesService
-from openmarket_api.services.screener_snapshots import ScreenerSnapshotService
+from openmarket_api.services.screener_snapshots import (
+    ScreenerSnapshotService,
+    _MemoizedLiquidityFinancialSeriesService,
+)
 
 
 def _seed_petr4(session: Session):
@@ -46,6 +54,43 @@ def test_screener_uses_liquidity_aware_financial_service() -> None:
 
     assert isinstance(service.financial_service, LiquidityFinancialSeriesService)
     assert FinancialMetric.CURRENT_RATIO in SCREENER_METRICS
+
+
+def test_screener_financial_series_are_memoized_per_request(monkeypatch) -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    calls: list[tuple[str, FinancialMetric, SeriesFrequency]] = []
+    series = FinancialSeries(
+        metric=FinancialMetric.REVENUE,
+        label="Receita",
+        frequency=SeriesFrequency.ANNUAL,
+        unit=SeriesUnit.CURRENCY,
+        points=[],
+    )
+
+    def fake_get_series(
+        self,
+        ticker,
+        metric,
+        *,
+        frequency=SeriesFrequency.ANNUAL,
+    ):
+        calls.append((ticker, metric, frequency))
+        return series
+
+    monkeypatch.setattr(LiquidityFinancialSeriesService, "get_series", fake_get_series)
+
+    with Session(engine) as session:
+        service = _MemoizedLiquidityFinancialSeriesService(session)
+        first = service.get_series("PETR4", FinancialMetric.REVENUE)
+        second = service.get_series("petr4", FinancialMetric.REVENUE)
+        service.get_series("VALE3", FinancialMetric.REVENUE)
+
+    assert first is second
+    assert calls == [
+        ("PETR4", FinancialMetric.REVENUE, SeriesFrequency.ANNUAL),
+        ("VALE3", FinancialMetric.REVENUE, SeriesFrequency.ANNUAL),
+    ]
 
 
 def test_screener_reuses_persistent_metric_snapshots(monkeypatch) -> None:
