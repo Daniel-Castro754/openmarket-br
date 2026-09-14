@@ -20,14 +20,22 @@ function statusSymbol(status: ChecklistStatus) {
 }
 
 export function FundamentalsChecklist({ items }: { items: FundamentalsChecklistItem[] }) {
+  const positive = items.filter((item) => item.status === "positive").length;
+  const attention = items.filter((item) => item.status === "attention").length;
+  const unavailable = items.filter((item) => item.status === "unavailable").length;
+
   return (
     <section className="fundamentals-checklist" aria-labelledby="fundamentals-checklist-title">
       <div className="section-title-row fundamentals-checklist-heading">
         <div>
           <span className="eyebrow">CHECKLIST DE FUNDAMENTOS</span>
-          <h2 id="fundamentals-checklist-title">Leitura objetiva dos dados disponíveis</h2>
+          <h2 id="fundamentals-checklist-title">Sinais objetivos do último período</h2>
         </div>
-        <span className="data-source-pill">Sem pontuação</span>
+        <div className="fundamentals-checklist-summary" aria-label="Resumo do checklist">
+          <span className="positive">{positive} atendem</span>
+          {attention > 0 ? <span className="attention">{attention} atenção</span> : null}
+          {unavailable > 0 ? <span>{unavailable} sem dado</span> : null}
+        </div>
       </div>
 
       <div className="fundamentals-checklist-list">
@@ -51,8 +59,8 @@ export function FundamentalsChecklist({ items }: { items: FundamentalsChecklistI
       </div>
 
       <p className="fundamentals-checklist-note">
-        Critérios matemáticos aplicados somente aos dados disponíveis. O checklist não é recomendação de compra,
-        venda ou manutenção e não gera nota para o ativo.
+        Contagem descritiva dos critérios matemáticos disponíveis; não é nota, recomendação de investimento ou
+        classificação de qualidade da empresa.
       </p>
     </section>
   );
