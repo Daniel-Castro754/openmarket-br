@@ -125,14 +125,13 @@ export default async function AssetFinancialPage({
   ];
 
   return (
-    <>
+    <div className={`financial-workspace ${isQuarterly ? "financial-view-quarterly" : "financial-view-annual"}`}>
       <section className="financial-workspace-header">
         <div className="financial-workspace-copy">
           <span className="eyebrow">FINANCEIRO</span>
           <h2>Demonstrações e evolução financeira</h2>
           <p>
-            Navegue por resultado, balanço, caixa e indicadores calculados. Cada série preserva período,
-            conta de origem e proveniência dos dados oficiais.
+            Resultado, balanço, caixa e indicadores calculados com período, conta de origem e proveniência preservados.
           </p>
         </div>
 
@@ -178,9 +177,7 @@ export default async function AssetFinancialPage({
             <span className="eyebrow">RESULTADO</span>
             <h2>{isQuarterly ? "Receitas e lucros trimestrais" : "Receitas e lucros anuais"}</h2>
           </div>
-          <p>
-            Receita, lucro bruto, resultado operacional e lucro líquido organizados como uma leitura contínua da DRE.
-          </p>
+          <p>Receita, lucro bruto, resultado operacional e lucro líquido da DRE.</p>
         </div>
         <div className="series-grid financial-result-grid">
           {incomeSeries.map((item) => (
@@ -195,10 +192,7 @@ export default async function AssetFinancialPage({
             <span className="eyebrow">BALANÇO PATRIMONIAL</span>
             <h2>Ativos, patrimônio e endividamento</h2>
           </div>
-          <p>
-            Caixa e dívida usam contas padronizadas da CVM. Dívida bruta e líquida só aparecem quando os componentes
-            pertencem ao mesmo fechamento.
-          </p>
+          <p>Caixa e dívida usam contas CVM compatíveis do mesmo fechamento.</p>
         </div>
         <div className="series-grid">
           {balanceSeries.map((item) => (
@@ -213,10 +207,7 @@ export default async function AssetFinancialPage({
             <span className="eyebrow">FLUXO DE CAIXA</span>
             <h2>Geração, investimento e financiamento</h2>
           </div>
-          <p>
-            A DFC usa os totais padronizados 6.01, 6.02, 6.03 e 6.05. Na visão trimestral, acumulados sucessivos
-            são isolados e mantêm proveniência explícita.
-          </p>
+          <p>DFC padronizada; trimestres derivados mantêm proveniência explícita.</p>
         </div>
         <div className="series-grid financial-result-grid">
           {cashFlowSeries.map((item) => (
@@ -231,10 +222,7 @@ export default async function AssetFinancialPage({
             <span className="eyebrow">INDICADORES FINANCEIROS</span>
             <h2>{isQuarterly ? "Margens e crescimento" : "Margens, crescimento e retorno"}</h2>
           </div>
-          <p>
-            Indicadores calculados sobre fatos oficiais compatíveis da CVM. O ROE anual usa lucro líquido consolidado
-            e patrimônio líquido médio; nenhum ROE trimestral é anualizado implicitamente.
-          </p>
+          <p>Indicadores calculados apenas sobre fatos oficiais compatíveis da CVM.</p>
         </div>
         <div className="series-grid">
           {analyticsSeries.map((item) => (
@@ -251,6 +239,6 @@ export default async function AssetFinancialPage({
             : "DFP consolidada da CVM. Em reapresentações, a versão mais recente é usada na leitura atual, preservando o histórico no banco."}
         </p>
       </div>
-    </>
+    </div>
   );
 }
