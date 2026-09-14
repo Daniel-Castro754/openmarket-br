@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 export function AssetSearch() {
   const router = useRouter();
-  const [ticker, setTicker] = useState("PETR4");
+  const [ticker, setTicker] = useState("");
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -16,20 +16,27 @@ export function AssetSearch() {
   }
 
   return (
-    <form className="asset-search" onSubmit={submit}>
-      <label htmlFor="ticker">Pesquisar ativo</label>
-      <div className="asset-search-row">
+    <form className="asset-search home-v2-search" onSubmit={submit} role="search">
+      <label htmlFor="home-asset-search">Buscar empresa ou ticker</label>
+      <div className="asset-search-row home-v2-search-row">
+        <span className="home-v2-search-icon" aria-hidden="true">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="10" cy="10" r="6" />
+            <path d="m20 20-4.35-4.35" />
+          </svg>
+        </span>
         <input
-          id="ticker"
+          id="home-asset-search"
           value={ticker}
           onChange={(event) => setTicker(event.target.value)}
-          placeholder="PETR4"
+          placeholder="Ex.: PETR4, VALE3, ITUB4"
+          aria-label="Buscar empresa ou ticker"
           autoComplete="off"
           maxLength={16}
         />
-        <button type="submit">Abrir ativo</button>
+        <button type="submit">Pesquisar</button>
       </div>
-      <small>O visualizador usa os dados já sincronizados no OpenMarket.</small>
+      <small>Digite o ticker de uma empresa já sincronizada no OpenMarket BR.</small>
     </form>
   );
 }
