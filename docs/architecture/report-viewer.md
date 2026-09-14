@@ -4,6 +4,23 @@
 
 Criar uma experiência web para abrir, navegar, pesquisar e analisar relatórios/documentos financeiros. O visualizador é uma camada de produto própria: primeiro o usuário consegue consumir o documento; recursos de extração, comparação e IA entram como capacidades adicionais.
 
+## Status atual
+
+O MVP de leitura está implementado em código:
+
+- biblioteca com filtros por texto, ticker e tipo;
+- metadados, fonte, licença e estado de processamento;
+- visualização incorporada do documento oficial com fallback para nova aba;
+- navegação por seções extraídas;
+- busca textual client-side nas seções já processadas;
+- navegação anterior/próxima e deep link por página em PDFs (`?page=N` + `#page=N`);
+- links de resultados da busca e das seções para a página correspondente;
+- painel de proveniência.
+
+Ainda falta o checkpoint data-backed do visualizador com documento real processado em PostgreSQL/Chromium. Build e testes regulares verdes não provam que a origem da CVM permitirá `iframe` em todos os documentos nem que todo PDF respeitará o fragmento `#page=N`; por isso o fallback para nova aba permanece obrigatório.
+
+A camada de análise estruturada e a comparação entre relatórios continuam como etapas posteriores.
+
 ## Separação de produtos
 
 ### OpenMarket BR
