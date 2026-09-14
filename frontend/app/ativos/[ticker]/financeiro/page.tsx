@@ -7,6 +7,8 @@ import {
   type FinancialSeries,
   type SeriesFrequency,
 } from "../../../../lib/api";
+import { provenanceKind, provenanceLabel } from "../../../../lib/data-semantics";
+import { formatFinancialValue, formatPeriod } from "../../../../lib/format";
 
 const incomeMetrics: FinancialMetric[] = [
   "revenue",
@@ -55,39 +57,24 @@ function metricSeries(series: FinancialSeries[], metric: FinancialMetric) {
 function formatSeriesValue(series?: FinancialSeries) {
   const point = latestPoint(series);
   if (!series || !point) return "—";
-  const numeric = Number(point.value);
-  if (!Number.isFinite(numeric)) return point.value;
-
-  if (series.unit === "percent") {
-    return `${new Intl.NumberFormat("pt-BR", {
-      maximumFractionDigits: 1,
-      minimumFractionDigits: 1,
-    }).format(numeric)}%`;
-  }
-
-  if (series.unit === "multiple") {
-    return `${new Intl.NumberFormat("pt-BR", {
-      maximumFractionDigits: 2,
-      minimumFractionDigits: 2,
-    }).format(numeric)}x`;
-  }
-
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: point.currency ?? "BRL",
-    notation: "compact",
-    maximumFractionDigits: 1,
-  }).format(numeric);
+  return formatFinancialValue(point.value, series.unit, {
+    currency: point.currency,
+    percentDigits: 1,
+  });
 }
 
 function periodLabel(series?: FinancialSeries) {
   const point = latestPoint(series);
-  if (!point) return "Sem período";
-  const [year, month] = point.period_end.split("-").map(Number);
-  if (series?.frequency === "quarterly") {
-    return `${Math.max(1, Math.min(4, Math.ceil(month / 3)))}T${String(year).slice(-2)}`;
-  }
-  return String(year);
+  if (!series || !point) return "Sem período";
+  return formatPeriod(point.period_end, series.frequency);
+}
+
+function seriesProvenance(series?: FinancialSeries) {
+  const point = latestPoint(series);
+  return provenanceLabel(provenanceKind({
+    derived: Boolean(series?.formula) || Boolean(point?.derived),
+    source: point?.source,
+  }));
 }
 
 export default async function AssetFinancialPage({
@@ -118,10 +105,10 @@ export default async function AssetFinancialPage({
   const netDebt = metricSeries(balanceSeries, "net_debt");
 
   const headlineMetrics = [
-    { label: "Receita", value: formatSeriesValue(revenue), period: periodLabel(revenue), source: "CVM" },
-    { label: "Lucro líquido", value: formatSeriesValue(netIncome), period: periodLabel(netIncome), source: "CVM" },
-    { label: "Caixa", value: formatSeriesValue(cash), period: periodLabel(cash), source: "CVM" },
-    { label: "Dívida líquida", value: formatSeriesValue(netDebt), period: periodLabel(netDebt), source: "Calculado" },
+    { label: "Receita", value: formatSeriesValue(revenue), period: periodLabel(revenue), source: seriesProvenance(revenue) },
+    { label: "Lucro líquido", value: formatSeriesValue(netIncome), period: periodLabel(netIncome), source: seriesProvenance(netIncome) },
+    { label: "Caixa", value: formatSeriesValue(cash), period: periodLabel(cash), source: seriesProvenance(cash) },
+    { label: "Dívida líquida", value: formatSeriesValue(netDebt), period: periodLabel(netDebt), source: seriesProvenance(netDebt) },
   ];
 
   return (
