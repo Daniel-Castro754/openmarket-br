@@ -18,8 +18,7 @@ import "./redesign-shell.css";
 import "./sidebar-layout-fix.css";
 import "./page-proportions.css";
 import "./asset-company-refinement.css";
-import "./asset-financial-refinement.css";
-import "./asset-financial-workspace-v2.css";
+import "./asset-financial-workspace.css";
 import "./market-discovery.css";
 import "./discovery-pages.css";
 import "./design-governance.css";
@@ -36,7 +35,6 @@ import "./home-v2-h3.css";
 import "./home-v2-title-tuning.css";
 import "./home-v2-macro-interactive.css";
 import "./site-footer.css";
-import "./asset-analysis-final-qa.css";
 import "./asset-documents-workspace.css";
 
 export const metadata: Metadata = {
