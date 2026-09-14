@@ -50,6 +50,10 @@ function yearLabel(period?: string | null) {
   return period ? period.slice(0, 4) : "sem período";
 }
 
+function hasIndicatorValue(indicator: IndicatorValue) {
+  return indicator.value != null && String(indicator.value).trim() !== "";
+}
+
 function historyHref(ticker: string, slug: string, years: 5 | 10, chartMode: ChartMode) {
   const params = new URLSearchParams({
     indicator: slug,
@@ -94,20 +98,30 @@ function IndicatorCard({
   chartMode: ChartMode;
   selected: boolean;
 }) {
+  const available = hasIndicatorValue(indicator);
+
   return (
-    <article className={`${styles.card} ${selected ? styles.cardSelected : ""}`}>
+    <article
+      className={`${styles.card} ${selected ? styles.cardSelected : ""} ${!available ? styles.cardUnavailable : ""}`}
+    >
       <div className={styles.cardHeading}>
         <span>{indicator.label}</span>
         <span className={styles.help} title={indicator.description} aria-label={`Sobre ${indicator.label}`}>?</span>
       </div>
+
       <div className={styles.cardValueRow}>
         <strong>{formatIndicatorValue(indicator.value, indicator.unit)}</strong>
+        {!available ? <span className={styles.unavailableText}>Sem dado comparável</span> : null}
       </div>
-      <div className={styles.cardMeta}>
-        <small>
-          {indicator.period_end ? yearLabel(indicator.period_end) : "sem dado"}
-          {indicator.derived ? " · calculado" : " · oficial"}
-        </small>
+
+      <div className={styles.cardFooter}>
+        <div className={styles.cardBadges} aria-label="Período e origem do indicador">
+          <span className={styles.metaBadge}>{indicator.period_end ? yearLabel(indicator.period_end) : "Sem período"}</span>
+          <span className={`${styles.metaBadge} ${indicator.derived ? styles.calculatedBadge : styles.officialBadge}`}>
+            {indicator.derived ? "Calculado" : "Oficial"}
+          </span>
+        </div>
+
         {indicator.supports_history ? (
           <Link
             className={styles.historyLink}
@@ -130,11 +144,11 @@ function HistoricalChart({ history, mode }: { history: IndicatorHistory; mode: C
   }
 
   const width = 920;
-  const height = 300;
+  const height = 260;
   const left = 64;
   const right = 28;
-  const top = 30;
-  const bottom = 46;
+  const top = 24;
+  const bottom = 40;
   const plotWidth = width - left - right;
   const plotHeight = height - top - bottom;
   const rawMin = Math.min(...values);
@@ -230,7 +244,7 @@ function HistoricalChart({ history, mode }: { history: IndicatorHistory; mode: C
       )}
 
       {history.points.map((point, index) => (
-        <text className={styles.xLabel} x={x(index)} y={height - 15} textAnchor="middle" key={`x-${point.period_end}`}>
+        <text className={styles.xLabel} x={x(index)} y={height - 13} textAnchor="middle" key={`x-${point.period_end}`}>
           {yearLabel(point.period_end)}
         </text>
       ))}
@@ -351,6 +365,9 @@ export function IndicatorDashboard({
   years,
   chartMode,
 }: Props) {
+  const allIndicators = summary.groups.flatMap((group) => group.indicators);
+  const availableIndicators = allIndicators.filter(hasIndicatorValue).length;
+
   return (
     <section className={styles.section} id="indicadores-fundamentais">
       <div className={styles.sectionHeading}>
@@ -361,34 +378,37 @@ export function IndicatorDashboard({
         </div>
         <div className={styles.headingMeta}>
           <span className={styles.sourceBadge}>Oficial + calculado</span>
-          <small>CVM · dados anuais</small>
+          <small>{availableIndicators} de {allIndicators.length} indicadores com dado · CVM anual</small>
         </div>
       </div>
 
       <div className={styles.groups}>
-        {summary.groups.map((group) => (
-          <section className={styles.group} key={group.group}>
-            <div className={styles.groupHeader}>
-              <div>
-                <h3>{group.label}</h3>
-                <p>{groupDescription(group.label)}</p>
+        {summary.groups.map((group) => {
+          const availableInGroup = group.indicators.filter(hasIndicatorValue).length;
+          return (
+            <section className={styles.group} key={group.group}>
+              <div className={styles.groupHeader}>
+                <div>
+                  <h3>{group.label}</h3>
+                  <p>{groupDescription(group.label)}</p>
+                </div>
+                <span className={styles.groupCount}>{availableInGroup}/{group.indicators.length} com dado</span>
               </div>
-              <span>{group.indicators.length} indicadores</span>
-            </div>
-            <div className={styles.grid}>
-              {group.indicators.map((indicator) => (
-                <IndicatorCard
-                  ticker={ticker}
-                  indicator={indicator}
-                  years={years}
-                  chartMode={chartMode}
-                  selected={selectedSlug === indicator.slug}
-                  key={indicator.slug}
-                />
-              ))}
-            </div>
-          </section>
-        ))}
+              <div className={styles.grid}>
+                {group.indicators.map((indicator) => (
+                  <IndicatorCard
+                    ticker={ticker}
+                    indicator={indicator}
+                    years={years}
+                    chartMode={chartMode}
+                    selected={selectedSlug === indicator.slug}
+                    key={indicator.slug}
+                  />
+                ))}
+              </div>
+            </section>
+          );
+        })}
       </div>
 
       <div className={styles.methodologyNote}>
