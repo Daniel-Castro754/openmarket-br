@@ -9,6 +9,7 @@ from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import Session
 
 from openmarket_api.domain.analytics import FinancialMetric, SeriesFrequency
+from openmarket_api.domain.screener import DerivedScreenerMetric, ScreenerMetric
 from openmarket_api.persistence.models import (
     CompanyRecord,
     FinancialStatementRecord,
@@ -16,10 +17,12 @@ from openmarket_api.persistence.models import (
     ScreenerMetricSnapshotRecord,
 )
 from openmarket_api.services.cash_flow_series import CASH_FLOW_METRICS, CashFlowSeriesService
+from openmarket_api.services.derived_indicator_series import DerivedIndicatorSeriesService
+from openmarket_api.services.indicator_engine import IndicatorEngine
 from openmarket_api.services.liquidity_series import LiquidityFinancialSeriesService
 
 SnapshotValue = tuple[Decimal | None, date | None]
-SnapshotMap = dict[tuple[UUID, FinancialMetric], SnapshotValue]
+SnapshotMap = dict[tuple[UUID, ScreenerMetric], SnapshotValue]
 SnapshotRow = dict[str, object]
 
 
@@ -30,11 +33,12 @@ class ScreenerSnapshotService:
         self.session = session
         self.financial_service = LiquidityFinancialSeriesService(session)
         self.cash_service = CashFlowSeriesService(session)
+        self.derived_service = DerivedIndicatorSeriesService(self.financial_service)
 
     def ensure(
         self,
         records: Iterable[tuple[InstrumentRecord, CompanyRecord | None]],
-        metrics: Iterable[FinancialMetric],
+        metrics: Iterable[ScreenerMetric],
     ) -> SnapshotMap:
         materialized_records = list(records)
         metric_list = list(dict.fromkeys(metrics))
@@ -136,25 +140,33 @@ class ScreenerSnapshotService:
     def _latest_metric(
         self,
         ticker: str,
-        metric: FinancialMetric,
+        metric: ScreenerMetric,
     ) -> SnapshotValue:
         try:
-            if metric in CASH_FLOW_METRICS:
-                series = self.cash_service.get_series(
+            if isinstance(metric, DerivedScreenerMetric):
+                definition = IndicatorEngine.get_definition(metric.value)
+                series = self.derived_service.get_series(
+                    ticker,
+                    definition,
+                    frequency=SeriesFrequency.ANNUAL,
+                )
+                points = series.points
+            elif metric in CASH_FLOW_METRICS:
+                points = self.cash_service.get_series(
                     ticker,
                     metric,
                     frequency=SeriesFrequency.ANNUAL,
-                )
+                ).points
             else:
-                series = self.financial_service.get_series(
+                points = self.financial_service.get_series(
                     ticker,
                     metric,
                     frequency=SeriesFrequency.ANNUAL,
-                )
-        except LookupError:
+                ).points
+        except (LookupError, ValueError):
             return None, None
 
-        if not series.points:
+        if not points:
             return None, None
-        latest = series.points[-1]
+        latest = points[-1]
         return latest.value, latest.period_end
