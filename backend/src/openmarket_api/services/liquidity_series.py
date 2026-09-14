@@ -1,5 +1,5 @@
 from datetime import date
-from unicodedata import normalize
+from unicodedata import combining, normalize
 
 from sqlalchemy.orm import Session
 
@@ -221,7 +221,7 @@ class LiquidityFinancialSeriesService(FinancialSeriesService):
     @staticmethod
     def _normalize_account_name(value: str) -> str:
         decomposed = normalize("NFKD", value)
-        ascii_value = "".join(char for char in decomposed if not char.iscombining())
+        ascii_value = "".join(char for char in decomposed if not combining(char))
         return " ".join(ascii_value.casefold().split())
 
     @staticmethod
