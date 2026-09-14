@@ -1,6 +1,9 @@
 name: visual-smoke-data
 
+# Pull-request trigger is temporary while validating the snapshot race fix on PostgreSQL.
 on:
+  pull_request:
+    branches: [main]
   workflow_dispatch:
     inputs:
       ticker:
@@ -165,6 +168,15 @@ jobs:
       - name: Run data-backed visual smoke matrix
         working-directory: frontend
         run: npm run qa:visual
+
+      - name: Check API log for screener snapshot integrity errors
+        if: always()
+        run: |
+          if grep -Eq 'uq_screener_metric_snapshot_key|duplicate key value violates unique constraint.*screener_metric_snapshots' "$RUNNER_TEMP/openmarket-api.log"; then
+            echo "Screener snapshot integrity regression detected"
+            grep -En 'uq_screener_metric_snapshot_key|duplicate key value violates unique constraint.*screener_metric_snapshots' "$RUNNER_TEMP/openmarket-api.log" || true
+            exit 1
+          fi
 
       - name: Upload Playwright report and API log
         if: always()
