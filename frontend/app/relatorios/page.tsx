@@ -5,6 +5,7 @@ import {
   type DocumentProcessingStatus,
   type DocumentType,
 } from "../../lib/api";
+import d8 from "./document-hub-d8.module.css";
 import styles from "./report-viewer.module.css";
 
 const PAGE_SIZE = 24;
@@ -103,21 +104,21 @@ export default async function ReportsPage({
   const hasFilters = Boolean(q || ticker || documentType);
 
   return (
-    <main className={`${styles.shell} ${styles.libraryShell}`}>
-      <header className={styles.header}>
+    <main className={`${styles.shell} ${styles.libraryShell} ${d8.workspace}`}>
+      <header className={`${styles.header} ${d8.header}`}>
         <div>
           <span className={styles.eyebrow}>DOCUMENT HUB · CVM</span>
           <h1>Relatórios e documentos</h1>
           <p>Pesquise a biblioteca sincronizada e abra a evidência original sem sair do fluxo de análise.</p>
         </div>
-        <div className={styles.headerMeta}>
+        <div className={d8.headerMeta}>
           <span>{documents.length} nesta página</span>
           <span>Página {page}</span>
           <strong>Fonte oficial</strong>
         </div>
       </header>
 
-      <form className={styles.filters} method="get">
+      <form className={`${styles.filters} ${d8.filters}`} method="get">
         <input name="q" defaultValue={q} placeholder="Título ou período" aria-label="Buscar por título ou período" />
         <input name="ticker" defaultValue={ticker} placeholder="Ticker, ex.: PETR4" aria-label="Filtrar por ticker" />
         <select name="type" defaultValue={documentType ?? ""} aria-label="Filtrar por tipo">
@@ -129,7 +130,7 @@ export default async function ReportsPage({
           ))}
         </select>
         <button type="submit">Aplicar</button>
-        {hasFilters ? <Link className={styles.clearFilters} href="/relatorios">Limpar</Link> : null}
+        {hasFilters ? <Link className={d8.clearFilters} href="/relatorios">Limpar</Link> : null}
       </form>
 
       {documents.length === 0 ? (
@@ -138,9 +139,9 @@ export default async function ReportsPage({
           {page > 1 ? " Volte uma página para continuar navegando." : ""}
         </section>
       ) : (
-        <section className={styles.libraryTablePanel}>
-          <div className={styles.libraryTableWrap}>
-            <table className={styles.libraryTable}>
+        <section className={d8.tablePanel}>
+          <div className={d8.tableWrap}>
+            <table className={d8.table}>
               <thead>
                 <tr>
                   <th>Documento</th>
@@ -156,7 +157,7 @@ export default async function ReportsPage({
                 {documents.map((document) => (
                   <tr key={document.id}>
                     <td>
-                      <div className={styles.documentCell}>
+                      <div className={d8.documentCell}>
                         <strong>{document.tickers[0] ?? document.company_name ?? "—"}</strong>
                         <span>{document.title}</span>
                         {document.company_name ? <small>{document.company_name}</small> : null}
@@ -167,7 +168,7 @@ export default async function ReportsPage({
                     <td>{formatDate(document.published_at)}</td>
                     <td><span className={statusClass(document.processing_status)}>{statusLabel(document.processing_status)}</span></td>
                     <td>{document.source.source_name}</td>
-                    <td><Link className={styles.openDocument} href={`/relatorios/${document.id}`}>Abrir</Link></td>
+                    <td><Link className={d8.openDocument} href={`/relatorios/${document.id}`}>Abrir</Link></td>
                   </tr>
                 ))}
               </tbody>
