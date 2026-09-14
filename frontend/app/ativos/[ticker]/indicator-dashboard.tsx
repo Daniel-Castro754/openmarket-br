@@ -7,6 +7,8 @@ import type {
   SeriesFrequency,
   SeriesUnit,
 } from "../../../lib/api";
+import { provenanceKind, provenanceLabel } from "../../../lib/data-semantics";
+import { formatFinancialValue, formatYear } from "../../../lib/format";
 import styles from "./indicator-dashboard.module.css";
 
 type ChartMode = "bar" | "line";
@@ -21,33 +23,23 @@ type Props = {
   pageFrequency: SeriesFrequency;
 };
 
-const compactNumber = new Intl.NumberFormat("pt-BR", {
-  notation: "compact",
-  maximumFractionDigits: 1,
-});
-
-const decimalNumber = new Intl.NumberFormat("pt-BR", {
-  maximumFractionDigits: 2,
-  minimumFractionDigits: 2,
-});
-
 function formatIndicatorValue(value: string | number | null | undefined, unit: SeriesUnit) {
-  if (value == null) return "—";
-  const numeric = Number(value);
-  if (!Number.isFinite(numeric)) return String(value);
-  if (unit === "percent") return `${decimalNumber.format(numeric)}%`;
-  if (unit === "multiple") return `${decimalNumber.format(numeric)}x`;
-  return `R$ ${compactNumber.format(numeric)}`;
+  return formatFinancialValue(value, unit, {
+    percentDigits: 2,
+    multipleDigits: 2,
+  });
 }
 
 function formatChartValue(value: number, unit: SeriesUnit) {
-  if (unit === "percent") return `${decimalNumber.format(value)}%`;
-  if (unit === "multiple") return `${decimalNumber.format(value)}x`;
-  return compactNumber.format(value);
+  return formatFinancialValue(value, unit, {
+    showCurrency: false,
+    percentDigits: 2,
+    multipleDigits: 2,
+  });
 }
 
 function yearLabel(period?: string | null) {
-  return period ? period.slice(0, 4) : "sem período";
+  return formatYear(period);
 }
 
 function hasIndicatorValue(indicator: IndicatorValue) {
@@ -99,6 +91,7 @@ function IndicatorCard({
   selected: boolean;
 }) {
   const available = hasIndicatorValue(indicator);
+  const provenance = provenanceKind({ derived: indicator.derived, source: indicator.source });
 
   return (
     <article
@@ -116,9 +109,9 @@ function IndicatorCard({
 
       <div className={styles.cardFooter}>
         <div className={styles.cardBadges} aria-label="Período e origem do indicador">
-          <span className={styles.metaBadge}>{indicator.period_end ? yearLabel(indicator.period_end) : "Sem período"}</span>
-          <span className={`${styles.metaBadge} ${indicator.derived ? styles.calculatedBadge : styles.officialBadge}`}>
-            {indicator.derived ? "Calculado" : "Oficial"}
+          <span className={styles.metaBadge}>{yearLabel(indicator.period_end)}</span>
+          <span className={`${styles.metaBadge} ${provenance === "calculated" ? styles.calculatedBadge : styles.officialBadge}`}>
+            {provenanceLabel(provenance)}
           </span>
         </div>
 
@@ -377,7 +370,7 @@ export function IndicatorDashboard({
           <p>Organizados por categoria, com histórico e metodologia rastreáveis.</p>
         </div>
         <div className={styles.headingMeta}>
-          <span className={styles.sourceBadge}>Oficial + calculado</span>
+          <span className={styles.sourceBadge}>{provenanceLabel("official")} + {provenanceLabel("calculated")}</span>
           <small>{availableIndicators} de {allIndicators.length} indicadores com dado · CVM anual</small>
         </div>
       </div>
