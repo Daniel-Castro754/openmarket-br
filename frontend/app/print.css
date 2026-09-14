@@ -1,0 +1,175 @@
+/* Print/export policy for analytical pages.
+   Preserve data, period, methodology and provenance while removing interactive chrome. */
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm 10mm 14mm;
+  }
+
+  :root {
+    color-scheme: light;
+  }
+
+  html,
+  body {
+    width: auto !important;
+    min-width: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+    color: #111 !important;
+  }
+
+  body {
+    font-size: 10pt;
+    line-height: 1.35;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-shadow: none !important;
+    text-shadow: none !important;
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .site-header,
+  .site-side-navigation,
+  .macro-ticker-bar,
+  .site-footer,
+  .appearance-panel,
+  .nav-mega,
+  .nav-dropdown,
+  .asset-tabs,
+  .asset-tabs-v2,
+  .results-filter-bar,
+  .discovery-toolbar,
+  .screener-toolbar,
+  .compare-toolbar,
+  .historyToolbar,
+  button,
+  [role="button"],
+  [data-print="hide"] {
+    display: none !important;
+  }
+
+  main,
+  .asset-page,
+  .discovery-page,
+  .research-home,
+  .financial-workspace,
+  .reports-page,
+  .compare-page,
+  .screener-page {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: none !important;
+  }
+
+  .panel,
+  .series-card,
+  .asset-publications,
+  .asset-analysis-shortcuts,
+  .fundamentals-checklist,
+  .asset-compare-panel,
+  .discovery-table-panel {
+    break-inside: avoid;
+    background: #fff !important;
+    border-color: #bbb !important;
+  }
+
+  .site-header,
+  .asset-tabs,
+  .asset-tabs-v2,
+  thead th,
+  .tool-table thead th,
+  .discovery-table thead th {
+    position: static !important;
+    inset: auto !important;
+  }
+
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    font-variant-numeric: tabular-nums;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  tfoot {
+    display: table-footer-group;
+  }
+
+  tr,
+  td,
+  th {
+    break-inside: avoid;
+  }
+
+  th,
+  td {
+    background: #fff !important;
+    color: #111 !important;
+    border-color: #c8c8c8 !important;
+  }
+
+  .source-pill,
+  .table-source-badge,
+  .data-source-pill,
+  .document-type-badge,
+  .processing-status,
+  .derived-mark,
+  [class*="metaBadge"],
+  [class*="sourceBadge"] {
+    background: transparent !important;
+    color: #222 !important;
+    border: 1px solid #999 !important;
+  }
+
+  .numeric-cell,
+  .series-row strong,
+  [class*="Value"],
+  [class*="value"] {
+    font-variant-numeric: tabular-nums;
+  }
+
+  svg,
+  canvas {
+    max-width: 100% !important;
+    break-inside: avoid;
+  }
+
+  .home-v2-chart-tooltip,
+  .home-v2-chart-hint {
+    display: none !important;
+  }
+
+  .home-v2-interactive-chart .home-v2-chart-line,
+  [class*="line"] {
+    stroke: #111;
+  }
+
+  .home-v2-interactive-chart .home-v2-chart-baseline,
+  [class*="gridLine"],
+  [class*="zeroLine"] {
+    stroke: #aaa;
+  }
+
+  a {
+    color: #111 !important;
+    text-decoration: none !important;
+  }
+
+  p,
+  li,
+  small,
+  span {
+    orphans: 3;
+    widows: 3;
+  }
+}
