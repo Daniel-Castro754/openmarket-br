@@ -16,7 +16,7 @@ from openmarket_api.persistence.models import (
     ScreenerMetricSnapshotRecord,
 )
 from openmarket_api.services.cash_flow_series import CASH_FLOW_METRICS, CashFlowSeriesService
-from openmarket_api.services.financial_series import FinancialSeriesService
+from openmarket_api.services.liquidity_series import LiquidityFinancialSeriesService
 
 SnapshotValue = tuple[Decimal | None, date | None]
 SnapshotMap = dict[tuple[UUID, FinancialMetric], SnapshotValue]
@@ -28,7 +28,7 @@ class ScreenerSnapshotService:
 
     def __init__(self, session: Session) -> None:
         self.session = session
-        self.financial_service = FinancialSeriesService(session)
+        self.financial_service = LiquidityFinancialSeriesService(session)
         self.cash_service = CashFlowSeriesService(session)
 
     def ensure(
