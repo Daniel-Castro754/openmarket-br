@@ -22,6 +22,7 @@ import "./market-discovery.css";
 import "./discovery-pages.css";
 import "./design-governance.css";
 import "./header-navigation-refinement.css";
+import "./company-workstation-d5.css";
 
 export const metadata: Metadata = {
   title: "OpenMarket BR",
