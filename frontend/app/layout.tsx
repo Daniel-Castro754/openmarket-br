@@ -36,6 +36,7 @@ import "./home-v2-h3.css";
 import "./home-v2-title-tuning.css";
 import "./home-v2-macro-interactive.css";
 import "./site-footer.css";
+import "./asset-analysis-final-qa.css";
 
 export const metadata: Metadata = {
   title: "OpenMarket BR",
