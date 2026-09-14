@@ -15,32 +15,30 @@ export default async function AnalysesPage() {
 
   return (
     <main className={styles.page}>
-      <section className={styles.hero}>
+      <header className={styles.hero}>
         <div>
-          <span className="eyebrow">ANÁLISES ECONÔMICAS</span>
-          <h1>Consumo, atividade e sinais da economia real.</h1>
+          <span className="eyebrow">ECONOMIA REAL · IBGE</span>
+          <h1>Análises econômicas</h1>
           <p>
-            Transformamos bases oficiais em leituras visuais: estrutura do orçamento das famílias,
-            varejo, serviços, indústria e inflação. Cada bloco preserva fonte e período.
+            Consumo das famílias e séries de atividade organizados com período, fonte e metodologia explícitos.
           </p>
         </div>
-        <div className={styles.heroAside}>
-          <strong>IBGE conectado</strong>
-          <span>POF + SIDRA</span>
-          <small>Dados estruturais e séries conjunturais no mesmo painel.</small>
+        <div className={styles.heroMeta} aria-label="Cobertura das análises econômicas">
+          <span><strong>IBGE</strong> fonte oficial</span>
+          <span><strong>POF + SIDRA</strong> bases</span>
+          <span><strong>Oficial</strong> proveniência</span>
         </div>
-      </section>
+      </header>
 
       {snapshot ? (
         <ConsumerAnalysis snapshot={snapshot} />
       ) : (
         <section className={styles.unavailable} role="status">
           <div>
-            <span className="eyebrow">DADOS TEMPORARIAMENTE INDISPONÍVEIS</span>
-            <h2>A página continua acessível.</h2>
+            <span className="eyebrow">DADOS INDISPONÍVEIS</span>
+            <h2>Não foi possível carregar as séries do IBGE.</h2>
             <p>
-              A OpenMarket API não respondeu nesta tentativa. Inicie ou reinicie o backend e recarregue a página
-              para buscar novamente os dados oficiais do IBGE.
+              A página não usa valores substitutos. Reinicie a API, se necessário, e tente carregar os dados oficiais novamente.
             </p>
           </div>
           <a className={styles.retryLink} href="/analises">Tentar novamente</a>
