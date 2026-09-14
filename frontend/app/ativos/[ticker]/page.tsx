@@ -7,7 +7,12 @@ import {
   type FinancialMetric,
   type FinancialSeries,
 } from "../../../lib/api";
+import { AssetComparePanel } from "./asset-compare-panel";
 import { AssetSummaryStrip } from "./asset-summary-strip";
+import {
+  FundamentalsChecklist,
+  type FundamentalsChecklistItem,
+} from "./fundamentals-checklist";
 
 const overviewMetrics: FinancialMetric[] = [
   "revenue",
@@ -26,6 +31,13 @@ function latestPoint(series?: FinancialSeries) {
 function previousPoint(series?: FinancialSeries) {
   if (!series || series.points.length < 2) return null;
   return series.points[series.points.length - 2];
+}
+
+function latestNumeric(series?: FinancialSeries) {
+  const point = latestPoint(series);
+  if (!point) return null;
+  const numeric = Number(point.value);
+  return Number.isFinite(numeric) ? numeric : null;
 }
 
 function metricSeries(series: FinancialSeries[], metric: FinancialMetric) {
@@ -95,6 +107,11 @@ function documentTypeLabel(value: string) {
   return labels[value] ?? value;
 }
 
+function checklistStatus(value: number | null, predicate: (number: number) => boolean): FundamentalsChecklistItem["status"] {
+  if (value == null) return "unavailable";
+  return predicate(value) ? "positive" : "attention";
+}
+
 export default async function AssetOverviewPage({ params }: { params: Promise<{ ticker: string }> }) {
   const { ticker: rawTicker } = await params;
   const ticker = rawTicker.trim().toUpperCase();
@@ -115,12 +132,13 @@ export default async function AssetOverviewPage({ params }: { params: Promise<{ 
     .flatMap((group) => group.indicators)
     .find((indicator) => indicator.slug === "current-ratio");
 
-  const currentRatioValue = currentRatio?.value == null
+  const currentRatioNumeric = currentRatio?.value == null ? null : Number(currentRatio.value);
+  const currentRatioValue = currentRatioNumeric == null || !Number.isFinite(currentRatioNumeric)
     ? "—"
     : `${new Intl.NumberFormat("pt-BR", {
         maximumFractionDigits: 2,
         minimumFractionDigits: 2,
-      }).format(Number(currentRatio.value))}x`;
+      }).format(currentRatioNumeric)}x`;
 
   const summaryMetrics = [
     { label: "Receita", value: formatSeriesValue(revenue), context: periodShort(revenue), provenance: "CVM" },
@@ -134,59 +152,68 @@ export default async function AssetOverviewPage({ params }: { params: Promise<{ 
     },
   ];
 
+  const revenueGrowthNumeric = latestNumeric(revenueGrowth);
+  const netIncomeNumeric = latestNumeric(netIncome);
+  const netMarginNumeric = latestNumeric(netMargin);
+  const operatingCashFlowNumeric = latestNumeric(operatingCashFlow);
+  const usableCurrentRatio = currentRatioNumeric != null && Number.isFinite(currentRatioNumeric)
+    ? currentRatioNumeric
+    : null;
+
+  const checklistItems: FundamentalsChecklistItem[] = [
+    {
+      label: "Receita cresceu no último período anual",
+      value: formatSeriesValue(revenueGrowth),
+      detail: "Crescimento anual da receita no fechamento mais recente.",
+      status: checklistStatus(revenueGrowthNumeric, (value) => value > 0),
+    },
+    {
+      label: "Lucro líquido está positivo",
+      value: formatSeriesValue(netIncome),
+      detail: `Lucro líquido consolidado de ${periodShort(netIncome)}.`,
+      status: checklistStatus(netIncomeNumeric, (value) => value > 0),
+    },
+    {
+      label: "Margem líquida está positiva",
+      value: formatSeriesValue(netMargin),
+      detail: "Resultado líquido em relação à receita do período.",
+      status: checklistStatus(netMarginNumeric, (value) => value > 0),
+    },
+    {
+      label: "Liquidez corrente é igual ou superior a 1,00x",
+      value: currentRatioValue,
+      detail: "Ativo circulante dividido pelo passivo circulante compatível.",
+      status: checklistStatus(usableCurrentRatio, (value) => value >= 1),
+    },
+    {
+      label: "Caixa operacional está positivo",
+      value: formatSeriesValue(operatingCashFlow),
+      detail: "Fluxo de caixa das atividades operacionais no período anual mais recente.",
+      status: checklistStatus(operatingCashFlowNumeric, (value) => value > 0),
+    },
+  ];
+
   return (
     <>
       <AssetSummaryStrip metrics={summaryMetrics} />
 
-      <section className="overview-dashboard" id="leitura-rapida">
-        <div className="dashboard-main">
-          <div className="section-title-row">
-            <div>
-              <span className="eyebrow">VISÃO GERAL</span>
-              <h2>Leitura rápida dos fundamentos</h2>
-            </div>
-            <span className="data-source-pill">Base CVM</span>
-          </div>
+      <section className="asset-overview-research-grid">
+        <FundamentalsChecklist items={checklistItems} />
+        <AssetComparePanel ticker={ticker} />
+      </section>
 
-          <div className="insight-grid">
-            <article className="insight-card neutral">
-              <span>Crescimento da receita</span>
-              <strong>{formatSeriesValue(revenueGrowth)}</strong>
-              <p>Comparação anual do período mais recente disponível.</p>
-            </article>
-            <article className="insight-card neutral">
-              <span>Margem líquida</span>
-              <strong>{formatSeriesValue(netMargin)}</strong>
-              <p>{marginMovement(netMargin)}.</p>
-            </article>
-            <article className="insight-card neutral">
-              <span>Dívida líquida</span>
-              <strong>{formatSeriesValue(netDebt)}</strong>
-              <p>Calculada apenas quando os componentes pertencem ao mesmo fechamento.</p>
-            </article>
-            <article className="insight-card neutral">
-              <span>Caixa operacional</span>
-              <strong>{formatSeriesValue(operatingCashFlow)}</strong>
-              <p>Fluxo de caixa operacional do período anual mais recente.</p>
-            </article>
-          </div>
+      <section className="asset-overview-links" aria-label="Aprofundar análise">
+        <div>
+          <span className="eyebrow">APROFUNDE A ANÁLISE</span>
+          <h2>Detalhes separados por área</h2>
+          <p>A visão geral resume os fundamentos; indicadores, demonstrações e publicações ficam nas abas dedicadas.</p>
         </div>
-
-        <aside className="research-consensus-card">
-          <div className="research-card-heading">
-            <div>
-              <span className="eyebrow">APROFUNDE A ANÁLISE</span>
-              <h2>Escolha o nível de detalhe</h2>
-            </div>
-          </div>
-          <p className="research-intro">A visão geral fica curta; os detalhes agora estão separados por área.</p>
-          <div className="recommendation-scale">
-            <div><span>Fundamentos</span><strong><Link href={`/ativos/${ticker}/indicadores`}>Indicadores →</Link></strong></div>
-            <div><span>Demonstrações</span><strong><Link href={`/ativos/${ticker}/financeiro`}>Financeiro →</Link></strong></div>
-            <div><span>Comparação</span><strong><Link href={`/comparar?tickers=${ticker}`}>Comparar →</Link></strong></div>
-          </div>
-          <small>Indicadores e séries preservam período, fórmula e origem dos dados.</small>
-        </aside>
+        <nav>
+          <Link href={`/ativos/${ticker}/indicadores`}>Indicadores →</Link>
+          <Link href={`/ativos/${ticker}/financeiro`}>Financeiro →</Link>
+          <Link href={`/ativos/${ticker}/eventos`}>Eventos →</Link>
+          <Link href={`/ativos/${ticker}/relatorios`}>Relatórios →</Link>
+        </nav>
       </section>
 
       <section className="events-section" id="eventos-recentes">
@@ -212,6 +239,12 @@ export default async function AssetOverviewPage({ params }: { params: Promise<{ 
             <div className="event-empty">Nenhum documento sincronizado para este ticker.</div>
           )}
         </div>
+      </section>
+
+      <section className="asset-overview-debt-note">
+        <span>Dívida líquida</span>
+        <strong>{formatSeriesValue(netDebt)}</strong>
+        <p>Valor calculado apenas quando caixa e componentes da dívida pertencem ao mesmo fechamento.</p>
       </section>
     </>
   );
