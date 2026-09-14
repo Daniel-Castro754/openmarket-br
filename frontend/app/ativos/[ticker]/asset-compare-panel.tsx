@@ -5,14 +5,15 @@ export function AssetComparePanel({ ticker }: { ticker: string }) {
     <aside className="asset-compare-panel" aria-labelledby="asset-compare-panel-title">
       <div>
         <span className="eyebrow">COMPARAÇÃO</span>
-        <h2 id="asset-compare-panel-title">Coloque {ticker} lado a lado</h2>
+        <h2 id="asset-compare-panel-title">Compare {ticker} com outras empresas</h2>
         <p>
-          Compare fundamentos com outras empresas usando as mesmas métricas e períodos, sem sugerir pares por setor enquanto a classificação setorial não estiver integrada.
+          Leve o ativo atual para o comparador e adicione outras empresas para analisar os mesmos fundamentos e
+          períodos lado a lado.
         </p>
       </div>
 
       <div className="asset-compare-current">
-        <span>Ativo atual</span>
+        <span>Ativo de partida</span>
         <strong>{ticker}</strong>
       </div>
 
@@ -23,7 +24,10 @@ export function AssetComparePanel({ ticker }: { ticker: string }) {
         <Link href="/screener">Encontrar empresas no Screener</Link>
       </div>
 
-      <small>O OpenMarket não infere concorrentes ou empresas semelhantes sem uma fonte setorial rastreável.</small>
+      <small>
+        Empresas semelhantes não são sugeridas automaticamente enquanto não houver uma classificação setorial
+        rastreável integrada.
+      </small>
     </aside>
   );
 }
