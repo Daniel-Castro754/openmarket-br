@@ -31,6 +31,7 @@ SCREENER_METRICS: tuple[FinancialMetric, ...] = (
     FinancialMetric.CASH,
     FinancialMetric.GROSS_DEBT,
     FinancialMetric.NET_DEBT,
+    FinancialMetric.CURRENT_RATIO,
     FinancialMetric.OPERATING_CASH_FLOW,
     FinancialMetric.INVESTING_CASH_FLOW,
     FinancialMetric.FINANCING_CASH_FLOW,

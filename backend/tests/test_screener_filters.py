@@ -14,6 +14,14 @@ def test_parse_filter_accepts_supported_metric_and_operator() -> None:
     assert parsed.value == Decimal("15.5")
 
 
+def test_parse_filter_accepts_current_ratio() -> None:
+    parsed = _parse_filter("current_ratio:gte:1.25")
+
+    assert parsed.metric is FinancialMetric.CURRENT_RATIO
+    assert parsed.operator == "gte"
+    assert parsed.value == Decimal("1.25")
+
+
 def test_parse_filter_accepts_decimal_comma() -> None:
     parsed = _parse_filter("net_margin:lt:12,75")
 

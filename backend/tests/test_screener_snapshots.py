@@ -11,6 +11,7 @@ from openmarket_api.domain.entities import Company, Instrument, InstrumentType
 from openmarket_api.persistence.base import Base
 from openmarket_api.persistence.models import ScreenerMetricSnapshotRecord
 from openmarket_api.persistence.repositories import CompanyRepository, InstrumentRepository
+from openmarket_api.services.liquidity_series import LiquidityFinancialSeriesService
 from openmarket_api.services.screener_snapshots import ScreenerSnapshotService
 
 
@@ -34,6 +35,17 @@ def _seed_petr4(session: Session):
     )
     session.commit()
     return company_record, instrument_record
+
+
+def test_screener_uses_liquidity_aware_financial_service() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+
+    with Session(engine) as session:
+        service = ScreenerSnapshotService(session)
+
+    assert isinstance(service.financial_service, LiquidityFinancialSeriesService)
+    assert FinancialMetric.CURRENT_RATIO in SCREENER_METRICS
 
 
 def test_screener_reuses_persistent_metric_snapshots(monkeypatch) -> None:
