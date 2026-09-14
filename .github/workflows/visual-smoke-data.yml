@@ -1,10 +1,6 @@
 name: visual-smoke-data
 
-# Pull-request trigger is temporary while the data-backed runner is validated.
-# Keep only workflow_dispatch after the first successful full run.
 on:
-  pull_request:
-    branches: [main]
   workflow_dispatch:
     inputs:
       ticker:
