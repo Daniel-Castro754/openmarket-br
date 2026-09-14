@@ -87,6 +87,7 @@ const visualMatrix: VisualCase[] = [
     mode: "dark",
     navigation: "topbar",
     viewport: desktop,
+    requiresData: true,
   },
   {
     name: "relatorios · light · topbar · desktop",
@@ -94,6 +95,7 @@ const visualMatrix: VisualCase[] = [
     mode: "light",
     navigation: "topbar",
     viewport: desktop,
+    requiresData: true,
   },
   {
     name: "home · light · mobile",
@@ -123,6 +125,7 @@ const visualMatrix: VisualCase[] = [
     mode: "dark",
     navigation: "topbar",
     viewport: mobile,
+    requiresData: true,
   },
 ];
 
@@ -251,6 +254,7 @@ test.describe("OpenMarket BR · print preview", () => {
       mode: "light",
       navigation: "topbar",
       viewport: desktop,
+      requiresData: true,
     },
   ];
 

@@ -123,7 +123,7 @@ npm run qa:visual
 npm run qa:visual:report
 ```
 
-Por padrão, o Playwright inicia `npm run dev` e reutiliza um servidor já ativo em `http://127.0.0.1:3000`. Para apontar para um ambiente existente, use `QA_BASE_URL`. Para outro ativo de referência, use `QA_ASSET_TICKER`; o padrão é `PETR4`.
+Por padrão, o Playwright inicia `npm run dev` e reutiliza um servidor já ativo em `http://localhost:3000`. Para apontar para um ambiente existente, use `QA_BASE_URL`. Para outro ativo de referência, use `QA_ASSET_TICKER`; o padrão é `PETR4`.
 
 Rotas que dependem de dados de empresa são marcadas como `requiresData`: se o backend/base local não estiver disponível e a rota responder com erro, o caso é pulado com motivo explícito em vez de gerar um falso diagnóstico visual. A rota `/dev/design-system` entra automaticamente quando o harness inicia o servidor de desenvolvimento; em um `QA_BASE_URL` externo ela só entra com `QA_INCLUDE_DEV=1`.
 
