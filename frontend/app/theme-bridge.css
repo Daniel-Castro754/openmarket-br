@@ -7,13 +7,17 @@
   --shadow: var(--shadow-card);
 }
 
-[data-theme="light"] img,
-[data-theme="light"] iframe {
+[data-mode="light"] img,
+[data-mode="light"] iframe,
+[data-mode="light"] input,
+[data-mode="light"] select,
+[data-mode="light"] textarea {
   color-scheme: light;
 }
 
-[data-theme="dark"] iframe,
-[data-theme="terminal"] iframe,
-[data-theme="ocean"] iframe {
+[data-mode="dark"] iframe,
+[data-mode="dark"] input,
+[data-mode="dark"] select,
+[data-mode="dark"] textarea {
   color-scheme: dark;
 }
