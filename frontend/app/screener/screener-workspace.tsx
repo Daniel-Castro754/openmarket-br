@@ -15,6 +15,7 @@ type MetricKey =
   | "operating_margin"
   | "net_margin"
   | "roe"
+  | "current_ratio"
   | "cash"
   | "gross_debt"
   | "net_debt";
@@ -33,14 +34,15 @@ type FilterRule = {
 type ColumnDefinition = {
   key: ColumnKey;
   label: string;
-  kind: "text" | "date" | "currency" | "percent";
+  kind: "text" | "date" | "currency" | "percent" | "multiple";
   metric?: MetricKey;
   sortable?: boolean;
 };
 
-const metricOptions: Array<{ key: MetricKey; label: string; unit: "%" | "R$"; group: string }> = [
+const metricOptions: Array<{ key: MetricKey; label: string; unit: "%" | "R$" | "x"; group: string }> = [
   { key: "revenue_growth_yoy", label: "Crescimento da receita", unit: "%", group: "Crescimento" },
   { key: "roe", label: "ROE", unit: "%", group: "Rentabilidade" },
+  { key: "current_ratio", label: "Liquidez corrente", unit: "x", group: "Liquidez" },
   { key: "gross_margin", label: "Margem bruta", unit: "%", group: "Margens" },
   { key: "operating_margin", label: "Margem operacional", unit: "%", group: "Margens" },
   { key: "net_margin", label: "Margem líquida", unit: "%", group: "Margens" },
@@ -68,6 +70,7 @@ const columns: ColumnDefinition[] = [
   { key: "revenue_growth_yoy", label: "Receita YoY", kind: "percent", metric: "revenue_growth_yoy", sortable: true },
   { key: "net_income", label: "Lucro líquido", kind: "currency", metric: "net_income", sortable: true },
   { key: "roe", label: "ROE", kind: "percent", metric: "roe", sortable: true },
+  { key: "current_ratio", label: "Liquidez corrente", kind: "multiple", metric: "current_ratio", sortable: true },
   { key: "gross_margin", label: "Margem bruta", kind: "percent", metric: "gross_margin", sortable: true },
   { key: "operating_margin", label: "Margem op.", kind: "percent", metric: "operating_margin", sortable: true },
   { key: "net_margin", label: "Margem líquida", kind: "percent", metric: "net_margin", sortable: true },
@@ -82,6 +85,7 @@ const defaultColumns: ColumnKey[] = [
   "company",
   "revenue_growth_yoy",
   "roe",
+  "current_ratio",
   "net_margin",
   "net_debt",
   "latest_period",
@@ -108,6 +112,9 @@ function formatMetric(row: ScreenerRow, column: ColumnDefinition) {
   if (value == null) return "—";
   if (column.kind === "percent") {
     return `${new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 2 }).format(value)}%`;
+  }
+  if (column.kind === "multiple") {
+    return `${new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)}x`;
   }
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -358,7 +365,7 @@ export function ScreenerWorkspace({
             <thead>
               <tr>
                 {activeColumns.map((column) => (
-                  <th key={column.key} className={column.kind === "currency" || column.kind === "percent" ? styles.numeric : ""}>
+                  <th key={column.key} className={column.kind === "currency" || column.kind === "percent" || column.kind === "multiple" ? styles.numeric : ""}>
                     {column.sortable ? (
                       <button type="button" onClick={() => changeSort(column.key as SortableKey)} disabled={isPending}>
                         {column.label}
@@ -383,7 +390,7 @@ export function ScreenerWorkspace({
                       return <td key={column.key}>{row.latest_period ? row.latest_period.slice(0, 4) : "—"}</td>;
                     }
                     return (
-                      <td className={column.kind === "currency" || column.kind === "percent" ? styles.numeric : ""} key={column.key}>
+                      <td className={column.kind === "currency" || column.kind === "percent" || column.kind === "multiple" ? styles.numeric : ""} key={column.key}>
                         {formatMetric(row, column)}
                       </td>
                     );
