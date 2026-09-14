@@ -1,0 +1,221 @@
+/* D9 — final visual QA guardrails.
+   Loaded last. Keep mode, color theme and navigation independent while
+   normalizing density, interaction states and responsive shell behavior. */
+
+:root {
+  --qa-control-height: 32px;
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+body,
+main,
+.site-header-inner,
+.site-header-actions,
+.site-nav,
+.panel,
+.discovery-table-panel {
+  min-width: 0;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+button,
+input,
+select,
+textarea,
+summary {
+  font: inherit;
+}
+
+input,
+select,
+textarea {
+  min-width: 0;
+}
+
+button:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: .52;
+}
+
+:where(a, button, input, select, textarea, summary):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Financial values should not visually jump as digits change. */
+table,
+.numeric-cell,
+.headline-metrics,
+.home-source-strip,
+.home-method-strip,
+.discovery-meta-strip,
+.ranking-formula-strip,
+.asset-kpi-strip,
+.asset-secondary-strip {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Static surfaces stay flat; elevation is reserved for overlays. */
+.panel,
+.discovery-table-panel,
+.ranking-methodology-card,
+.home-workspace-panel,
+.home-module-card,
+.home-context-card,
+.headline-metrics article,
+.series-card,
+.sector-unavailable-panel,
+.sector-roadmap-grid article {
+  box-shadow: none;
+}
+
+/* Status/source tokens are compact labels, not decorative pills. */
+.source-pill,
+.table-source-badge,
+.document-type-badge,
+.processing-status,
+.data-source-pill,
+.research-status,
+.exchange-tag,
+.home-status-badge,
+.nav-planned-badge {
+  border-radius: 4px;
+}
+
+/* Dropdowns must remain usable on short viewports. */
+.nav-mega,
+.nav-dropdown,
+.appearance-panel {
+  overscroll-behavior: contain;
+}
+
+.nav-mega {
+  max-height: calc(100vh - var(--chrome-height, 52px) - 16px);
+  overflow-y: auto;
+}
+
+.appearance-panel {
+  max-height: calc(100vh - 72px);
+  overflow-y: auto;
+}
+
+.site-side-navigation {
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+/* Old showcase hover motion is intentionally neutralized. */
+.home-module-card[href]:hover,
+.home-context-card:hover,
+.home-quick-links a:hover,
+.ranking-card:hover,
+.product-card:hover {
+  transform: none;
+}
+
+/* Sector page is a methodology state, not a roadmap landing page. */
+.sectors-page .sectors-header {
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+}
+
+.sectors-page .sector-methodology-notice {
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  margin-top: 14px;
+  padding: 14px;
+  border-style: solid;
+  border-color: var(--border);
+  border-radius: 7px;
+  background: var(--surface);
+}
+
+.sectors-page .sector-methodology-notice h2 {
+  margin: 4px 0;
+  color: var(--text-strong);
+  font-size: .98rem;
+}
+
+.sectors-page .sector-methodology-notice p {
+  max-width: 860px;
+  margin: 0;
+  color: var(--muted);
+  font-size: .61rem;
+  line-height: 1.42;
+}
+
+.sectors-page .sector-current-paths {
+  margin-top: 16px;
+  padding-top: 14px;
+}
+
+.sectors-page .sector-path-links a {
+  border-radius: 5px;
+}
+
+/* Keep table workspaces stable when content is wider than the viewport. */
+.discovery-table-wrap,
+.focusTableWrap,
+.reportTableWrap {
+  overscroll-behavior-inline: contain;
+  scrollbar-gutter: stable;
+}
+
+@media (max-width: 900px) {
+  :root {
+    --shell-gutter: 12px;
+  }
+
+  .nav-mega {
+    max-height: calc(100vh - 102px);
+  }
+
+  .sectors-page .sector-methodology-notice,
+  .sectors-page .sector-current-paths {
+    grid-template-columns: 1fr;
+  }
+
+  .sectors-page .sector-path-links {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 620px) {
+  html[data-navigation="sidebar"] main,
+  html[data-navigation="rail"] main,
+  html[data-navigation="topbar"] main {
+    width: calc(100% - 18px);
+  }
+
+  .appearance-panel {
+    max-height: calc(100vh - 62px);
+  }
+
+  .sectors-page .sector-path-links {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .sectors-page .sector-path-links a {
+    justify-content: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
