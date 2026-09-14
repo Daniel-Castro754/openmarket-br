@@ -1,10 +1,6 @@
 name: visual-smoke
 
-# Pull-request trigger is temporary while validating the final Chromium run.
-# It will be reduced to workflow_dispatch before merge.
 on:
-  pull_request:
-    branches: [main]
   workflow_dispatch:
 
 jobs:
