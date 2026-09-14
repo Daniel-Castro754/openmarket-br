@@ -80,6 +80,51 @@ Modo, tema e navegação são independentes. Uma correção em um eixo não pode
 - enquanto não houver fonte setorial rastreável, a tela deve permanecer um estado metodológico curto;
 - não publicar agrupamentos, medianas ou rankings setoriais inferidos.
 
+## Impressão / exportação
+
+O stylesheet `frontend/app/print.css` define o contrato mínimo para impressão e geração de PDF pelo navegador.
+
+- remover header, navegação lateral, barra macro, footer e controles interativos;
+- preservar tabelas, números, fonte, período, metodologia e proveniência;
+- repetir cabeçalhos de tabela quando o navegador suportar;
+- neutralizar sticky positioning e chrome de tela;
+- evitar quebra dentro de painéis, linhas e gráficos sempre que possível;
+- manter proveniência legível também sem cor.
+
+Smoke test recomendado: `/ativos/PETR4`, `/ativos/PETR4/financeiro`, `/comparar` e `/relatorios` usando Print Preview do navegador.
+
+## Página viva do Design System
+
+Durante desenvolvimento, `/dev/design-system` apresenta os tokens e primitives compartilhados em contexto real. A rota retorna 404 em produção e não faz parte da navegação pública.
+
+A página deve ser atualizada quando houver mudança material em:
+
+- cores/tokens semânticos;
+- tipografia ou densidade;
+- proveniência e estados de dados;
+- controles base;
+- tabela analítica;
+- contrato visual de gráficos.
+
+Ela é uma referência de implementação; não substitui a Constituição de Design nem este checklist de QA.
+
+## Fechamento da auditoria V3.2
+
+Os blocos estruturais da V3.2 são considerados implementados quando o PR de fechamento estiver verde. O status de validação deve ser registrado separando claramente build/teste de inspeção visual.
+
+| Verificação | Status esperado no merge |
+| --- | --- |
+| Tokens/fundação canônica | implementado |
+| Semântica e formatação compartilhada | implementado |
+| Primitives de tabelas/ferramentas | implementado |
+| Consolidação CSS de Indicadores/Financeiro/Home/Overview | implementado |
+| Contrato visual de gráficos | implementado |
+| Print/export | implementado; smoke visual manual recomendado |
+| Página viva do Design System | implementado em desenvolvimento |
+| `frontend-ci` | obrigatório verde |
+| `backend-ci` | obrigatório verde quando acionado |
+| Matriz visual completa de navegador | manual; não inferir a partir do CI |
+
 ## Critério de merge
 
 Uma mudança visual só deve ser considerada concluída quando:

@@ -27,10 +27,10 @@ import "./market-discovery.css";
 import "./discovery-pages.css";
 import "./design-governance.css";
 import "./header-navigation-refinement.css";
-import "./company-workstation-d5.css";
+import "./company-workstation.css";
 import "./home-research-hub.css";
-import "./discovery-workspace-d7.css";
-import "./visual-qa-d9.css";
+import "./discovery-workspace.css";
+import "./visual-qa.css";
 
 /* Canonical current page workspaces. Keep after global QA guardrails. */
 import "./asset-overview.css";
@@ -38,6 +38,9 @@ import "./home-research-workspace.css";
 import "./chart-system.css";
 import "./site-footer.css";
 import "./asset-documents-workspace.css";
+
+/* Print/export must win the cascade without changing screen presentation. */
+import "./print.css";
 
 export const metadata: Metadata = {
   title: "OpenMarket BR",

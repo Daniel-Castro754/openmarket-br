@@ -1,4 +1,4 @@
-/* D7 — rankings + results as dense research workspaces. */
+/* Canonical discovery workspace styles. Formerly versioned as D7. */
 
 .discovery-page.d7-workspace {
   width: min(1460px, calc(100% - 40px));
@@ -66,17 +66,13 @@
   background: transparent;
 }
 
-.d7-workspace .ranking-selector {
-  gap: 2px;
-}
-
+.d7-workspace .ranking-selector { gap: 2px; }
 .d7-workspace .ranking-selector a {
   min-height: 29px;
   padding: 0 9px;
   border-radius: 4px;
   font-size: .58rem;
 }
-
 .d7-workspace .ranking-selector a.active {
   border-color: transparent;
   background: var(--surface-soft);
@@ -91,7 +87,6 @@
   padding: 8px 0;
   border-bottom: 1px solid var(--border);
 }
-
 .ranking-context-bar > div { min-width: 0; }
 .ranking-context-bar strong {
   display: block;
@@ -119,36 +114,14 @@
   margin-top: 10px;
   border-radius: 5px;
 }
-
-.d7-workspace .discovery-table-heading {
-  padding: 8px 10px;
-}
-
-.d7-workspace .discovery-table-heading h2 {
-  font-size: .78rem;
-}
-
+.d7-workspace .discovery-table-heading { padding: 8px 10px; }
+.d7-workspace .discovery-table-heading h2 { font-size: .78rem; }
 .d7-workspace .discovery-table th,
-.d7-workspace .discovery-table td {
-  padding: 7px 9px;
-}
-
-.d7-workspace .discovery-table {
-  font-size: .57rem;
-}
-
-.d7-workspace .discovery-table thead th {
-  font-size: .49rem;
-}
-
-.d7-workspace .rank-position {
-  width: 46px;
-  color: var(--soft);
-}
-
-.d7-workspace .numeric-cell strong {
-  font-size: .64rem;
-}
+.d7-workspace .discovery-table td { padding: 7px 9px; }
+.d7-workspace .discovery-table { font-size: .57rem; }
+.d7-workspace .discovery-table thead th { font-size: .49rem; }
+.d7-workspace .rank-position { width: 46px; color: var(--soft); }
+.d7-workspace .numeric-cell strong { font-size: .64rem; }
 
 .d7-workspace .table-source-badge,
 .d7-workspace .document-type-badge,
@@ -160,10 +133,7 @@
   font-size: .46rem;
 }
 
-.d7-workspace .table-actions {
-  gap: 3px;
-}
-
+.d7-workspace .table-actions { gap: 3px; }
 .d7-workspace .table-actions a {
   min-height: 24px;
   padding: 0 6px;
@@ -196,10 +166,7 @@
   border-radius: 4px;
   font-size: .56rem;
 }
-
-.d7-workspace .results-filter-bar label > span {
-  font-size: .49rem;
-}
+.d7-workspace .results-filter-bar label > span { font-size: .49rem; }
 
 .results-context-line {
   display: flex;
@@ -211,7 +178,6 @@
   color: var(--muted);
   font-size: .51rem;
 }
-
 .results-context-line strong {
   color: var(--text-strong);
   font-size: .56rem;
@@ -222,20 +188,12 @@
     align-items: flex-start;
     flex-direction: column;
   }
-
   .ranking-context-bar {
     grid-template-columns: 1fr;
     gap: 4px;
   }
-
-  .ranking-context-bar .ranking-formula-inline {
-    white-space: normal;
-  }
-
-  .d7-workspace .results-filter-bar {
-    grid-template-columns: 1fr 140px auto;
-  }
-
+  .ranking-context-bar .ranking-formula-inline { white-space: normal; }
+  .d7-workspace .results-filter-bar { grid-template-columns: 1fr 140px auto; }
   .d7-workspace .results-filter-bar > a {
     grid-column: 1 / -1;
     width: fit-content;
@@ -247,27 +205,18 @@
     width: calc(100% - 18px);
     padding-top: 14px;
   }
-
   .d7-meta-strip {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
   }
-
   .d7-meta-strip > div,
   .d7-meta-strip > div:first-child {
     padding: 6px 8px;
     border-right: 1px solid var(--border);
     border-bottom: 1px solid var(--border);
   }
-
   .d7-meta-strip > div:nth-child(2n) { border-right: 0; }
   .d7-meta-strip > div:nth-last-child(-n + 2) { border-bottom: 0; }
-
-  .d7-workspace .results-filter-bar {
-    grid-template-columns: 1fr;
-  }
-
-  .d7-workspace .results-filter-bar > a {
-    grid-column: auto;
-  }
+  .d7-workspace .results-filter-bar { grid-template-columns: 1fr; }
+  .d7-workspace .results-filter-bar > a { grid-column: auto; }
 }
