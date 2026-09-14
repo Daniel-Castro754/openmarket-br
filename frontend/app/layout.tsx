@@ -81,13 +81,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <script dangerouslySetInnerHTML={{ __html: appearanceInitScript }} />
       </head>
       <body>
+        <SiteSideNavigation />
         <SiteHeader />
         <MacroTickerBar />
-        <SiteSideNavigation />
-        <div className="site-shell-main">
-          {children}
-          <SiteFooter />
-        </div>
+        {children}
+        <SiteFooter />
       </body>
     </html>
   );
