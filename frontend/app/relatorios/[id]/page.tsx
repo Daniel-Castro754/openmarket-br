@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { getDocument } from "../../../lib/api";
+import { DocumentTextSearch } from "../document-text-search";
 import styles from "../report-viewer.module.css";
 
 function formatDate(value?: string | null) {
@@ -24,17 +25,46 @@ function processingLabel(status: string) {
   return "Metadados sincronizados";
 }
 
+function parsePage(value?: string | string[]) {
+  const raw = Array.isArray(value) ? value[0] : value;
+  const parsed = Number.parseInt(raw ?? "1", 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+}
+
+function withPdfPage(sourceUrl: string, page: number) {
+  const hashIndex = sourceUrl.indexOf("#");
+  const base = hashIndex >= 0 ? sourceUrl.slice(0, hashIndex) : sourceUrl;
+  return `${base}#page=${page}`;
+}
+
+function sectionHref(sequence: number, pageStart?: number | null) {
+  const anchor = `#sec-${sequence}`;
+  return pageStart == null ? anchor : `?page=${pageStart}${anchor}`;
+}
+
 export default async function ReportViewerPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ page?: string | string[] }>;
 }) {
-  const { id } = await params;
+  const [{ id }, query] = await Promise.all([params, searchParams]);
   const document = await getDocument(id);
   if (!document) notFound();
 
+  const requestedPage = parsePage(query.page);
+  const currentPage = document.page_count
+    ? Math.min(requestedPage, document.page_count)
+    : requestedPage;
   const hasOriginal = Boolean(document.source_url);
   const hasExtractedText = document.sections.length > 0;
+  const isPdf = document.content_type.toLocaleLowerCase().includes("pdf");
+  const viewerSourceUrl = document.source_url && isPdf
+    ? withPdfPage(document.source_url, currentPage)
+    : document.source_url;
+  const canGoPreviousPage = isPdf && currentPage > 1;
+  const canGoNextPage = isPdf && document.page_count != null && currentPage < document.page_count;
 
   return (
     <main className={`${styles.shell} ${styles.viewerShell}`}>
@@ -75,10 +105,13 @@ export default async function ReportViewerPage({
 
           {hasExtractedText ? (
             <>
+              <span className={styles.eyebrowBlock}>BUSCA</span>
+              <DocumentTextSearch sections={document.sections} />
+
               <span className={styles.eyebrowBlock}>SEÇÕES EXTRAÍDAS</span>
               <div className={styles.sectionNav}>
                 {document.sections.map((section) => (
-                  <a href={`#sec-${section.sequence}`} key={section.id}>
+                  <a href={sectionHref(section.sequence, section.page_start)} key={section.id}>
                     {section.heading ?? `Seção ${section.sequence}`} · {pagesLabel(section.page_start, section.page_end)}
                   </a>
                 ))}
@@ -93,18 +126,37 @@ export default async function ReportViewerPage({
               <span className={styles.eyebrow}>VISUALIZAÇÃO</span>
               <h2>Documento oficial</h2>
             </div>
-            {document.source_url ? (
-              <a href={document.source_url} target="_blank" rel="noreferrer">
-                Abrir em nova aba ↗
-              </a>
-            ) : null}
+            <div className={styles.documentPaneActions}>
+              {isPdf ? (
+                <div className={styles.pageControls} aria-label="Navegação por página">
+                  {canGoPreviousPage ? (
+                    <Link href={`?page=${currentPage - 1}`} aria-label="Página anterior">←</Link>
+                  ) : (
+                    <span aria-hidden="true">←</span>
+                  )}
+                  <strong>
+                    Página {currentPage}{document.page_count ? ` de ${document.page_count}` : ""}
+                  </strong>
+                  {canGoNextPage ? (
+                    <Link href={`?page=${currentPage + 1}`} aria-label="Próxima página">→</Link>
+                  ) : (
+                    <span aria-hidden="true">→</span>
+                  )}
+                </div>
+              ) : null}
+              {viewerSourceUrl ? (
+                <a href={viewerSourceUrl} target="_blank" rel="noreferrer">
+                  {isPdf ? `Abrir pág. ${currentPage} ↗` : "Abrir em nova aba ↗"}
+                </a>
+              ) : null}
+            </div>
           </div>
 
           {hasOriginal ? (
             <div className={styles.pdfFrameWrap}>
               <iframe
                 className={styles.pdfFrame}
-                src={document.source_url ?? undefined}
+                src={viewerSourceUrl ?? undefined}
                 title={`Documento oficial: ${document.title}`}
               />
               <p className={styles.viewerFallback}>
@@ -122,7 +174,13 @@ export default async function ReportViewerPage({
               <span className={styles.eyebrow}>CONTEÚDO EXTRAÍDO</span>
               {document.sections.map((section) => (
                 <section className={styles.documentSection} id={`sec-${section.sequence}`} key={section.id}>
-                  <div className={styles.pageLabel}>{pagesLabel(section.page_start, section.page_end)}</div>
+                  <div className={styles.pageLabel}>
+                    {section.page_start != null ? (
+                      <Link href={`?page=${section.page_start}#sec-${section.sequence}`}>
+                        {pagesLabel(section.page_start, section.page_end)}
+                      </Link>
+                    ) : pagesLabel(section.page_start, section.page_end)}
+                  </div>
                   <h2>{section.heading ?? `Seção ${section.sequence}`}</h2>
                   <p>{section.text}</p>
                 </section>
