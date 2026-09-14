@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { getMacroSnapshot, type MacroIndicator } from "../../lib/macro-api";
+import { HomeMacroInteractiveChart } from "./home-macro-interactive-chart";
 
 function formatMacroValue(indicator: MacroIndicator) {
   const numeric = Number(indicator.latest_value);
@@ -23,27 +24,6 @@ function formatReferenceDate(value: string) {
   }).format(new Date(`${value}T00:00:00Z`));
 }
 
-function sparklinePoints(indicator: MacroIndicator) {
-  const points = indicator.points.slice(-18);
-  if (points.length < 2) return null;
-
-  const values = points.map((point) => Number(point.value)).filter(Number.isFinite);
-  if (values.length !== points.length) return null;
-
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const spread = max - min || 1;
-
-  return points
-    .map((point, index) => {
-      const value = Number(point.value);
-      const x = (index / (points.length - 1)) * 100;
-      const y = 34 - ((value - min) / spread) * 28;
-      return `${x.toFixed(2)},${y.toFixed(2)}`;
-    })
-    .join(" ");
-}
-
 export async function HomeMacroFocusPanel() {
   const snapshot = await getMacroSnapshot().catch(() => null);
   const preferredKeys = ["selic_target", "ipca_12m", "ibc_br"];
@@ -62,8 +42,6 @@ export async function HomeMacroFocusPanel() {
     );
   }
 
-  const sparkline = sparklinePoints(indicator);
-
   return (
     <aside className="home-v2-macro" aria-label="Brasil em foco">
       <div className="home-v2-macro-heading">
@@ -81,15 +59,12 @@ export async function HomeMacroFocusPanel() {
 
       <p className="home-v2-macro-description">{indicator.description}</p>
 
-      <div className="home-v2-sparkline" aria-hidden="true">
-        {sparkline ? (
-          <svg viewBox="0 0 100 40" preserveAspectRatio="none">
-            <line x1="0" y1="35" x2="100" y2="35" />
-            <polyline points={sparkline} />
-          </svg>
-        ) : (
-          <span>Histórico curto ainda indisponível.</span>
-        )}
+      <div className="home-v2-sparkline">
+        <HomeMacroInteractiveChart
+          points={indicator.points}
+          unit={indicator.unit}
+          label={indicator.label}
+        />
       </div>
 
       <div className="home-v2-macro-footer">
