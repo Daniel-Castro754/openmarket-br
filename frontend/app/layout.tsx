@@ -19,6 +19,7 @@ import "./page-proportions.css";
 import "./asset-company-refinement.css";
 import "./asset-indicator-refinement.css";
 import "./asset-financial-refinement.css";
+import "./asset-financial-workspace-v2.css";
 import "./market-discovery.css";
 import "./discovery-pages.css";
 import "./design-governance.css";

@@ -4,19 +4,20 @@ import { FinancialBarChart } from "../../../../components/financial-bar-chart";
 import {
   getFinancialSeries,
   type FinancialMetric,
+  type FinancialSeries,
   type SeriesFrequency,
 } from "../../../../lib/api";
 
-const fundamentalMetrics: FinancialMetric[] = [
+const incomeMetrics: FinancialMetric[] = [
   "revenue",
   "gross_profit",
   "operating_result",
   "net_income",
-  "total_assets",
-  "equity",
 ];
 
-const capitalMetrics: FinancialMetric[] = [
+const balanceMetrics: FinancialMetric[] = [
+  "total_assets",
+  "equity",
   "cash",
   "short_term_debt",
   "long_term_debt",
@@ -42,6 +43,53 @@ function firstValue(value?: string | string[]) {
   return Array.isArray(value) ? value[0] : value;
 }
 
+function latestPoint(series?: FinancialSeries) {
+  if (!series?.points.length) return null;
+  return series.points[series.points.length - 1];
+}
+
+function metricSeries(series: FinancialSeries[], metric: FinancialMetric) {
+  return series.find((item) => item.metric === metric);
+}
+
+function formatSeriesValue(series?: FinancialSeries) {
+  const point = latestPoint(series);
+  if (!series || !point) return "—";
+  const numeric = Number(point.value);
+  if (!Number.isFinite(numeric)) return point.value;
+
+  if (series.unit === "percent") {
+    return `${new Intl.NumberFormat("pt-BR", {
+      maximumFractionDigits: 1,
+      minimumFractionDigits: 1,
+    }).format(numeric)}%`;
+  }
+
+  if (series.unit === "multiple") {
+    return `${new Intl.NumberFormat("pt-BR", {
+      maximumFractionDigits: 2,
+      minimumFractionDigits: 2,
+    }).format(numeric)}x`;
+  }
+
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: point.currency ?? "BRL",
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(numeric);
+}
+
+function periodLabel(series?: FinancialSeries) {
+  const point = latestPoint(series);
+  if (!point) return "Sem período";
+  const [year, month] = point.period_end.split("-").map(Number);
+  if (series?.frequency === "quarterly") {
+    return `${Math.max(1, Math.min(4, Math.ceil(month / 3)))}T${String(year).slice(-2)}`;
+  }
+  return String(year);
+}
+
 export default async function AssetFinancialPage({
   params,
   searchParams,
@@ -57,92 +105,135 @@ export default async function AssetFinancialPage({
     ? analyticsMetrics
     : [...analyticsMetrics, "roe"];
 
-  const [fundamentalSeries, capitalSeries, cashFlowSeries, analyticsSeries] = await Promise.all([
-    Promise.all(fundamentalMetrics.map((metric) => getFinancialSeries(ticker, metric, frequency))),
-    Promise.all(capitalMetrics.map((metric) => getFinancialSeries(ticker, metric, frequency))),
+  const [incomeSeries, balanceSeries, cashFlowSeries, analyticsSeries] = await Promise.all([
+    Promise.all(incomeMetrics.map((metric) => getFinancialSeries(ticker, metric, frequency))),
+    Promise.all(balanceMetrics.map((metric) => getFinancialSeries(ticker, metric, frequency))),
     Promise.all(cashFlowMetrics.map((metric) => getFinancialSeries(ticker, metric, frequency))),
     Promise.all(analysisMetrics.map((metric) => getFinancialSeries(ticker, metric, frequency))),
   ]);
 
+  const revenue = metricSeries(incomeSeries, "revenue");
+  const netIncome = metricSeries(incomeSeries, "net_income");
+  const cash = metricSeries(balanceSeries, "cash");
+  const netDebt = metricSeries(balanceSeries, "net_debt");
+
+  const headlineMetrics = [
+    { label: "Receita", value: formatSeriesValue(revenue), period: periodLabel(revenue), source: "CVM" },
+    { label: "Lucro líquido", value: formatSeriesValue(netIncome), period: periodLabel(netIncome), source: "CVM" },
+    { label: "Caixa", value: formatSeriesValue(cash), period: periodLabel(cash), source: "CVM" },
+    { label: "Dívida líquida", value: formatSeriesValue(netDebt), period: periodLabel(netDebt), source: "Calculado" },
+  ];
+
   return (
     <>
-      <section className="series-section" id="financeiro">
-        <div className="section-heading series-section-heading">
-          <div>
-            <span className="eyebrow">DEMONSTRAÇÕES FINANCEIRAS</span>
-            <h2>{isQuarterly ? "Histórico trimestral" : "Histórico anual"}</h2>
-          </div>
-          <div className="series-heading-side">
-            <div className="series-toggle" aria-label="Frequência das séries">
-              <Link className={!isQuarterly ? "active" : ""} href={`/ativos/${ticker}/financeiro`}>
-                Anual
-              </Link>
-              <Link
-                className={isQuarterly ? "active" : ""}
-                href={`/ativos/${ticker}/financeiro?view=quarterly`}
-              >
-                Trimestral
-              </Link>
-            </div>
-            <p>
-              {isQuarterly
-                ? "Fluxos usam trimestres isolados do ITR. O 4T é calculado como DFP anual menos ITR de 9M e aparece marcado com D."
-                : "DFP consolidada da CVM. Em reapresentações, usamos a versão mais recente e preservamos o histórico no banco."}
-            </p>
+      <section className="financial-workspace-header">
+        <div className="financial-workspace-copy">
+          <span className="eyebrow">FINANCEIRO</span>
+          <h2>Demonstrações e evolução financeira</h2>
+          <p>
+            Navegue por resultado, balanço, caixa e indicadores calculados. Cada série preserva período,
+            conta de origem e proveniência dos dados oficiais.
+          </p>
+        </div>
+
+        <div className="financial-workspace-controls">
+          <span>Frequência</span>
+          <div className="series-toggle" aria-label="Frequência das séries">
+            <Link className={!isQuarterly ? "active" : ""} href={`/ativos/${ticker}/financeiro`}>
+              Anual
+            </Link>
+            <Link
+              className={isQuarterly ? "active" : ""}
+              href={`/ativos/${ticker}/financeiro?view=quarterly`}
+            >
+              Trimestral
+            </Link>
           </div>
         </div>
-        <div className="series-grid">
-          {fundamentalSeries.map((item) => (
+      </section>
+
+      <section className="financial-headline-strip" aria-label="Resumo financeiro">
+        {headlineMetrics.map((metric) => (
+          <article key={metric.label}>
+            <div>
+              <span>{metric.label}</span>
+              <small>{metric.source}</small>
+            </div>
+            <strong>{metric.value}</strong>
+            <p>{metric.period}</p>
+          </article>
+        ))}
+      </section>
+
+      <nav className="financial-section-nav" aria-label="Áreas do financeiro">
+        <a href="#resultado">Resultados</a>
+        <a href="#balanco">Balanço</a>
+        <a href="#caixa">Fluxo de caixa</a>
+        <a href="#analise-financeira">Indicadores</a>
+      </nav>
+
+      <section className="series-section financial-research-section" id="resultado">
+        <div className="section-heading series-section-heading">
+          <div>
+            <span className="eyebrow">RESULTADO</span>
+            <h2>{isQuarterly ? "Receitas e lucros trimestrais" : "Receitas e lucros anuais"}</h2>
+          </div>
+          <p>
+            Receita, lucro bruto, resultado operacional e lucro líquido organizados como uma leitura contínua da DRE.
+          </p>
+        </div>
+        <div className="series-grid financial-result-grid">
+          {incomeSeries.map((item) => (
             <FinancialBarChart key={`${item.metric}-${frequency}`} series={item} />
           ))}
         </div>
       </section>
 
-      <section className="series-section analytics-section">
+      <section className="series-section financial-research-section" id="balanco">
         <div className="section-heading">
           <div>
-            <span className="eyebrow">LIQUIDEZ E ENDIVIDAMENTO</span>
-            <h2>Caixa e estrutura da dívida</h2>
+            <span className="eyebrow">BALANÇO PATRIMONIAL</span>
+            <h2>Ativos, patrimônio e endividamento</h2>
           </div>
           <p>
-            Caixa, empréstimos de curto e longo prazo usam contas padronizadas da CVM. Dívida bruta e líquida só
-            são calculadas quando os componentes pertencem ao mesmo fechamento.
+            Caixa e dívida usam contas padronizadas da CVM. Dívida bruta e líquida só aparecem quando os componentes
+            pertencem ao mesmo fechamento.
           </p>
         </div>
         <div className="series-grid">
-          {capitalSeries.map((item) => (
+          {balanceSeries.map((item) => (
             <FinancialBarChart key={`${item.metric}-${frequency}`} series={item} />
           ))}
         </div>
       </section>
 
-      <section className="series-section analytics-section">
+      <section className="series-section financial-research-section" id="caixa">
         <div className="section-heading">
           <div>
             <span className="eyebrow">FLUXO DE CAIXA</span>
-            <h2>Geração e uso de caixa</h2>
+            <h2>Geração, investimento e financiamento</h2>
           </div>
           <p>
             A DFC usa os totais padronizados 6.01, 6.02, 6.03 e 6.05. Na visão trimestral, acumulados sucessivos
             são isolados e mantêm proveniência explícita.
           </p>
         </div>
-        <div className="series-grid">
+        <div className="series-grid financial-result-grid">
           {cashFlowSeries.map((item) => (
             <FinancialBarChart key={`${item.metric}-${frequency}`} series={item} />
           ))}
         </div>
       </section>
 
-      <section className="series-section analytics-section">
+      <section className="series-section financial-research-section" id="analise-financeira">
         <div className="section-heading">
           <div>
-            <span className="eyebrow">ANÁLISE</span>
+            <span className="eyebrow">INDICADORES FINANCEIROS</span>
             <h2>{isQuarterly ? "Margens e crescimento" : "Margens, crescimento e retorno"}</h2>
           </div>
           <p>
-            Indicadores calculados sobre fatos oficiais compatíveis da CVM. O ROE anual usa lucro líquido
-            consolidado e patrimônio líquido médio; nenhum ROE trimestral é anualizado implicitamente.
+            Indicadores calculados sobre fatos oficiais compatíveis da CVM. O ROE anual usa lucro líquido consolidado
+            e patrimônio líquido médio; nenhum ROE trimestral é anualizado implicitamente.
           </p>
         </div>
         <div className="series-grid">
@@ -151,6 +242,15 @@ export default async function AssetFinancialPage({
           ))}
         </div>
       </section>
+
+      <div className="financial-method-note">
+        <strong>Leitura dos dados</strong>
+        <p>
+          {isQuarterly
+            ? "Fluxos usam trimestres isolados do ITR. O 4T é calculado como DFP anual menos ITR de 9M e aparece marcado com D."
+            : "DFP consolidada da CVM. Em reapresentações, a versão mais recente é usada na leitura atual, preservando o histórico no banco."}
+        </p>
+      </div>
     </>
   );
 }
