@@ -1,0 +1,389 @@
+/* Asset overview v3 — concise investor-oriented summary without duplicating the detail tabs. */
+
+.asset-overview-intro {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 18px 0 8px;
+}
+
+.asset-overview-intro h2 {
+  margin: 4px 0 3px;
+  color: var(--text-strong);
+  font-size: 1.05rem;
+  letter-spacing: -.025em;
+}
+
+.asset-overview-intro p {
+  max-width: 620px;
+  margin: 0;
+  color: var(--muted);
+  font-size: .58rem;
+  line-height: 1.45;
+}
+
+.asset-overview-intro > span {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: .52rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.asset-overview-research-grid {
+  grid-template-columns: minmax(0, 1.55fr) minmax(260px, .55fr);
+  gap: 10px;
+  margin-top: 0;
+}
+
+.fundamentals-checklist,
+.asset-compare-panel {
+  border-radius: 7px;
+  box-shadow: none;
+}
+
+.fundamentals-checklist-heading {
+  align-items: flex-start;
+  padding: 14px 15px 12px;
+}
+
+.fundamentals-checklist-heading h2 {
+  font-size: .92rem;
+}
+
+.fundamentals-checklist-summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 5px;
+}
+
+.fundamentals-checklist-summary span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 7px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-size: .49rem;
+  font-weight: 760;
+  white-space: nowrap;
+}
+
+.fundamentals-checklist-summary .positive {
+  border-color: color-mix(in srgb, var(--positive) 35%, var(--border));
+  color: var(--positive);
+}
+
+.fundamentals-checklist-summary .attention {
+  border-color: color-mix(in srgb, var(--warning) 40%, var(--border));
+  color: var(--warning);
+}
+
+.fundamentals-checklist-row {
+  min-height: 62px;
+  padding: 10px 14px;
+}
+
+.fundamentals-checklist-row:hover {
+  background: var(--surface-hover);
+}
+
+.fundamentals-checklist-copy strong {
+  font-size: .68rem;
+}
+
+.fundamentals-checklist-value b {
+  font-size: .77rem;
+}
+
+.asset-compare-panel {
+  padding: 15px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--accent) 4%, transparent), transparent 45%),
+    var(--surface);
+}
+
+.asset-compare-panel h2 {
+  margin-top: 5px;
+  font-size: 1rem;
+  letter-spacing: -.02em;
+}
+
+.asset-compare-panel p {
+  font-size: .58rem;
+}
+
+.asset-compare-current {
+  margin: 15px 0 11px;
+  padding: 11px 12px;
+  border-radius: 5px;
+}
+
+.asset-compare-current strong {
+  font-size: .95rem;
+}
+
+.asset-compare-actions a {
+  min-height: 34px;
+  border-radius: 5px;
+}
+
+.asset-analysis-shortcuts {
+  margin-top: 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.asset-analysis-shortcuts-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.asset-analysis-shortcuts-header h2 {
+  margin: 3px 0 0;
+  color: var(--text-strong);
+  font-size: .86rem;
+}
+
+.asset-analysis-shortcuts-header p {
+  max-width: 520px;
+  margin: 0;
+  color: var(--muted);
+  font-size: .53rem;
+  line-height: 1.4;
+  text-align: right;
+}
+
+.asset-analysis-shortcuts nav {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.asset-analysis-shortcuts nav a {
+  min-width: 0;
+  min-height: 58px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  padding: 10px 13px;
+  border-right: 1px solid var(--border);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.asset-analysis-shortcuts nav a:last-child {
+  border-right: 0;
+}
+
+.asset-analysis-shortcuts nav a:hover {
+  background: var(--surface-hover);
+}
+
+.asset-analysis-shortcuts nav strong {
+  color: var(--text-strong);
+  font-size: .65rem;
+}
+
+.asset-analysis-shortcuts nav span {
+  color: var(--muted);
+  font-size: .51rem;
+}
+
+.asset-analysis-shortcuts nav b {
+  color: var(--accent);
+  font-size: .51rem;
+  font-weight: 760;
+}
+
+.asset-publications {
+  margin-top: 18px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.asset-publications .section-title-row {
+  margin: 0;
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.asset-publications-list {
+  display: grid;
+}
+
+.asset-publication-row {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr) 130px 18px;
+  align-items: center;
+  gap: 12px;
+  min-height: 54px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.asset-publication-row:last-child {
+  border-bottom: 0;
+}
+
+.asset-publication-row:hover {
+  background: var(--surface-hover);
+}
+
+.asset-publication-meta {
+  display: grid;
+  gap: 3px;
+}
+
+.asset-publication-meta strong {
+  color: var(--accent);
+  font-size: .54rem;
+  letter-spacing: .03em;
+}
+
+.asset-publication-meta span,
+.asset-publication-source {
+  color: var(--muted);
+  font-size: .5rem;
+}
+
+.asset-publication-copy {
+  min-width: 0;
+}
+
+.asset-publication-copy strong {
+  display: block;
+  overflow: hidden;
+  color: var(--text-strong);
+  font-size: .64rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.asset-publication-copy span {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: .5rem;
+}
+
+.asset-publication-arrow {
+  color: var(--accent);
+  font-size: .72rem;
+  text-align: right;
+}
+
+.asset-publications-empty {
+  padding: 18px 14px;
+  color: var(--muted);
+  font-size: .58rem;
+}
+
+.asset-overview-debt-note {
+  margin-top: 10px;
+  border-radius: 6px;
+  background: var(--surface-soft);
+}
+
+@media (max-width: 900px) {
+  .asset-overview-intro,
+  .asset-analysis-shortcuts-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .asset-analysis-shortcuts-header p {
+    max-width: none;
+    text-align: left;
+  }
+
+  .asset-analysis-shortcuts nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .asset-analysis-shortcuts nav a:nth-child(2) {
+    border-right: 0;
+  }
+
+  .asset-analysis-shortcuts nav a:nth-child(-n + 2) {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .asset-publication-row {
+    grid-template-columns: 82px minmax(0, 1fr) 18px;
+  }
+
+  .asset-publication-source {
+    display: none;
+  }
+}
+
+@media (max-width: 620px) {
+  .fundamentals-checklist-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .fundamentals-checklist-summary {
+    justify-content: flex-start;
+  }
+
+  .fundamentals-checklist-copy {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .fundamentals-checklist-value {
+    min-width: 0;
+    text-align: left;
+  }
+
+  .asset-analysis-shortcuts nav {
+    grid-template-columns: 1fr;
+  }
+
+  .asset-analysis-shortcuts nav a,
+  .asset-analysis-shortcuts nav a:nth-child(2) {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .asset-analysis-shortcuts nav a:last-child {
+    border-bottom: 0;
+  }
+
+  .asset-publication-row {
+    grid-template-columns: 1fr 18px;
+    gap: 6px 10px;
+  }
+
+  .asset-publication-meta {
+    grid-column: 1 / -1;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .asset-overview-debt-note {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}
