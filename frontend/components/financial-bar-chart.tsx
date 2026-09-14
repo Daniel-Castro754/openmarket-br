@@ -32,6 +32,20 @@ function derivationTitle(point: FinancialSeriesPoint) {
   return [point.derivation, sources ? `Fontes: ${sources}` : null].filter(Boolean).join(" • ");
 }
 
+function DerivedMark({ point }: { point: FinancialSeriesPoint }) {
+  if (!point.derived) return null;
+
+  return (
+    <span
+      className="derived-mark"
+      title={derivationTitle(point)}
+      aria-label={`Valor derivado: ${point.derivation ?? "cálculo OpenMarket"}`}
+    >
+      D
+    </span>
+  );
+}
+
 export function FinancialBarChart({ series }: { series: FinancialSeries }) {
   const limit = series.frequency === "annual" ? 6 : 8;
   const points = series.points.slice(-limit);
@@ -44,9 +58,18 @@ export function FinancialBarChart({ series }: { series: FinancialSeries }) {
   const latestFiledPoint = [...points]
     .reverse()
     .find((point) => !point.derived && point.filing_version != null);
+  const singlePoint = points.length === 1 ? points[0] : null;
+  const cardClassName = [
+    "panel",
+    "series-card",
+    series.frequency === "annual" ? "series-card-annual" : "series-card-quarterly",
+    singlePoint ? "series-card-single" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
-    <article className="panel series-card">
+    <article className={cardClassName}>
       <div className="series-heading">
         <div>
           <span className="eyebrow">{frequencyLabel}</span>
@@ -57,6 +80,17 @@ export function FinancialBarChart({ series }: { series: FinancialSeries }) {
 
       {points.length === 0 ? (
         <p className="series-empty">Nenhum dado comparável disponível para esta métrica.</p>
+      ) : singlePoint ? (
+        <div className="series-single-point" aria-label={`Valor ${series.frequency} de ${series.label}`}>
+          <div className="series-single-copy">
+            <span>
+              {periodLabel(singlePoint.period_end, series.frequency)}
+              <DerivedMark point={singlePoint} />
+            </span>
+            <small>1 período disponível</small>
+          </div>
+          <strong>{formatValue(singlePoint.value, singlePoint.currency, series.unit)}</strong>
+        </div>
       ) : (
         <div className="series-chart" aria-label={`Série ${series.frequency} de ${series.label}`}>
           {points.map((point) => {
@@ -66,15 +100,7 @@ export function FinancialBarChart({ series }: { series: FinancialSeries }) {
               <div className="series-row" key={`${point.period_end}-${point.filing_version ?? 0}-${point.derived}`}>
                 <span className="series-year">
                   {periodLabel(point.period_end, series.frequency)}
-                  {point.derived && (
-                    <span
-                      className="derived-mark"
-                      title={derivationTitle(point)}
-                      aria-label={`Valor derivado: ${point.derivation ?? "cálculo OpenMarket"}`}
-                    >
-                      D
-                    </span>
-                  )}
+                  <DerivedMark point={point} />
                 </span>
                 <div className="series-track">
                   <span
@@ -90,9 +116,7 @@ export function FinancialBarChart({ series }: { series: FinancialSeries }) {
       )}
 
       <footer className="series-footer">
-        <span>
-          {series.frequency === "annual" ? "DFP consolidada" : "ITR/DFP consolidada"}
-        </span>
+        <span>{series.frequency === "annual" ? "DFP consolidada" : "ITR/DFP consolidada"}</span>
         {hasDerivedPoints ? (
           <span>D = valor calculado com proveniência</span>
         ) : series.formula ? (
