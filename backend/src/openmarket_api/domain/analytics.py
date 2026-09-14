@@ -13,12 +13,15 @@ class FinancialMetric(StrEnum):
     OPERATING_RESULT = "operating_result"
     NET_INCOME = "net_income"
     TOTAL_ASSETS = "total_assets"
+    CURRENT_ASSETS = "current_assets"
     EQUITY = "equity"
+    CURRENT_LIABILITIES = "current_liabilities"
     CASH = "cash"
     SHORT_TERM_DEBT = "short_term_debt"
     LONG_TERM_DEBT = "long_term_debt"
     GROSS_DEBT = "gross_debt"
     NET_DEBT = "net_debt"
+    CURRENT_RATIO = "current_ratio"
     OPERATING_CASH_FLOW = "operating_cash_flow"
     INVESTING_CASH_FLOW = "investing_cash_flow"
     FINANCING_CASH_FLOW = "financing_cash_flow"
@@ -38,6 +41,7 @@ class SeriesFrequency(StrEnum):
 class SeriesUnit(StrEnum):
     CURRENCY = "currency"
     PERCENT = "percent"
+    MULTIPLE = "multiple"
 
 
 class FinancialSeriesPoint(BaseModel):

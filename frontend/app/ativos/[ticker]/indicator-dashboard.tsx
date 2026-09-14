@@ -36,7 +36,14 @@ function formatIndicatorValue(value: string | number | null | undefined, unit: S
   const numeric = Number(value);
   if (!Number.isFinite(numeric)) return String(value);
   if (unit === "percent") return `${decimalNumber.format(numeric)}%`;
+  if (unit === "multiple") return `${decimalNumber.format(numeric)}x`;
   return `R$ ${compactNumber.format(numeric)}`;
+}
+
+function formatChartValue(value: number, unit: SeriesUnit) {
+  if (unit === "percent") return `${decimalNumber.format(value)}%`;
+  if (unit === "multiple") return `${decimalNumber.format(value)}x`;
+  return compactNumber.format(value);
 }
 
 function yearLabel(period?: string | null) {
@@ -170,9 +177,7 @@ function HistoricalChart({ history, mode }: { history: IndicatorHistory; mode: C
           <g key={gridValue.toFixed(6)}>
             <line className={styles.gridLine} x1={left} y1={gridY} x2={width - right} y2={gridY} />
             <text className={styles.axisLabel} x={left - 8} y={gridY + 4} textAnchor="end">
-              {history.definition.unit === "percent"
-                ? `${decimalNumber.format(gridValue)}%`
-                : compactNumber.format(gridValue)}
+              {formatChartValue(gridValue, history.definition.unit)}
             </text>
           </g>
         );
@@ -211,9 +216,7 @@ function HistoricalChart({ history, mode }: { history: IndicatorHistory; mode: C
                 y={value >= 0 ? rectY - 7 : rectY + rectHeight + 14}
                 textAnchor="middle"
               >
-                {history.definition.unit === "percent"
-                  ? `${decimalNumber.format(value)}%`
-                  : compactNumber.format(value)}
+                {formatChartValue(value, history.definition.unit)}
               </text>
             </g>
           );

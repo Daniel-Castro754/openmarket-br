@@ -18,8 +18,8 @@ from openmarket_api.services.cash_flow_series import (
     CASH_FLOW_METRICS,
     CashFlowSeriesService,
 )
-from openmarket_api.services.financial_series import FinancialSeriesService
 from openmarket_api.services.indicator_engine import IndicatorEngine
+from openmarket_api.services.liquidity_series import LiquidityFinancialSeriesService
 
 router = APIRouter(prefix="/api/v1/assets", tags=["assets"])
 
@@ -123,7 +123,7 @@ def get_asset_financial_series(
                 metric,
                 frequency=frequency,
             )
-        return FinancialSeriesService(session).get_series(
+        return LiquidityFinancialSeriesService(session).get_series(
             ticker,
             metric,
             frequency=frequency,

@@ -55,12 +55,15 @@ export type FinancialMetric =
   | "operating_result"
   | "net_income"
   | "total_assets"
+  | "current_assets"
   | "equity"
+  | "current_liabilities"
   | "cash"
   | "short_term_debt"
   | "long_term_debt"
   | "gross_debt"
   | "net_debt"
+  | "current_ratio"
   | "operating_cash_flow"
   | "investing_cash_flow"
   | "financing_cash_flow"
@@ -72,7 +75,7 @@ export type FinancialMetric =
   | "roe";
 
 export type SeriesFrequency = "annual" | "quarterly";
-export type SeriesUnit = "currency" | "percent";
+export type SeriesUnit = "currency" | "percent" | "multiple";
 
 export type FinancialSeriesPoint = {
   period_start?: string | null;
@@ -99,7 +102,7 @@ export type FinancialSeries = {
   points: FinancialSeriesPoint[];
 };
 
-export type IndicatorGroup = "efficiency" | "profitability" | "leverage" | "growth";
+export type IndicatorGroup = "efficiency" | "profitability" | "leverage" | "liquidity" | "growth";
 
 export type IndicatorDefinition = {
   slug: string;

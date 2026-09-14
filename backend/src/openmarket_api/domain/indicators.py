@@ -17,6 +17,7 @@ class IndicatorGroup(StrEnum):
     EFFICIENCY = "efficiency"
     PROFITABILITY = "profitability"
     LEVERAGE = "leverage"
+    LIQUIDITY = "liquidity"
     GROWTH = "growth"
 
 
