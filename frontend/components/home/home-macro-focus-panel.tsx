@@ -1,28 +1,8 @@
 import Link from "next/link";
 
+import { formatDateShortPtBr, formatMacroValue } from "../../lib/format";
 import { getMacroSnapshot, type MacroIndicator } from "../../lib/macro-api";
 import { HomeMacroInteractiveChart } from "./home-macro-interactive-chart";
-
-function formatMacroValue(indicator: MacroIndicator) {
-  const numeric = Number(indicator.latest_value);
-  if (!Number.isFinite(numeric)) return indicator.latest_value;
-
-  const formatted = new Intl.NumberFormat("pt-BR", {
-    maximumFractionDigits: 2,
-    minimumFractionDigits: indicator.unit.includes("R$/") ? 2 : 1,
-  }).format(numeric);
-
-  if (indicator.unit.startsWith("%")) return `${formatted}%`;
-  if (indicator.unit.includes("R$/")) return `R$ ${formatted}`;
-  return formatted;
-}
-
-function formatReferenceDate(value: string) {
-  return new Intl.DateTimeFormat("pt-BR", {
-    dateStyle: "medium",
-    timeZone: "UTC",
-  }).format(new Date(`${value}T00:00:00Z`));
-}
 
 export async function HomeMacroFocusPanel() {
   const snapshot = await getMacroSnapshot().catch(() => null);
@@ -52,9 +32,9 @@ export async function HomeMacroFocusPanel() {
       <div className="home-v2-macro-value-row">
         <div>
           <span className="home-v2-macro-label">{indicator.label}</span>
-          <strong>{formatMacroValue(indicator)}</strong>
+          <strong>{formatMacroValue(indicator.latest_value, indicator.unit)}</strong>
         </div>
-        <span className="home-v2-macro-date">{formatReferenceDate(indicator.reference_date)}</span>
+        <span className="home-v2-macro-date">{formatDateShortPtBr(indicator.reference_date)}</span>
       </div>
 
       <p className="home-v2-macro-description">{indicator.description}</p>
