@@ -74,6 +74,14 @@ export type FinancialMetric =
   | "revenue_growth_yoy"
   | "roe";
 
+export type ScreenerMetric =
+  | FinancialMetric
+  | "roa"
+  | "net-debt-to-equity"
+  | "gross-debt-to-equity"
+  | "equity-to-assets"
+  | "net-income-growth-yoy";
+
 export type SeriesFrequency = "annual" | "quarterly";
 export type SeriesUnit = "currency" | "percent" | "multiple";
 
@@ -207,8 +215,8 @@ export type ScreenerRow = {
   latest_period?: string | null;
   financial_item_count: number;
   document_count: number;
-  metrics: Partial<Record<FinancialMetric, string | null>>;
-  metric_periods: Partial<Record<FinancialMetric, string | null>>;
+  metrics: Partial<Record<ScreenerMetric, string | null>>;
+  metric_periods: Partial<Record<ScreenerMetric, string | null>>;
 };
 
 export type ScreenerResponse = {
