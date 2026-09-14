@@ -94,13 +94,13 @@ export function ConsumerAnalysis({ snapshot }: { snapshot: ConsumerInsightSnapsh
         <div className={styles.sectionHeading}>
           <div>
             <div className={styles.sourceLine}>
-              <span className={styles.badge}>CONSUMO DAS FAMÍLIAS</span>
-              <span>Fonte: IBGE, POF 2017–2018</span>
+              <span className={styles.badge}>POF 2017–2018</span>
+              <span>Fonte oficial · IBGE</span>
             </div>
-            <h2>Para onde vai o dinheiro das famílias?</h2>
+            <h2>Estrutura da despesa de consumo</h2>
             <p>
-              Participação de cada grupo na despesa média de consumo. O valor em reais é mostrado apenas nos
-              recortes em que a média mensal correspondente está publicada no conjunto usado.
+              Participação de cada grupo na despesa média de consumo. Valores em reais aparecem somente quando a
+              média mensal correspondente está publicada no conjunto utilizado.
             </p>
           </div>
           {profile?.average_monthly_consumption ? (
@@ -141,10 +141,10 @@ export function ConsumerAnalysis({ snapshot }: { snapshot: ConsumerInsightSnapsh
       <section>
         <div className={styles.blockTitle}>
           <div>
-            <span className="eyebrow">PULSO DO CONSUMO</span>
-            <h2>O que está mudando agora?</h2>
+            <span className="eyebrow">SÉRIES CONJUNTURAIS</span>
+            <h2>Atividade e preços</h2>
           </div>
-          <p>Comércio, serviços, indústria e preços ajudam a separar estrutura de tendência.</p>
+          <p>Comércio, serviços, indústria e preços ajudam a separar a estrutura de consumo da evolução recente.</p>
         </div>
 
         <div className={styles.trendGrid}>
@@ -177,8 +177,8 @@ export function ConsumerAnalysis({ snapshot }: { snapshot: ConsumerInsightSnapsh
 
       <section className={styles.methodCard}>
         <div>
-          <span className="eyebrow">COMO LER</span>
-          <h2>Estrutura não é tendência.</h2>
+          <span className="eyebrow">METODOLOGIA</span>
+          <h2>Estrutura e tendência</h2>
         </div>
         <div className={styles.methodGrid}>
           {snapshot.notes.map((note) => <p key={note}>{note}</p>)}
