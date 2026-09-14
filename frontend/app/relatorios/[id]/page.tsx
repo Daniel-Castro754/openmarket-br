@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { getDocument } from "../../../lib/api";
 import { DocumentTextSearch } from "../document-text-search";
+import controls from "../report-viewer-controls.module.css";
 import styles from "../report-viewer.module.css";
 
 function formatDate(value?: string | null) {
@@ -126,9 +127,9 @@ export default async function ReportViewerPage({
               <span className={styles.eyebrow}>VISUALIZAÇÃO</span>
               <h2>Documento oficial</h2>
             </div>
-            <div className={styles.documentPaneActions}>
+            <div className={controls.documentPaneActions}>
               {isPdf ? (
-                <div className={styles.pageControls} aria-label="Navegação por página">
+                <div className={controls.pageControls} aria-label="Navegação por página">
                   {canGoPreviousPage ? (
                     <Link href={`?page=${currentPage - 1}`} aria-label="Página anterior">←</Link>
                   ) : (
@@ -176,7 +177,7 @@ export default async function ReportViewerPage({
                 <section className={styles.documentSection} id={`sec-${section.sequence}`} key={section.id}>
                   <div className={styles.pageLabel}>
                     {section.page_start != null ? (
-                      <Link href={`?page=${section.page_start}#sec-${section.sequence}`}>
+                      <Link className={controls.pageLink} href={`?page=${section.page_start}#sec-${section.sequence}`}>
                         {pagesLabel(section.page_start, section.page_end)}
                       </Link>
                     ) : pagesLabel(section.page_start, section.page_end)}
