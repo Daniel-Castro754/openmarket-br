@@ -73,6 +73,16 @@ function closeHref(ticker: string, pageFrequency: SeriesFrequency) {
     : `/ativos/${ticker}#indicadores-fundamentais`;
 }
 
+function groupDescription(label: string) {
+  const normalized = label.toLocaleLowerCase("pt-BR");
+  if (normalized.includes("efici")) return "Margens e eficiência operacional da companhia.";
+  if (normalized.includes("rentab")) return "Retorno gerado sobre patrimônio e ativos.";
+  if (normalized.includes("liquid")) return "Capacidade de honrar obrigações de curto prazo.";
+  if (normalized.includes("endivid")) return "Estrutura de capital e relação entre dívida e patrimônio.";
+  if (normalized.includes("cresci")) return "Evolução de receita e lucro em relação ao período anterior.";
+  return "Indicadores calculados a partir das demonstrações oficiais.";
+}
+
 function ChartIcon() {
   return (
     <svg viewBox="0 0 20 20" aria-hidden="true">
@@ -91,36 +101,40 @@ function IndicatorCard({
   years,
   chartMode,
   pageFrequency,
+  selected,
 }: {
   ticker: string;
   indicator: IndicatorValue;
   years: 5 | 10;
   chartMode: ChartMode;
   pageFrequency: SeriesFrequency;
+  selected: boolean;
 }) {
   return (
-    <article className={styles.card}>
+    <article className={`${styles.card} ${selected ? styles.cardSelected : ""}`}>
       <div className={styles.cardHeading}>
         <span>{indicator.label}</span>
-        <span className={styles.help} title={indicator.description}>?</span>
+        <span className={styles.help} title={indicator.description} aria-label={`Sobre ${indicator.label}`}>?</span>
       </div>
       <div className={styles.cardValueRow}>
         <strong>{formatIndicatorValue(indicator.value, indicator.unit)}</strong>
+      </div>
+      <div className={styles.cardMeta}>
+        <small>
+          {indicator.period_end ? yearLabel(indicator.period_end) : "sem dado"}
+          {indicator.derived ? " · calculado" : " · oficial"}
+        </small>
         {indicator.supports_history ? (
           <Link
-            className={styles.chartButton}
+            className={styles.historyLink}
             href={historyHref(ticker, indicator.slug, years, chartMode, pageFrequency)}
-            aria-label={`Abrir histórico de ${indicator.label}`}
-            title={`Histórico de ${indicator.label}`}
+            aria-label={`Ver histórico de ${indicator.label}`}
           >
             <ChartIcon />
+            Histórico
           </Link>
         ) : null}
       </div>
-      <small>
-        {indicator.period_end ? yearLabel(indicator.period_end) : "sem dado"}
-        {indicator.derived ? " · calculado" : ""}
-      </small>
     </article>
   );
 }
@@ -131,12 +145,12 @@ function HistoricalChart({ history, mode }: { history: IndicatorHistory; mode: C
     return <div className={styles.emptyChart}>Não há histórico suficiente para este indicador.</div>;
   }
 
-  const width = 820;
-  const height = 270;
-  const left = 56;
-  const right = 24;
-  const top = 28;
-  const bottom = 42;
+  const width = 920;
+  const height = 300;
+  const left = 64;
+  const right = 28;
+  const top = 30;
+  const bottom = 46;
   const plotWidth = width - left - right;
   const plotHeight = height - top - bottom;
   const rawMin = Math.min(...values);
@@ -154,15 +168,14 @@ function HistoricalChart({ history, mode }: { history: IndicatorHistory; mode: C
   }
 
   const y = (value: number) => top + ((max - value) / (max - min)) * plotHeight;
-  const x = (index: number) =>
-    left + ((index + 0.5) / history.points.length) * plotWidth;
+  const x = (index: number) => left + ((index + 0.5) / history.points.length) * plotWidth;
   const zeroY = y(0);
   const gridValues = Array.from({ length: 5 }, (_, index) => max - ((max - min) * index) / 4);
   const average = history.historical_average == null ? null : Number(history.historical_average);
   const linePoints = history.points
     .map((point, index) => `${x(index).toFixed(2)},${y(Number(point.value)).toFixed(2)}`)
     .join(" ");
-  const barWidth = Math.min(52, Math.max(18, plotWidth / Math.max(history.points.length * 1.8, 1)));
+  const barWidth = Math.min(56, Math.max(18, plotWidth / Math.max(history.points.length * 1.8, 1)));
 
   return (
     <svg
@@ -176,19 +189,21 @@ function HistoricalChart({ history, mode }: { history: IndicatorHistory; mode: C
         return (
           <g key={gridValue.toFixed(6)}>
             <line className={styles.gridLine} x1={left} y1={gridY} x2={width - right} y2={gridY} />
-            <text className={styles.axisLabel} x={left - 8} y={gridY + 4} textAnchor="end">
+            <text className={styles.axisLabel} x={left - 9} y={gridY + 4} textAnchor="end">
               {formatChartValue(gridValue, history.definition.unit)}
             </text>
           </g>
         );
       })}
 
-      {mode === "bar" ? <line className={styles.zeroLine} x1={left} y1={zeroY} x2={width - right} y2={zeroY} /> : null}
+      {mode === "bar" ? (
+        <line className={styles.zeroLine} x1={left} y1={zeroY} x2={width - right} y2={zeroY} />
+      ) : null}
 
       {average != null && Number.isFinite(average) ? (
         <g>
           <line className={styles.averageLine} x1={left} y1={y(average)} x2={width - right} y2={y(average)} />
-          <text className={styles.averageLabel} x={width - right} y={y(average) - 6} textAnchor="end">
+          <text className={styles.averageLabel} x={width - right} y={y(average) - 7} textAnchor="end">
             média {formatIndicatorValue(average, history.definition.unit)}
           </text>
         </g>
@@ -208,7 +223,7 @@ function HistoricalChart({ history, mode }: { history: IndicatorHistory; mode: C
                 y={rectY}
                 width={barWidth}
                 height={rectHeight}
-                rx="4"
+                rx="3"
               />
               <text
                 className={styles.valueLabel}
@@ -237,7 +252,7 @@ function HistoricalChart({ history, mode }: { history: IndicatorHistory; mode: C
       )}
 
       {history.points.map((point, index) => (
-        <text className={styles.xLabel} x={x(index)} y={height - 14} textAnchor="middle" key={`x-${point.period_end}`}>
+        <text className={styles.xLabel} x={x(index)} y={height - 15} textAnchor="middle" key={`x-${point.period_end}`}>
           {yearLabel(point.period_end)}
         </text>
       ))}
@@ -245,7 +260,7 @@ function HistoricalChart({ history, mode }: { history: IndicatorHistory; mode: C
   );
 }
 
-function HistoryModal({
+function HistoryPanel({
   ticker,
   summary,
   history,
@@ -260,94 +275,96 @@ function HistoryModal({
   chartMode: ChartMode;
   pageFrequency: SeriesFrequency;
 }) {
-  const allIndicators = summary.groups.flatMap((group) => group.indicators);
+  const allIndicators = summary.groups.flatMap((group) => group.indicators).filter((indicator) => indicator.supports_history);
+
   return (
-    <div className={styles.backdrop} id="indicator-history" role="presentation">
-      <section className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="indicator-history-title">
-        <header className={styles.modalHeader}>
-          <div>
-            <span className="eyebrow">HISTÓRICO DE INDICADORES</span>
-            <h2 id="indicator-history-title">{history.definition.label} · {ticker}</h2>
+    <section className={styles.historyPanel} id="indicator-history" aria-labelledby="indicator-history-title">
+      <header className={styles.historyHeader}>
+        <div>
+          <span className="eyebrow">HISTÓRICO DE INDICADORES</span>
+          <h2 id="indicator-history-title">{history.definition.label} · {ticker}</h2>
+          <p>Compare a evolução do fundamento ao longo do tempo sem sair da análise do ativo.</p>
+        </div>
+        <Link className={styles.closeHistory} href={closeHref(ticker, pageFrequency)}>Fechar histórico</Link>
+      </header>
+
+      <div className={styles.historyToolbar}>
+        <form className={styles.indicatorSelector} method="get" action={`/ativos/${ticker}`}>
+          {pageFrequency === "quarterly" ? <input type="hidden" name="view" value="quarterly" /> : null}
+          <input type="hidden" name="years" value={years} />
+          <input type="hidden" name="chart" value={chartMode} />
+          <label>
+            <span>Indicador</span>
+            <select name="indicator" defaultValue={history.definition.slug}>
+              {allIndicators.map((indicator) => (
+                <option value={indicator.slug} key={indicator.slug}>{indicator.label}</option>
+              ))}
+            </select>
+          </label>
+          <button type="submit">Atualizar</button>
+        </form>
+
+        <div className={styles.toolbarToggles}>
+          <div className={styles.toggleGroup} aria-label="Janela histórica">
+            {([5, 10] as const).map((window) => (
+              <Link
+                className={years === window ? styles.activeToggle : ""}
+                href={historyHref(ticker, history.definition.slug, window, chartMode, pageFrequency)}
+                key={window}
+              >
+                {window}A
+              </Link>
+            ))}
           </div>
-          <Link className={styles.close} href={closeHref(ticker, pageFrequency)} aria-label="Fechar histórico">×</Link>
-        </header>
-
-        <div className={styles.modalToolbar}>
-          <form className={styles.indicatorSelector} method="get" action={`/ativos/${ticker}`}>
-            {pageFrequency === "quarterly" ? <input type="hidden" name="view" value="quarterly" /> : null}
-            <input type="hidden" name="years" value={years} />
-            <input type="hidden" name="chart" value={chartMode} />
-            <label>
-              <span>Indicador</span>
-              <select name="indicator" defaultValue={history.definition.slug}>
-                {allIndicators.map((indicator) => (
-                  <option value={indicator.slug} key={indicator.slug}>{indicator.label}</option>
-                ))}
-              </select>
-            </label>
-            <button type="submit">Exibir</button>
-          </form>
-
-          <div className={styles.toolbarToggles}>
-            <div className={styles.toggleGroup} aria-label="Janela histórica">
-              {([5, 10] as const).map((window) => (
-                <Link
-                  className={years === window ? styles.activeToggle : ""}
-                  href={historyHref(ticker, history.definition.slug, window, chartMode, pageFrequency)}
-                  key={window}
-                >
-                  {window}A
-                </Link>
-              ))}
-            </div>
-            <div className={styles.toggleGroup} aria-label="Tipo de gráfico">
-              {(["line", "bar"] as const).map((mode) => (
-                <Link
-                  className={chartMode === mode ? styles.activeToggle : ""}
-                  href={historyHref(ticker, history.definition.slug, years, mode, pageFrequency)}
-                  key={mode}
-                >
-                  {mode === "line" ? "Linha" : "Barra"}
-                </Link>
-              ))}
-            </div>
+          <div className={styles.toggleGroup} aria-label="Tipo de gráfico">
+            {(["line", "bar"] as const).map((mode) => (
+              <Link
+                className={chartMode === mode ? styles.activeToggle : ""}
+                href={historyHref(ticker, history.definition.slug, years, mode, pageFrequency)}
+                key={mode}
+              >
+                {mode === "line" ? "Linha" : "Barra"}
+              </Link>
+            ))}
           </div>
         </div>
+      </div>
 
-        <div className={styles.historyStats}>
-          <div><span>Valor atual</span><strong>{formatIndicatorValue(history.current_value, history.definition.unit)}</strong></div>
-          <div><span>Média da empresa</span><strong>{formatIndicatorValue(history.historical_average, history.definition.unit)}</strong></div>
-          <div><span>Período atual</span><strong>{yearLabel(history.current_period)}</strong></div>
-        </div>
+      <div className={styles.historyStats}>
+        <div><span>Valor atual</span><strong>{formatIndicatorValue(history.current_value, history.definition.unit)}</strong></div>
+        <div><span>Média histórica</span><strong>{formatIndicatorValue(history.historical_average, history.definition.unit)}</strong></div>
+        <div><span>Período atual</span><strong>{yearLabel(history.current_period)}</strong></div>
+      </div>
 
+      <div className={styles.chartSurface}>
         <HistoricalChart history={history} mode={chartMode} />
+      </div>
 
-        <div className={styles.historyTableWrap}>
-          <table className={styles.historyTable}>
-            <thead>
-              <tr>
-                <th>Indicador</th>
-                {history.points.slice().reverse().map((point) => <th key={point.period_end}>{yearLabel(point.period_end)}</th>)}
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <th>{history.definition.label}</th>
-                {history.points.slice().reverse().map((point) => (
-                  <td key={point.period_end}>{formatIndicatorValue(point.value, history.definition.unit)}</td>
-                ))}
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <div className={styles.historyTableWrap}>
+        <table className={styles.historyTable}>
+          <thead>
+            <tr>
+              <th>Indicador</th>
+              {history.points.slice().reverse().map((point) => <th key={point.period_end}>{yearLabel(point.period_end)}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th>{history.definition.label}</th>
+              {history.points.slice().reverse().map((point) => (
+                <td key={point.period_end}>{formatIndicatorValue(point.value, history.definition.unit)}</td>
+              ))}
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-        <footer className={styles.modalFooter}>
-          <span>{history.definition.description}</span>
-          <span>Fórmula: {history.definition.formula ?? "dado direto"}</span>
-          <span>Base: CVM · proveniência preservada em cada ponto</span>
-        </footer>
-      </section>
-    </div>
+      <footer className={styles.historyFooter}>
+        <div><span>Definição</span><p>{history.definition.description}</p></div>
+        <div><span>Fórmula</span><p>{history.definition.formula ?? "Dado direto da demonstração"}</p></div>
+        <div><span>Fonte</span><p>CVM · proveniência preservada em cada ponto</p></div>
+      </footer>
+    </section>
   );
 }
 
@@ -364,17 +381,26 @@ export function IndicatorDashboard({
     <section className={styles.section} id="indicadores-fundamentais">
       <div className={styles.sectionHeading}>
         <div>
-          <span className="eyebrow">INDICADORES FUNDAMENTALISTAS</span>
-          <h2>Fundamentos organizados por categoria</h2>
-          <p>Valores anuais consolidados calculados a partir das demonstrações oficiais da CVM.</p>
+          <span className="eyebrow">FUNDAMENTOS</span>
+          <h2>Indicadores fundamentalistas {ticker}</h2>
+          <p>Leitura direta dos principais fundamentos, com histórico e metodologia rastreáveis.</p>
         </div>
-        <span className={styles.sourceBadge}>CVM · anual</span>
+        <div className={styles.headingMeta}>
+          <span className={styles.sourceBadge}>Oficial + calculado</span>
+          <small>CVM · dados anuais</small>
+        </div>
       </div>
 
       <div className={styles.groups}>
         {summary.groups.map((group) => (
           <section className={styles.group} key={group.group}>
-            <h3>{group.label}</h3>
+            <div className={styles.groupHeader}>
+              <div>
+                <h3>{group.label}</h3>
+                <p>{groupDescription(group.label)}</p>
+              </div>
+              <span>{group.indicators.length} indicadores</span>
+            </div>
             <div className={styles.grid}>
               {group.indicators.map((indicator) => (
                 <IndicatorCard
@@ -383,6 +409,7 @@ export function IndicatorDashboard({
                   years={years}
                   chartMode={chartMode}
                   pageFrequency={pageFrequency}
+                  selected={selectedSlug === indicator.slug}
                   key={indicator.slug}
                 />
               ))}
@@ -391,12 +418,16 @@ export function IndicatorDashboard({
         ))}
       </div>
 
-      <p className={styles.note}>
-        Múltiplos de valuation dependentes de cotação (P/L, P/VP, EV/EBITDA e DY) serão adicionados somente após a integração de uma fonte de preços com licença adequada.
-      </p>
+      <div className={styles.methodologyNote}>
+        <strong>Metodologia aberta</strong>
+        <p>
+          Cada indicador preserva período, fórmula e origem. Múltiplos dependentes de cotação, como P/L, P/VP,
+          EV/EBITDA e DY, continuam indisponíveis até existir uma fonte de preços adequada.
+        </p>
+      </div>
 
       {history && selectedSlug ? (
-        <HistoryModal
+        <HistoryPanel
           ticker={ticker}
           summary={summary}
           history={history}
