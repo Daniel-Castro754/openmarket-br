@@ -50,6 +50,13 @@ html[data-navigation="rail"] main {
   margin-right: var(--shell-gutter);
 }
 
+/* Home historically carried its own sidebar width. Shell geometry must win. */
+html[data-navigation="sidebar"] main.research-home {
+  width: calc(100% - var(--shell-offset) - (var(--shell-gutter) * 2));
+  margin-left: calc(var(--shell-offset) + var(--shell-gutter));
+  margin-right: var(--shell-gutter);
+}
+
 html[data-navigation="topbar"] main {
   width: min(1480px, calc(100% - (var(--shell-gutter) * 2)));
   margin-left: auto;
@@ -69,7 +76,8 @@ html[data-navigation="topbar"] main {
 
   html[data-navigation="sidebar"] main,
   html[data-navigation="rail"] main,
-  html[data-navigation="topbar"] main {
+  html[data-navigation="topbar"] main,
+  html[data-navigation="sidebar"] main.research-home {
     width: min(calc(100% - 24px), var(--content-analytics));
     margin-left: auto;
     margin-right: auto;
