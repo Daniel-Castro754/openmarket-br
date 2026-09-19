@@ -12,7 +12,7 @@ export default function Home() {
     <main className="research-home home-v2">
       <section className="home-v2-hero" aria-labelledby="home-v2-title">
         <div className="home-v2-search-panel">
-          <span className="home-v2-kicker">PESQUISA DE MERCADO</span>
+          <span className="home-v2-kicker">Pesquisa de mercado</span>
           <h1 id="home-v2-title">Pesquise empresas. Entenda os números.</h1>
           <p>
             Demonstrações, indicadores calculados e documentos oficiais em um só lugar, sempre com período e origem identificados.
