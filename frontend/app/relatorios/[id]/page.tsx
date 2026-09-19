@@ -97,6 +97,12 @@ export default async function ReportViewerPage({
             <div><dt>Publicado</dt><dd>{formatDate(document.published_at)}</dd></div>
             <div><dt>Páginas</dt><dd>{document.page_count ?? "—"}</dd></div>
             <div><dt>Formato</dt><dd>{document.content_type}</dd></div>
+            {document.source_category ? <div><dt>Categoria CVM</dt><dd>{document.source_category}</dd></div> : null}
+            {document.source_document_type ? <div><dt>Tipo CVM</dt><dd>{document.source_document_type}</dd></div> : null}
+            {document.source_species ? <div><dt>Espécie CVM</dt><dd>{document.source_species}</dd></div> : null}
+            {document.source_presentation_type ? (
+              <div><dt>Apresentação</dt><dd>{document.source_presentation_type}</dd></div>
+            ) : null}
           </dl>
           {document.source_url && (
             <a className={styles.originalLink} href={document.source_url} target="_blank" rel="noreferrer">
@@ -211,6 +217,12 @@ export default async function ReportViewerPage({
             <strong>Estado</strong>
             <p>{processingLabel(document.processing_status)}</p>
           </div>
+          {document.source_subject && document.source_subject !== document.title ? (
+            <div className={styles.analysisCard}>
+              <strong>Assunto CVM</strong>
+              <p>{document.source_subject}</p>
+            </div>
+          ) : null}
           <div className={styles.analysisCard}>
             <strong>Análise estruturada</strong>
             <p>
