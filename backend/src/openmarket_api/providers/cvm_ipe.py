@@ -191,6 +191,11 @@ class CVMIpeDocumentProvider(DocumentProvider):
                     source_url=source_url,
                     published_at=delivered_at,
                     reference_period=reference_date.isoformat() if reference_date else None,
+                    source_category=category,
+                    source_document_type=document_type_text,
+                    source_species=species,
+                    source_subject=subject,
+                    source_presentation_type=presentation_type,
                     processing_status=DocumentProcessingStatus.PENDING,
                     source=cls._source_metadata(reference_date or delivered_at, notes=notes),
                 )
