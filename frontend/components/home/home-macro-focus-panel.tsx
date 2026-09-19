@@ -14,7 +14,7 @@ export async function HomeMacroFocusPanel() {
   if (!indicator) {
     return (
       <aside className="home-v2-macro home-v2-macro-empty" aria-label="Brasil em foco">
-        <span className="home-v2-kicker">BRASIL EM FOCO</span>
+        <span className="home-v2-kicker">Brasil em foco</span>
         <h2>Contexto macroeconômico</h2>
         <p>Os dados oficiais não puderam ser carregados agora.</p>
         <Link href="/macroeconomia">Abrir macroeconomia →</Link>
