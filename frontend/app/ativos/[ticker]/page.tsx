@@ -199,7 +199,7 @@ export default async function AssetOverviewPage({ params }: { params: Promise<{ 
 
       <section className="asset-overview-intro" aria-labelledby="asset-overview-intro-title">
         <div>
-          <span className="eyebrow">VISÃO GERAL</span>
+          <span className="asset-section-label">Visão geral</span>
           <h2 id="asset-overview-intro-title">Fundamentos em um olhar</h2>
           <p>
             Uma leitura curta dos dados anuais mais recentes. O detalhamento permanece separado nas abas de
@@ -223,7 +223,7 @@ export default async function AssetOverviewPage({ params }: { params: Promise<{ 
       <section className="asset-analysis-shortcuts" aria-labelledby="asset-analysis-shortcuts-title">
         <div className="asset-analysis-shortcuts-header">
           <div>
-            <span className="eyebrow">APROFUNDE A ANÁLISE</span>
+            <span className="asset-section-label">Aprofunde a análise</span>
             <h2 id="asset-analysis-shortcuts-title">Escolha a próxima leitura</h2>
           </div>
           <p>Cada área mantém período, fórmula e origem dos dados sem duplicar toda a análise nesta página.</p>
@@ -232,22 +232,22 @@ export default async function AssetOverviewPage({ params }: { params: Promise<{ 
           <Link href={`/ativos/${ticker}/indicadores`}>
             <strong>Indicadores</strong>
             <span>Margens, retorno, liquidez e dívida</span>
-            <b>Abrir →</b>
+            <b aria-hidden="true">→</b>
           </Link>
           <Link href={`/ativos/${ticker}/financeiro`}>
             <strong>Financeiro</strong>
             <span>Resultados, balanço e fluxo de caixa</span>
-            <b>Abrir →</b>
+            <b aria-hidden="true">→</b>
           </Link>
           <Link href={`/ativos/${ticker}/eventos`}>
             <strong>Eventos</strong>
             <span>Fatos, ITR, DFP e publicações recentes</span>
-            <b>Abrir →</b>
+            <b aria-hidden="true">→</b>
           </Link>
           <Link href={`/ativos/${ticker}/relatorios`}>
             <strong>Relatórios</strong>
             <span>Documentos oficiais no Document Hub</span>
-            <b>Abrir →</b>
+            <b aria-hidden="true">→</b>
           </Link>
         </nav>
       </section>
@@ -255,7 +255,7 @@ export default async function AssetOverviewPage({ params }: { params: Promise<{ 
       <section className="asset-publications" id="eventos-recentes" aria-labelledby="asset-publications-title">
         <div className="section-title-row">
           <div>
-            <span className="eyebrow">PUBLICAÇÕES</span>
+            <span className="asset-section-label">Publicações</span>
             <h2 id="asset-publications-title">Documentos recentes</h2>
           </div>
           <Link href={`/ativos/${ticker}/eventos`}>Ver todos →</Link>
