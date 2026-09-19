@@ -922,3 +922,60 @@ html[data-navigation="rail"] .home-v2-hero { grid-template-columns: minmax(0, 1.
     display: none;
   }
 }
+
+
+/* Review refinements: tighter hero, calmer secondary text and content-sized rankings. */
+.home-v2-search-panel {
+  padding: 24px 28px;
+}
+
+.home-v2-macro {
+  min-height: 260px;
+  padding: 20px;
+}
+
+.home-v2-search-panel h1 {
+  font-size: clamp(28px, 2.25vw, 34px);
+}
+
+.home-v2-search-panel > p,
+.home-v2-macro-description,
+.home-v2-shortcut small,
+.home-v2-result-company small,
+.home-v2-research-link-list small,
+.home-v2-transparency-grid small {
+  color: var(--soft);
+}
+
+.home-v2-search-wrap {
+  margin-top: 16px;
+}
+
+.home-v2-shortcut-action {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.home-v2-shortcut:hover .home-v2-shortcut-action {
+  color: var(--accent);
+}
+
+.home-v2-discovery {
+  align-items: start;
+}
+
+.home-v2-ranking-panel,
+.home-v2-research-links {
+  align-self: start;
+}
+
+.home-v2-ranking-empty {
+  min-height: 64px;
+}
+
+@media (max-width: 560px) {
+  .home-v2-search-panel,
+  .home-v2-macro {
+    padding: 18px;
+  }
+}
