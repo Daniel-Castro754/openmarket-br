@@ -9,7 +9,9 @@
     "lint": "eslint .",
     "qa:visual": "playwright test",
     "qa:visual:install": "playwright install chromium",
-    "qa:visual:report": "playwright show-report"
+    "qa:visual:report": "playwright show-report",
+    "qa:design": "node scripts/audit-design.mjs",
+    "qa:design:strict": "node scripts/audit-design.mjs --strict"
   },
   "dependencies": {
     "next": "16.3.0",
