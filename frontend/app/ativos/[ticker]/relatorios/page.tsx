@@ -1,6 +1,13 @@
 import Link from "next/link";
 
-import { getDocuments } from "../../../../lib/api";
+import { getDocuments, type DocumentProcessingStatus } from "../../../../lib/api";
+import {
+  categoryCounts,
+  documentCategory,
+  documentCategoryLabel,
+  documentCategoryOptions,
+  type DocumentCategory,
+} from "../../../../lib/document-taxonomy";
 
 function formatDate(value?: string | null) {
   if (!value) return "—";
@@ -24,17 +31,40 @@ function documentTypeLabel(value: string) {
   return labels[value] ?? value;
 }
 
-function statusLabel(value: string) {
-  if (value === "ready") return "Disponível";
-  if (value === "processing") return "Processando";
-  if (value === "failed") return "Falha";
-  return value;
+function statusLabel(status: DocumentProcessingStatus, hasOriginal: boolean) {
+  if (status === "ready") return "Texto extraído";
+  if (status === "failed") return "Falha na extração";
+  if (hasOriginal) return "Original disponível";
+  return "Aguardando processamento";
 }
 
-export default async function AssetReportsPage({ params }: { params: Promise<{ ticker: string }> }) {
-  const { ticker: rawTicker } = await params;
+function normalizeCategory(value?: string): DocumentCategory | null {
+  return documentCategoryOptions.some((item) => item.value === value)
+    ? (value as DocumentCategory)
+    : null;
+}
+
+function categoryHref(ticker: string, category: DocumentCategory | null) {
+  if (!category) return `/ativos/${ticker}/relatorios`;
+  return `/ativos/${ticker}/relatorios?category=${category}`;
+}
+
+export default async function AssetReportsPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ ticker: string }>;
+  searchParams: Promise<{ category?: string | string[] }>;
+}) {
+  const [{ ticker: rawTicker }, query] = await Promise.all([params, searchParams]);
   const ticker = rawTicker.trim().toUpperCase();
-  const documents = await getDocuments({ ticker, limit: 30 });
+  const rawCategory = Array.isArray(query.category) ? query.category[0] : query.category;
+  const selectedCategory = normalizeCategory(rawCategory);
+  const documents = await getDocuments({ ticker, limit: 100 });
+  const counts = categoryCounts(documents);
+  const visibleDocuments = selectedCategory
+    ? documents.filter((document) => documentCategory(document) === selectedCategory)
+    : documents;
 
   return (
     <section className="asset-doc-workspace asset-reports-workspace" id="relatorios">
@@ -43,7 +73,7 @@ export default async function AssetReportsPage({ params }: { params: Promise<{ t
           <span className="eyebrow">DOCUMENTOS</span>
           <h2>Relatórios e arquivos oficiais de {ticker}</h2>
           <p>
-            Explorador documental do ativo, com período de referência, processamento e acesso ao arquivo sincronizado.
+            Biblioteca documental organizada por finalidade, com período de referência, origem e estado de processamento.
           </p>
         </div>
 
@@ -56,6 +86,28 @@ export default async function AssetReportsPage({ params }: { params: Promise<{ t
         </div>
       </header>
 
+      <nav className="asset-doc-filters" aria-label="Categorias de documentos">
+        <Link
+          href={categoryHref(ticker, null)}
+          className={!selectedCategory ? "asset-doc-filter asset-doc-filter-active" : "asset-doc-filter"}
+        >
+          Todos <strong>{documents.length}</strong>
+        </Link>
+        {documentCategoryOptions.map((option) => (
+          <Link
+            href={categoryHref(ticker, option.value)}
+            key={option.value}
+            className={
+              selectedCategory === option.value
+                ? "asset-doc-filter asset-doc-filter-active"
+                : "asset-doc-filter"
+            }
+          >
+            {option.label} <strong>{counts.get(option.value) ?? 0}</strong>
+          </Link>
+        ))}
+      </nav>
+
       <div className="asset-doc-list-shell">
         <div className="asset-doc-list-head" aria-hidden="true">
           <span>Tipo / data</span>
@@ -64,7 +116,8 @@ export default async function AssetReportsPage({ params }: { params: Promise<{ t
         </div>
 
         <div className="asset-doc-list">
-          {documents.map((document) => {
+          {visibleDocuments.map((document) => {
+            const category = documentCategory(document);
             const ready = document.processing_status === "ready";
             return (
               <Link className="asset-doc-row" href={`/relatorios/${document.id}`} key={document.id}>
@@ -76,6 +129,7 @@ export default async function AssetReportsPage({ params }: { params: Promise<{ t
                 <div className="asset-doc-main">
                   <h3>{document.title}</h3>
                   <div className="asset-doc-subline">
+                    <span className="asset-doc-category">{documentCategoryLabel(category)}</span>
                     {document.reference_period ? <span>Referência: {document.reference_period}</span> : null}
                     <span>{document.source.source_name}</span>
                   </div>
@@ -83,7 +137,7 @@ export default async function AssetReportsPage({ params }: { params: Promise<{ t
 
                 <div className="asset-doc-side">
                   <span className={`asset-doc-status ${ready ? "asset-doc-status-ready" : ""}`}>
-                    {statusLabel(document.processing_status)}
+                    {statusLabel(document.processing_status, Boolean(document.source_url))}
                   </span>
                   <span className="asset-doc-open">Abrir →</span>
                 </div>
@@ -91,15 +145,21 @@ export default async function AssetReportsPage({ params }: { params: Promise<{ t
             );
           })}
 
-          {documents.length === 0 ? (
-            <div className="asset-doc-empty">Nenhum relatório sincronizado para este ticker.</div>
+          {visibleDocuments.length === 0 ? (
+            <div className="asset-doc-empty">
+              Nenhum documento encontrado nesta categoria para {ticker}.
+            </div>
           ) : null}
         </div>
       </div>
 
       <div className="asset-doc-note">
-        <strong>Mais filtros</strong>
-        <span>O Document Hub oferece a exploração completa por ticker, tipo de documento e demais filtros disponíveis.</span>
+        <strong>
+          {selectedCategory ? documentCategoryLabel(selectedCategory) : "Biblioteca completa"}
+        </strong>
+        <span>
+          As categorias usam o tipo oficial quando disponível e uma classificação auxiliar pelo título nos documentos genéricos.
+        </span>
       </div>
     </section>
   );
