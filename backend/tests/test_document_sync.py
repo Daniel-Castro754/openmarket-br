@@ -39,6 +39,11 @@ class FakeDocumentProvider(DocumentProvider):
                 source_url="https://example.test/fato.pdf",
                 published_at=date(2026, 9, 1),
                 reference_period="2026-09-01",
+                source_category="Fato Relevante",
+                source_document_type="Comunicado",
+                source_species="Fato relevante",
+                source_subject="Fato relevante de teste",
+                source_presentation_type="Única",
                 source=SourceMetadata(
                     provider=self.name,
                     source_name="Fixture",
@@ -87,6 +92,11 @@ def test_sync_documents_persists_provider_results_idempotently() -> None:
         assert first.cvm_code == "9512"
         assert len(stored) == 1
         assert stored[0].title == "Fato relevante de teste"
+        assert stored[0].source_category == "Fato Relevante"
+        assert stored[0].source_document_type == "Comunicado"
+        assert stored[0].source_species == "Fato relevante"
+        assert stored[0].source_subject == "Fato relevante de teste"
+        assert stored[0].source_presentation_type == "Única"
 
 
 def test_sync_documents_requires_asset_to_be_persisted_first() -> None:
