@@ -4,7 +4,7 @@ export function AssetComparePanel({ ticker }: { ticker: string }) {
   return (
     <aside className="asset-compare-panel" aria-labelledby="asset-compare-panel-title">
       <div>
-        <span className="eyebrow">COMPARAÇÃO</span>
+        <span className="asset-section-label">Comparação</span>
         <h2 id="asset-compare-panel-title">Compare {ticker} com outras empresas</h2>
         <p>
           Leve o ativo atual para o comparador e adicione outras empresas para analisar os mesmos fundamentos e
