@@ -6,6 +6,7 @@ import {
   documentCategory,
   documentCategoryLabel,
   documentCategoryOptions,
+  sourceClassificationLabel,
   type DocumentCategory,
 } from "../../../../lib/document-taxonomy";
 
@@ -130,6 +131,9 @@ export default async function AssetReportsPage({
                   <h3>{document.title}</h3>
                   <div className="asset-doc-subline">
                     <span className="asset-doc-category">{documentCategoryLabel(category)}</span>
+                    {sourceClassificationLabel(document) ? (
+                      <span>CVM: {sourceClassificationLabel(document)}</span>
+                    ) : null}
                     {document.reference_period ? <span>Referência: {document.reference_period}</span> : null}
                     <span>{document.source.source_name}</span>
                   </div>
