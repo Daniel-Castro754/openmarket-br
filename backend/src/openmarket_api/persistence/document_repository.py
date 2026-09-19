@@ -62,6 +62,11 @@ class PublicDocumentRepository:
             "source_url": document.source_url,
             "published_at": document.published_at,
             "reference_period": document.reference_period,
+            "source_category": document.source_category,
+            "source_document_type": document.source_document_type,
+            "source_species": document.source_species,
+            "source_subject": document.source_subject,
+            "source_presentation_type": document.source_presentation_type,
             "content_type": document.content_type,
             "page_count": document.page_count,
             "processing_status": document.processing_status.value,
@@ -118,6 +123,10 @@ class PublicDocumentRepository:
                 or_(
                     func.lower(PublicDocumentRecord.title).contains(needle),
                     func.lower(func.coalesce(PublicDocumentRecord.reference_period, "")).contains(needle),
+                    func.lower(func.coalesce(PublicDocumentRecord.source_category, "")).contains(needle),
+                    func.lower(func.coalesce(PublicDocumentRecord.source_document_type, "")).contains(needle),
+                    func.lower(func.coalesce(PublicDocumentRecord.source_species, "")).contains(needle),
+                    func.lower(func.coalesce(PublicDocumentRecord.source_subject, "")).contains(needle),
                 )
             )
         query = query.order_by(
@@ -190,6 +199,11 @@ class PublicDocumentRepository:
             source_url=record.source_url,
             published_at=record.published_at,
             reference_period=record.reference_period,
+            source_category=record.source_category,
+            source_document_type=record.source_document_type,
+            source_species=record.source_species,
+            source_subject=record.source_subject,
+            source_presentation_type=record.source_presentation_type,
             content_type=record.content_type,
             page_count=record.page_count,
             processing_status=record.processing_status,
