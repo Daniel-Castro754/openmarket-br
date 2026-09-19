@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 
 import { MacroTickerBar } from "../components/macro-ticker-bar";
 import { SiteFooter } from "../components/site-footer";
@@ -42,8 +41,6 @@ import "./asset-documents-workspace.css";
 
 /* Print/export must win the cascade without changing screen presentation. */
 import "./print.css";
-
-const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
   title: "OpenMarket BR",
@@ -89,7 +86,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <head>
         <script dangerouslySetInnerHTML={{ __html: appearanceInitScript }} />
       </head>
-      <body className={inter.className}>
+      <body>
         <SiteSideNavigation />
         <SiteHeader />
         <MacroTickerBar />
