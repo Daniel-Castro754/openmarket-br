@@ -46,6 +46,12 @@ def test_parse_csv_filters_company_and_preserves_versions() -> None:
     assert "versao=1" in (documents[0].source.license.notes or "")
     assert "versao=2" in (documents[1].source.license.notes or "")
     assert documents[2].document_type == DocumentType.EARNINGS_RELEASE
+    assert documents[0].source_category == "Fato Relevante"
+    assert documents[0].source_subject == "Plano estratégico 2027"
+    assert documents[0].source_presentation_type == "Única"
+    assert documents[2].source_category == "Dados Econômico-Financeiros"
+    assert documents[2].source_document_type == "Release"
+    assert documents[2].source_species == "Resultados"
 
 
 def test_reference_date_can_be_after_delivery_window() -> None:

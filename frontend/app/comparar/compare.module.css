@@ -309,3 +309,44 @@
   .methodologyNote { flex-direction: column; }
   .methodologyNote span + span::before { content: none; }
 }
+
+
+.viewTabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+  scrollbar-width: none;
+}
+
+.viewTabs::-webkit-scrollbar { display: none; }
+
+.viewTab,
+.viewTabActive {
+  flex: 0 0 auto;
+  min-height: 27px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 9px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  font-size: .54rem;
+  font-weight: 760;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.viewTab:hover {
+  border-color: var(--border);
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.viewTabActive {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+  color: var(--accent-readable);
+}

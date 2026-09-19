@@ -191,6 +191,11 @@ export type DocumentSummary = {
   source_url?: string | null;
   published_at?: string | null;
   reference_period?: string | null;
+  source_category?: string | null;
+  source_document_type?: string | null;
+  source_species?: string | null;
+  source_subject?: string | null;
+  source_presentation_type?: string | null;
   content_type: string;
   page_count?: number | null;
   processing_status: DocumentProcessingStatus;

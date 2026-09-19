@@ -32,6 +32,11 @@ class PublicDocument(BaseModel):
     source_url: str | None = None
     published_at: date | None = None
     reference_period: str | None = None
+    source_category: str | None = None
+    source_document_type: str | None = None
+    source_species: str | None = None
+    source_subject: str | None = None
+    source_presentation_type: str | None = None
     content_type: str = "application/pdf"
     page_count: int | None = None
     processing_status: DocumentProcessingStatus = DocumentProcessingStatus.PENDING
@@ -58,6 +63,11 @@ class DocumentSummary(BaseModel):
     source_url: str | None = None
     published_at: date | None = None
     reference_period: str | None = None
+    source_category: str | None = None
+    source_document_type: str | None = None
+    source_species: str | None = None
+    source_subject: str | None = None
+    source_presentation_type: str | None = None
     content_type: str
     page_count: int | None = None
     processing_status: DocumentProcessingStatus
