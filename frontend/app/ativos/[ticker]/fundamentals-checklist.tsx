@@ -28,7 +28,7 @@ export function FundamentalsChecklist({ items }: { items: FundamentalsChecklistI
     <section className="fundamentals-checklist" aria-labelledby="fundamentals-checklist-title">
       <div className="section-title-row fundamentals-checklist-heading">
         <div>
-          <span className="eyebrow">CHECKLIST DE FUNDAMENTOS</span>
+          <span className="asset-section-label">Checklist de fundamentos</span>
           <h2 id="fundamentals-checklist-title">Sinais objetivos do último período</h2>
         </div>
         <div className="fundamentals-checklist-summary" aria-label="Resumo do checklist">
