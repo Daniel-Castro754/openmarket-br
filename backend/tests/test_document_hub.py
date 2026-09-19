@@ -72,6 +72,11 @@ def test_document_hub_filters_by_ticker_and_returns_company_context() -> None:
             source_url="https://example.test/petrobras-2025.pdf",
             published_at=date(2026, 3, 15),
             reference_period="2025",
+            source_category="Dados Econômico-Financeiros",
+            source_document_type="Relatório anual",
+            source_species="Relato integrado",
+            source_subject="Relato Integrado Petrobras 2025",
+            source_presentation_type="Única",
             page_count=120,
             processing_status=DocumentProcessingStatus.READY,
             source=_source(date(2026, 3, 15)),
@@ -86,6 +91,11 @@ def test_document_hub_filters_by_ticker_and_returns_company_context() -> None:
         assert results[0].company_name == "PETROBRAS"
         assert results[0].tickers == ["PETR3", "PETR4"]
         assert results[0].processing_status == DocumentProcessingStatus.READY
+        assert results[0].source_category == "Dados Econômico-Financeiros"
+        assert results[0].source_document_type == "Relatório anual"
+        assert results[0].source_species == "Relato integrado"
+        assert results[0].source_subject == "Relato Integrado Petrobras 2025"
+        assert results[0].source_presentation_type == "Única"
 
 
 def test_document_detail_preserves_section_order_and_pages() -> None:
@@ -220,3 +230,32 @@ def test_document_hub_rejects_unknown_ticker() -> None:
             assert "XXXX3" in str(exc)
         else:
             raise AssertionError("unknown ticker should not resolve")
+
+def test_document_hub_searches_structured_source_metadata() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+
+    with Session(engine) as session:
+        company = _seed_company(session)
+        repo = PublicDocumentRepository(session)
+        repo.upsert(
+            PublicDocument(
+                company_id=company.id,
+                title="Documento periódico",
+                document_type=DocumentType.OTHER,
+                published_at=date(2026, 9, 10),
+                source_category="Assembleia",
+                source_document_type="AGE",
+                source_species="Edital de convocação",
+                source_subject="Deliberação societária",
+                processing_status=DocumentProcessingStatus.PENDING,
+                source=_source(date(2026, 9, 10)),
+            )
+        )
+        session.commit()
+
+        results = DocumentHubService(session).list_documents(query_text="assembleia")
+
+        assert len(results) == 1
+        assert results[0].source_category == "Assembleia"
+        assert results[0].source_species == "Edital de convocação"
