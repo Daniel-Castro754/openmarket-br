@@ -70,7 +70,7 @@ export async function HomeResearchWorkspace() {
             <span className="home-v2-shortcut-meta">{item.meta}</span>
             <strong>{item.label}</strong>
             <small>{item.detail}</small>
-            <span className="home-v2-shortcut-action">Abrir →</span>
+            <span className="home-v2-shortcut-action" aria-hidden="true">→</span>
           </Link>
         ))}
       </section>
