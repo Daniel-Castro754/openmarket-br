@@ -31,22 +31,57 @@ function containsAny(text: string, terms: string[]) {
   return terms.some((term) => text.includes(term));
 }
 
-export function documentCategory(document: DocumentSummary): DocumentCategory {
-  if (document.document_type === "material_fact") return "material";
-  if (document.document_type === "fre") return "governance";
+function classifyText(text: string): DocumentCategory | null {
+  if (!text) return null;
+
+  if (containsAny(text, ["calendario", "agenda de eventos"])) return "calendar";
+
   if (
-    document.document_type === "dfp"
-    || document.document_type === "itr"
-    || document.document_type === "earnings_release"
-    || document.document_type === "annual_report"
-    || document.document_type === "presentation"
+    containsAny(text, [
+      "dados economico-financeiros",
+      "demonstracoes financeiras",
+      "informacoes trimestrais",
+      "resultado",
+      "release",
+      "relatorio anual",
+      "relato integrado",
+      "desempenho financeiro",
+      "informacoes financeiras",
+    ])
   ) {
     return "results";
   }
 
-  const text = normalized(document.title);
+  if (
+    containsAny(text, [
+      "fato relevante",
+      "comunicado ao mercado",
+      "comunicado",
+      "esclarecimento",
+      "aviso aos acionistas",
+      "aviso",
+    ])
+  ) {
+    return "material";
+  }
 
-  if (containsAny(text, ["calendario", "agenda de eventos"])) return "calendar";
+  if (
+    containsAny(text, [
+      "assembleia",
+      "conselho",
+      "governanca",
+      "transacao com parte relacionada",
+      "posicao consolidada",
+      "posicao individual",
+      "acionista",
+      "administrador",
+      "estatuto",
+      "capital social",
+      "formulario de referencia",
+    ])
+  ) {
+    return "governance";
+  }
 
   if (
     containsAny(text, [
@@ -64,23 +99,6 @@ export function documentCategory(document: DocumentSummary): DocumentCategory {
     ])
   ) {
     return "finance";
-  }
-
-  if (
-    containsAny(text, [
-      "assembleia",
-      "conselho",
-      "governanca",
-      "transacao com parte relacionada",
-      "posicao consolidada",
-      "posicao individual",
-      "acionista",
-      "administrador",
-      "estatuto",
-      "capital social",
-    ])
-  ) {
-    return "governance";
   }
 
   if (
@@ -104,19 +122,6 @@ export function documentCategory(document: DocumentSummary): DocumentCategory {
 
   if (
     containsAny(text, [
-      "resultado",
-      "desempenho financeiro",
-      "demonstracao financeira",
-      "informacoes financeiras",
-      "relatorio anual",
-      "relato integrado",
-    ])
-  ) {
-    return "results";
-  }
-
-  if (
-    containsAny(text, [
       "regulatorio",
       "regulacao",
       "fiscal",
@@ -124,26 +129,46 @@ export function documentCategory(document: DocumentSummary): DocumentCategory {
       "anp",
       "ibama",
       "cade",
-      "cvm",
       "sec",
     ])
   ) {
     return "regulatory";
   }
 
+  return null;
+}
+
+function structuredSourceText(document: DocumentSummary) {
+  return normalized(
+    [
+      document.source_category,
+      document.source_document_type,
+      document.source_species,
+      document.source_subject,
+      document.source_presentation_type,
+    ]
+      .filter((value): value is string => Boolean(value))
+      .join(" "),
+  );
+}
+
+export function documentCategory(document: DocumentSummary): DocumentCategory {
+  if (document.document_type === "material_fact") return "material";
+  if (document.document_type === "fre") return "governance";
   if (
-    containsAny(text, [
-      "comunicado",
-      "informa",
-      "esclarecimento",
-      "aviso",
-      "fato relevante",
-    ])
+    document.document_type === "dfp"
+    || document.document_type === "itr"
+    || document.document_type === "earnings_release"
+    || document.document_type === "annual_report"
+    || document.document_type === "presentation"
   ) {
-    return "material";
+    return "results";
   }
 
-  return "other";
+  const structured = classifyText(structuredSourceText(document));
+  if (structured) return structured;
+
+  return classifyText(normalized(document.title)) ?? "other";
 }
 
 export function documentCategoryLabel(value: DocumentCategory) {
@@ -158,4 +183,11 @@ export function categoryCounts(documents: DocumentSummary[]) {
     counts.set(category, (counts.get(category) ?? 0) + 1);
   }
   return counts;
+}
+
+export function sourceClassificationLabel(document: DocumentSummary) {
+  return document.source_category
+    ?? document.source_document_type
+    ?? document.source_species
+    ?? null;
 }
