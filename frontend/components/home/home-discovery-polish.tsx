@@ -68,7 +68,7 @@ export async function HomeDiscoveryPolish() {
         <article className="home-v2-ranking-panel">
           <header className="home-v2-discovery-heading">
             <div>
-              <span className="eyebrow">DESCOBERTA</span>
+              <span className="home-v2-section-label">Descoberta</span>
               <h2>Rankings em destaque</h2>
             </div>
             <Link href="/rankings">Explorar rankings →</Link>
@@ -106,7 +106,7 @@ export async function HomeDiscoveryPolish() {
         <aside className="home-v2-research-links">
           <header className="home-v2-discovery-heading">
             <div>
-              <span className="eyebrow">PESQUISA</span>
+              <span className="home-v2-section-label">Pesquisa</span>
               <h2>Outras áreas</h2>
             </div>
           </header>
@@ -126,7 +126,7 @@ export async function HomeDiscoveryPolish() {
 
       <section className="home-v2-transparency" aria-label="Dados e metodologia">
         <header>
-          <span className="eyebrow">DADOS E METODOLOGIA</span>
+          <span className="home-v2-section-label">Dados e metodologia</span>
           <strong>Origem antes de interpretação.</strong>
         </header>
         <div className="home-v2-transparency-grid">
