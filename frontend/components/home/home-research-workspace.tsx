@@ -79,7 +79,7 @@ export async function HomeResearchWorkspace() {
         <article className="home-v2-results-panel">
           <header className="home-v2-workspace-heading">
             <div>
-              <span className="eyebrow">PUBLICAÇÕES</span>
+              <span className="home-v2-section-label">Publicações</span>
               <h2>Últimos resultados</h2>
             </div>
             <Link href="/resultados">Ver todos →</Link>
@@ -113,7 +113,7 @@ export async function HomeResearchWorkspace() {
         <aside className="home-v2-panorama-panel">
           <header className="home-v2-workspace-heading">
             <div>
-              <span className="eyebrow">BRASIL</span>
+              <span className="home-v2-section-label">Brasil</span>
               <h2>Panorama</h2>
             </div>
             <Link href="/macroeconomia">Macroeconomia →</Link>
