@@ -402,3 +402,394 @@
   }
   .asset-summary-v2 article:last-child { border-bottom: 0; }
 }
+
+
+/* Company visual foundation v1
+   Mirrors the Home language: structural surfaces, fewer pills, readable type. */
+.asset-hero-v2 {
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+  gap: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.asset-hero-identity {
+  padding: 18px 20px;
+}
+
+.asset-hero-mark {
+  width: 44px;
+  height: 44px;
+  border-radius: 4px;
+  background: transparent;
+  font-size: 12px;
+  letter-spacing: 0;
+}
+
+.asset-hero-title-row h1 {
+  font-size: clamp(28px, 2.6vw, 36px);
+  line-height: 1;
+  letter-spacing: -.03em;
+}
+
+.asset-hero-exchange {
+  min-height: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.asset-hero-name {
+  margin-top: 5px;
+  font-size: 16px;
+}
+
+.asset-hero-copy > p {
+  margin-top: 2px;
+  color: var(--soft);
+  font-size: 12px;
+}
+
+.asset-hero-metadata {
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.asset-hero-metadata span {
+  min-height: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.asset-hero-side {
+  gap: 0;
+  border-left: 1px solid var(--border);
+}
+
+.asset-hero-actions {
+  justify-content: flex-end;
+  gap: 14px;
+  padding: 12px 16px 0;
+}
+
+.asset-hero-actions a {
+  min-height: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  color: var(--accent);
+  font-size: 12px;
+}
+
+.asset-hero-actions a:hover {
+  border-color: transparent;
+  background: transparent;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.asset-financial-context {
+  min-height: 0;
+  padding: 16px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.asset-context-eyebrow,
+.asset-section-label {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.asset-financial-context > strong {
+  margin-top: 4px;
+  font-size: 18px;
+}
+
+.asset-context-stats {
+  gap: 0;
+  margin: 10px 0 8px;
+  border-width: 1px 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.asset-context-stats > div {
+  padding: 7px 0;
+  background: transparent;
+}
+
+.asset-context-stats > div:first-child {
+  padding-right: 10px;
+  border-right: 1px solid var(--border);
+}
+
+.asset-context-stats > div:last-child {
+  padding-left: 10px;
+}
+
+.asset-context-stats span,
+.asset-context-stats b,
+.asset-financial-context > small,
+.asset-financial-context > a {
+  font-size: 12px;
+}
+
+.asset-tabs-v2 {
+  min-height: 40px;
+  padding: 3px 0;
+}
+
+.asset-tabs-v2 a {
+  min-height: 30px;
+  padding: 0 9px;
+  border-radius: 0;
+  font-size: 12px;
+}
+
+.asset-tabs-v2 a:hover {
+  background: transparent;
+  color: var(--text-strong);
+}
+
+.asset-summary-v2 {
+  margin-top: 10px;
+  border-width: 1px 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.asset-summary-v2 article {
+  min-height: 72px;
+  padding: 10px 12px;
+}
+
+.asset-summary-heading > span,
+.asset-summary-heading > small,
+.asset-summary-v2 p {
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.asset-summary-v2 strong {
+  margin-top: 5px;
+  font-size: 18px;
+}
+
+.asset-overview-intro {
+  margin: 16px 0 8px;
+}
+
+.asset-overview-intro h2 {
+  margin-top: 2px;
+  font-size: 20px;
+}
+
+.asset-overview-intro p {
+  max-width: 720px;
+  color: var(--soft);
+  font-size: 13px;
+}
+
+.asset-overview-intro > span {
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.fundamentals-checklist,
+.asset-compare-panel {
+  border-radius: 0;
+}
+
+.fundamentals-checklist-heading {
+  padding: 12px 14px 10px;
+}
+
+.fundamentals-checklist-heading h2 {
+  margin-top: 2px;
+  font-size: 16px;
+}
+
+.fundamentals-checklist-summary {
+  gap: 10px;
+}
+
+.fundamentals-checklist-summary span {
+  min-height: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-size: 12px;
+}
+
+.fundamentals-checklist-row {
+  min-height: 58px;
+  padding: 9px 14px;
+}
+
+.fundamentals-checklist-copy strong,
+.fundamentals-checklist-copy span,
+.fundamentals-checklist-value b,
+.fundamentals-checklist-value small,
+.fundamentals-checklist-note {
+  font-size: 12px;
+}
+
+.asset-compare-panel {
+  padding: 14px;
+  background: transparent;
+}
+
+.asset-compare-panel h2 {
+  margin-top: 2px;
+  font-size: 16px;
+}
+
+.asset-compare-panel p,
+.asset-compare-panel small,
+.asset-compare-current span,
+.asset-compare-actions a {
+  font-size: 12px;
+}
+
+.asset-compare-current {
+  margin: 12px 0 10px;
+  padding: 9px 0;
+  border-width: 1px 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.asset-compare-current strong {
+  font-size: 16px;
+}
+
+.asset-compare-actions {
+  gap: 12px;
+}
+
+.asset-compare-actions a {
+  min-height: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.asset-analysis-shortcuts {
+  margin-top: 12px;
+  border-width: 1px 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.asset-analysis-shortcuts-header {
+  padding: 10px 0;
+}
+
+.asset-analysis-shortcuts-header h2 {
+  margin-top: 2px;
+  font-size: 16px;
+}
+
+.asset-analysis-shortcuts-header p {
+  color: var(--soft);
+  font-size: 12px;
+}
+
+.asset-analysis-shortcuts nav a {
+  min-height: 54px;
+  padding: 9px 12px;
+}
+
+.asset-analysis-shortcuts nav strong {
+  font-size: 13px;
+}
+
+.asset-analysis-shortcuts nav span,
+.asset-analysis-shortcuts nav b {
+  font-size: 12px;
+}
+
+.asset-analysis-shortcuts nav b {
+  color: var(--muted);
+}
+
+.asset-analysis-shortcuts nav a:hover b {
+  color: var(--accent);
+}
+
+.asset-overview-debt-note {
+  border-radius: 0;
+  background: transparent;
+}
+
+.asset-publications {
+  margin-top: 16px;
+  border-width: 1px 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.asset-publications .section-title-row {
+  padding: 10px 0;
+}
+
+.asset-publication-meta strong,
+.asset-publication-meta span,
+.asset-publication-source,
+.asset-publication-copy strong,
+.asset-publication-copy span,
+.asset-publication-arrow,
+.asset-publications-empty {
+  font-size: 12px;
+}
+
+.asset-publication-copy strong {
+  font-size: 13px;
+}
+
+@media (max-width: 760px) {
+  .asset-hero-v2 {
+    grid-template-columns: 1fr;
+  }
+
+  .asset-hero-side {
+    border-top: 1px solid var(--border);
+    border-left: 0;
+  }
+
+  .asset-hero-actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 520px) {
+  .asset-hero-identity {
+    padding: 14px;
+  }
+
+  .asset-hero-mark {
+    width: 40px;
+    height: 40px;
+  }
+
+  .asset-hero-title-row h1 {
+    font-size: 28px;
+  }
+}
