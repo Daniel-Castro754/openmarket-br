@@ -39,18 +39,6 @@
   --shadow-card: none;
   --body-background: radial-gradient(circle at 82% -12%, rgba(44, 112, 88, .11), transparent 24%), #090d12;
 
-  /* Target foundation scale. These tokens are additive while legacy CSS migrates
-     page by page; existing tokens below remain untouched to avoid layout regressions. */
-  --type-12: 12px;
-  --type-13: 13px;
-  --type-14: 14px;
-  --type-16: 16px;
-  --type-20: 20px;
-  --type-28: 28px;
-  --radius-data: 4px;
-  --radius-table: 0;
-  --shadow-overlay: 0 12px 28px rgba(0, 0, 0, .22);
-
   /* Typography — compact research/workstation scale. */
   --font-xs: .68rem;
   --font-sm: .76rem;
