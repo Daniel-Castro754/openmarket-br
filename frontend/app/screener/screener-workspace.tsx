@@ -4,13 +4,15 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import type { ScreenerMetric, ScreenerResponse, ScreenerRow } from "../../lib/api";
+import type {
+  IndicatorDefinition,
+  ScreenerResponse,
+  ScreenerRow,
+  SeriesUnit,
+} from "../../lib/api";
 import styles from "./screener.module.css";
 
-type MetricKey = Exclude<
-  ScreenerMetric,
-  "current_assets" | "current_liabilities" | "short_term_debt" | "long_term_debt"
->;
+type MetricKey = string;
 
 type Operator = "gt" | "gte" | "lt" | "lte";
 type SortableKey = "ticker" | "company" | MetricKey;
@@ -31,18 +33,7 @@ type ColumnDefinition = {
   sortable?: boolean;
 };
 
-const metricOptions: Array<{ key: MetricKey; label: string; unit: "%" | "R$" | "x"; group: string }> = [
-  { key: "revenue_growth_yoy", label: "Crescimento da receita", unit: "%", group: "Crescimento" },
-  { key: "net-income-growth-yoy", label: "Crescimento do lucro", unit: "%", group: "Crescimento" },
-  { key: "roe", label: "ROE", unit: "%", group: "Rentabilidade" },
-  { key: "roa", label: "ROA", unit: "%", group: "Rentabilidade" },
-  { key: "current_ratio", label: "Liquidez corrente", unit: "x", group: "Liquidez" },
-  { key: "net-debt-to-equity", label: "Dívida líquida / PL", unit: "%", group: "Endividamento" },
-  { key: "gross-debt-to-equity", label: "Dívida bruta / PL", unit: "%", group: "Endividamento" },
-  { key: "equity-to-assets", label: "Patrimônio / Ativos", unit: "%", group: "Endividamento" },
-  { key: "gross_margin", label: "Margem bruta", unit: "%", group: "Margens" },
-  { key: "operating_margin", label: "Margem operacional", unit: "%", group: "Margens" },
-  { key: "net_margin", label: "Margem líquida", unit: "%", group: "Margens" },
+const baseMetricOptions: Array<{ key: MetricKey; label: string; unit: "%" | "R$" | "x"; group: string }> = [
   { key: "revenue", label: "Receita", unit: "R$", group: "Resultados" },
   { key: "gross_profit", label: "Lucro bruto", unit: "R$", group: "Resultados" },
   { key: "operating_result", label: "Resultado operacional", unit: "R$", group: "Resultados" },
@@ -58,7 +49,6 @@ const metricOptions: Array<{ key: MetricKey; label: string; unit: "%" | "R$" | "
   { key: "net_change_in_cash", label: "Variação líquida de caixa", unit: "R$", group: "Fluxo de caixa" },
 ];
 
-const metricKeys = new Set<MetricKey>(metricOptions.map((item) => item.key));
 const operatorKeys = new Set<Operator>(["gt", "gte", "lt", "lte"]);
 
 const operatorLabels: Record<Operator, string> = {
@@ -68,24 +58,13 @@ const operatorLabels: Record<Operator, string> = {
   lte: "≤",
 };
 
-const columns: ColumnDefinition[] = [
+const baseColumns: ColumnDefinition[] = [
   { key: "ticker", label: "Ticker", kind: "text", sortable: true },
   { key: "company", label: "Empresa", kind: "text", sortable: true },
   { key: "revenue", label: "Receita", kind: "currency", metric: "revenue", sortable: true },
   { key: "gross_profit", label: "Lucro bruto", kind: "currency", metric: "gross_profit", sortable: true },
   { key: "operating_result", label: "Resultado op.", kind: "currency", metric: "operating_result", sortable: true },
-  { key: "revenue_growth_yoy", label: "Receita YoY", kind: "percent", metric: "revenue_growth_yoy", sortable: true },
-  { key: "net-income-growth-yoy", label: "Lucro YoY", kind: "percent", metric: "net-income-growth-yoy", sortable: true },
   { key: "net_income", label: "Lucro líquido", kind: "currency", metric: "net_income", sortable: true },
-  { key: "roe", label: "ROE", kind: "percent", metric: "roe", sortable: true },
-  { key: "roa", label: "ROA", kind: "percent", metric: "roa", sortable: true },
-  { key: "current_ratio", label: "Liquidez corrente", kind: "multiple", metric: "current_ratio", sortable: true },
-  { key: "net-debt-to-equity", label: "Dív. líquida / PL", kind: "percent", metric: "net-debt-to-equity", sortable: true },
-  { key: "gross-debt-to-equity", label: "Dív. bruta / PL", kind: "percent", metric: "gross-debt-to-equity", sortable: true },
-  { key: "equity-to-assets", label: "PL / Ativos", kind: "percent", metric: "equity-to-assets", sortable: true },
-  { key: "gross_margin", label: "Margem bruta", kind: "percent", metric: "gross_margin", sortable: true },
-  { key: "operating_margin", label: "Margem op.", kind: "percent", metric: "operating_margin", sortable: true },
-  { key: "net_margin", label: "Margem líquida", kind: "percent", metric: "net_margin", sortable: true },
   { key: "total_assets", label: "Ativos", kind: "currency", metric: "total_assets", sortable: true },
   { key: "equity", label: "Patrimônio", kind: "currency", metric: "equity", sortable: true },
   { key: "cash", label: "Caixa", kind: "currency", metric: "cash", sortable: true },
@@ -97,6 +76,65 @@ const columns: ColumnDefinition[] = [
   { key: "net_change_in_cash", label: "Variação caixa", kind: "currency", metric: "net_change_in_cash", sortable: true },
   { key: "latest_period", label: "Último período", kind: "date" },
 ];
+
+function screenerKeyForIndicator(definition: IndicatorDefinition): MetricKey {
+  return definition.metric ?? definition.slug;
+}
+
+function optionUnit(unit: SeriesUnit): "%" | "R$" | "x" {
+  if (unit === "percent") return "%";
+  if (unit === "multiple") return "x";
+  return "R$";
+}
+
+function columnKind(unit: SeriesUnit): ColumnDefinition["kind"] {
+  if (unit === "percent") return "percent";
+  if (unit === "multiple") return "multiple";
+  return "currency";
+}
+
+function supportsAnnualScreener(definition: IndicatorDefinition) {
+  return definition.available_frequencies.includes("annual") && !definition.requires_market_data;
+}
+
+function resolveMetricOptions(catalog: IndicatorDefinition[]) {
+  const options = new Map<MetricKey, (typeof baseMetricOptions)[number]>(
+    baseMetricOptions.map((option) => [option.key, option]),
+  );
+
+  for (const definition of catalog) {
+    if (!supportsAnnualScreener(definition)) continue;
+    const key = screenerKeyForIndicator(definition);
+    options.set(key, {
+      key,
+      label: definition.label,
+      unit: optionUnit(definition.unit),
+      group: definition.group_label ?? definition.group,
+    });
+  }
+
+  return [...options.values()];
+}
+
+function resolveColumns(catalog: IndicatorDefinition[]) {
+  const columns = new Map<ColumnKey, ColumnDefinition>(
+    baseColumns.map((column) => [column.key, column]),
+  );
+
+  for (const definition of catalog) {
+    if (!supportsAnnualScreener(definition)) continue;
+    const key = screenerKeyForIndicator(definition);
+    columns.set(key, {
+      key,
+      label: definition.short_label ?? definition.label,
+      kind: columnKind(definition.unit),
+      metric: key,
+      sortable: true,
+    });
+  }
+
+  return [...columns.values()];
+}
 
 const defaultColumns: ColumnKey[] = [
   "ticker",
@@ -144,7 +182,7 @@ function formatMetric(row: ScreenerRow, column: ColumnDefinition) {
 
 function parseFilterExpression(expression: string, id: number): FilterRule | null {
   const [metric, operator, value] = expression.split(":", 3);
-  if (!metricKeys.has(metric as MetricKey) || !operatorKeys.has(operator as Operator) || value == null) return null;
+  if (!metric || !operatorKeys.has(operator as Operator) || value == null) return null;
   return { id, metric: metric as MetricKey, operator: operator as Operator, value };
 }
 
@@ -185,14 +223,18 @@ function buildSearchParams({
 
 export function ScreenerWorkspace({
   response,
+  indicatorCatalog,
   initialQuery,
   initialFilters,
 }: {
   response: ScreenerResponse;
+  indicatorCatalog: IndicatorDefinition[];
   initialQuery: string;
   initialFilters: string[];
 }) {
   const router = useRouter();
+  const metricOptions = resolveMetricOptions(indicatorCatalog);
+  const columns = resolveColumns(indicatorCatalog);
   const [isPending, startTransition] = useTransition();
   const [rules, setRules] = useState<FilterRule[]>(() => rulesFromFilters(initialFilters));
   const [query, setQuery] = useState(initialQuery);

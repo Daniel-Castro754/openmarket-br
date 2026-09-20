@@ -13,7 +13,7 @@ from openmarket_api.domain.analytics import (
     FinancialSeries,
     SeriesFrequency,
 )
-from openmarket_api.domain.screener import DerivedScreenerMetric, ScreenerMetric
+from openmarket_api.domain.screener import ScreenerMetric, screener_metric_value
 from openmarket_api.persistence.models import (
     CompanyRecord,
     FinancialStatementRecord,
@@ -22,7 +22,7 @@ from openmarket_api.persistence.models import (
 )
 from openmarket_api.services.cash_flow_series import CASH_FLOW_METRICS, CashFlowSeriesService
 from openmarket_api.services.derived_indicator_series import DerivedIndicatorSeriesService
-from openmarket_api.services.indicator_engine import IndicatorEngine
+from openmarket_api.services.indicator_registry import indicator_registry
 from openmarket_api.services.liquidity_series import LiquidityFinancialSeriesService
 
 SnapshotValue = tuple[Decimal | None, date | None]
@@ -83,7 +83,7 @@ class ScreenerSnapshotService:
         existing = self.session.scalars(
             select(ScreenerMetricSnapshotRecord).where(
                 ScreenerMetricSnapshotRecord.instrument_id.in_(instrument_ids),
-                ScreenerMetricSnapshotRecord.metric.in_([metric.value for metric in metric_list]),
+                ScreenerMetricSnapshotRecord.metric.in_([screener_metric_value(metric) for metric in metric_list]),
                 ScreenerMetricSnapshotRecord.frequency == SeriesFrequency.ANNUAL.value,
             )
         ).all()
@@ -100,7 +100,7 @@ class ScreenerSnapshotService:
                 else None
             )
             for metric in metric_list:
-                key = (instrument.id, metric.value)
+                key = (instrument.id, screener_metric_value(metric))
                 snapshot = existing_by_key.get(key)
                 if snapshot is None or snapshot.source_latest_period != source_latest_period:
                     value, period_end = self._latest_metric(instrument.ticker, metric)
@@ -108,7 +108,7 @@ class ScreenerSnapshotService:
                         {
                             "id": snapshot.id if snapshot is not None else uuid4(),
                             "instrument_id": instrument.id,
-                            "metric": metric.value,
+                            "metric": screener_metric_value(metric),
                             "frequency": SeriesFrequency.ANNUAL.value,
                             "value": value,
                             "period_end": period_end,
@@ -170,8 +170,8 @@ class ScreenerSnapshotService:
         metric: ScreenerMetric,
     ) -> SnapshotValue:
         try:
-            if isinstance(metric, DerivedScreenerMetric):
-                definition = IndicatorEngine.get_definition(metric.value)
+            if not isinstance(metric, FinancialMetric):
+                definition = indicator_registry.get_definition(screener_metric_value(metric))
                 series = self.derived_service.get_series(
                     ticker,
                     definition,

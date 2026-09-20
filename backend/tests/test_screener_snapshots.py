@@ -13,9 +13,11 @@ from openmarket_api.domain.analytics import (
     SeriesUnit,
 )
 from openmarket_api.domain.entities import Company, Instrument, InstrumentType
+from openmarket_api.domain.screener import screener_metric_value
 from openmarket_api.persistence.base import Base
 from openmarket_api.persistence.models import ScreenerMetricSnapshotRecord
 from openmarket_api.persistence.repositories import CompanyRepository, InstrumentRepository
+from openmarket_api.services.indicator_registry import indicator_registry
 from openmarket_api.services.liquidity_series import LiquidityFinancialSeriesService
 from openmarket_api.services.screener_snapshots import (
     ScreenerSnapshotService,
@@ -54,6 +56,19 @@ def test_screener_uses_liquidity_aware_financial_service() -> None:
 
     assert isinstance(service.financial_service, LiquidityFinancialSeriesService)
     assert FinancialMetric.CURRENT_RATIO in SCREENER_METRICS
+
+
+def test_screener_discovers_annual_registry_indicators_without_duplicate_keys() -> None:
+    metric_keys = [screener_metric_value(metric) for metric in SCREENER_METRICS]
+
+    assert len(metric_keys) == len(set(metric_keys))
+    for definition in indicator_registry.get_catalog():
+        if SeriesFrequency.ANNUAL not in definition.available_frequencies:
+            continue
+        if definition.requires_market_data:
+            continue
+        expected_key = definition.metric.value if definition.metric is not None else definition.slug
+        assert expected_key in metric_keys
 
 
 def test_screener_financial_series_are_memoized_per_request(monkeypatch) -> None:

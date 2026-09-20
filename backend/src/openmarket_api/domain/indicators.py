@@ -25,7 +25,9 @@ class IndicatorDefinition(BaseModel):
     slug: str
     metric: FinancialMetric | None = None
     label: str
+    short_label: str | None = None
     group: IndicatorGroup
+    group_label: str | None = None
     description: str
     unit: SeriesUnit
     format: str
@@ -37,6 +39,8 @@ class IndicatorDefinition(BaseModel):
     supports_history: bool = True
     supports_sector_benchmark: bool = False
     requires_market_data: bool = False
+    methodology_version: str = "1.0"
+    methodology_notes: str | None = None
 
 
 class IndicatorValue(IndicatorDefinition):

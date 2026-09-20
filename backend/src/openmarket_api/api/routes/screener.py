@@ -10,19 +10,20 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from openmarket_api.api.dependencies import get_db_session
-from openmarket_api.domain.analytics import FinancialMetric
-from openmarket_api.domain.screener import DerivedScreenerMetric, ScreenerMetric
+from openmarket_api.domain.analytics import FinancialMetric, SeriesFrequency
+from openmarket_api.domain.screener import ScreenerMetric, screener_metric_value
 from openmarket_api.persistence.models import (
     CompanyRecord,
     FinancialStatementRecord,
     InstrumentRecord,
     PublicDocumentRecord,
 )
+from openmarket_api.services.indicator_registry import indicator_registry
 from openmarket_api.services.screener_snapshots import ScreenerSnapshotService, SnapshotMap
 
 router = APIRouter(prefix="/api/v1/screener", tags=["screener"])
 
-SCREENER_METRICS: tuple[ScreenerMetric, ...] = (
+BASE_SCREENER_METRICS: tuple[FinancialMetric, ...] = (
     FinancialMetric.REVENUE,
     FinancialMetric.GROSS_PROFIT,
     FinancialMetric.OPERATING_RESULT,
@@ -32,24 +33,31 @@ SCREENER_METRICS: tuple[ScreenerMetric, ...] = (
     FinancialMetric.CASH,
     FinancialMetric.GROSS_DEBT,
     FinancialMetric.NET_DEBT,
-    FinancialMetric.CURRENT_RATIO,
     FinancialMetric.OPERATING_CASH_FLOW,
     FinancialMetric.INVESTING_CASH_FLOW,
     FinancialMetric.FINANCING_CASH_FLOW,
     FinancialMetric.NET_CHANGE_IN_CASH,
-    FinancialMetric.GROSS_MARGIN,
-    FinancialMetric.OPERATING_MARGIN,
-    FinancialMetric.NET_MARGIN,
-    FinancialMetric.REVENUE_GROWTH_YOY,
-    FinancialMetric.ROE,
-    DerivedScreenerMetric.ROA,
-    DerivedScreenerMetric.NET_DEBT_TO_EQUITY,
-    DerivedScreenerMetric.GROSS_DEBT_TO_EQUITY,
-    DerivedScreenerMetric.EQUITY_TO_ASSETS,
-    DerivedScreenerMetric.NET_INCOME_GROWTH_YOY,
 )
 
-SCREENER_METRIC_BY_VALUE = {metric.value: metric for metric in SCREENER_METRICS}
+
+def _registry_screener_metrics() -> list[ScreenerMetric]:
+    metrics: list[ScreenerMetric] = []
+    for definition in indicator_registry.get_catalog():
+        if SeriesFrequency.ANNUAL not in definition.available_frequencies:
+            continue
+        if definition.requires_market_data:
+            continue
+        metrics.append(definition.metric if definition.metric is not None else definition.slug)
+    return metrics
+
+
+SCREENER_METRICS: tuple[ScreenerMetric, ...] = tuple(
+    dict.fromkeys([*BASE_SCREENER_METRICS, *_registry_screener_metrics()])
+)
+
+SCREENER_METRIC_BY_VALUE = {
+    screener_metric_value(metric): metric for metric in SCREENER_METRICS
+}
 FILTER_OPERATORS = {"gt", "gte", "lt", "lte"}
 CompanyStats = tuple[int, date | None, int]
 
@@ -218,8 +226,9 @@ def _build_row(
     periods: dict[str, date | None] = {}
     for metric in SCREENER_METRICS:
         value, period = _snapshot_value(values, instrument, metric)
-        metrics[metric.value] = value
-        periods[metric.value] = period
+        metric_name = screener_metric_value(metric)
+        metrics[metric_name] = value
+        periods[metric_name] = period
 
     if instrument.company_id is not None:
         financial_item_count, latest_period, document_count = company_stats.get(

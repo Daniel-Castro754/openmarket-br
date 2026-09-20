@@ -26,6 +26,7 @@ from openmarket_api.persistence.repositories import (
     InstrumentRepository,
 )
 from openmarket_api.services.indicator_engine import IndicatorEngine
+from openmarket_api.services.indicator_registry import indicator_registry
 
 
 def _source(reference_date: date) -> SourceMetadata:
@@ -136,7 +137,7 @@ def _seed(session: Session) -> None:
 
 
 def test_indicator_catalog_has_stable_groups_and_formulas() -> None:
-    catalog = IndicatorEngine.get_catalog()
+    catalog = indicator_registry.get_catalog()
 
     assert [item.slug for item in catalog] == [
         "gross-margin",
@@ -162,9 +163,12 @@ def test_indicator_catalog_has_stable_groups_and_formulas() -> None:
     ]
     assert catalog[0].supports_history is True
     assert catalog[0].requires_market_data is False
+    assert catalog[0].methodology_version == "1.0"
+    assert catalog[0].group_label == "Eficiência"
 
     roa = next(item for item in catalog if item.slug == "roa")
     assert roa.metric is None
+    assert roa.group_label == "Rentabilidade"
     assert roa.available_frequencies == [SeriesFrequency.ANNUAL]
     assert roa.dependencies == [FinancialMetric.NET_INCOME, FinancialMetric.TOTAL_ASSETS]
 
