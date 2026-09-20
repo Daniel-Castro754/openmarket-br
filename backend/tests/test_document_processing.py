@@ -275,3 +275,49 @@ def test_cvm_content_provider_rejects_untrusted_host_and_license() -> None:
             assert expected in str(exc)
         else:
             raise AssertionError("unsafe document fetch should be rejected")
+
+
+def test_cvm_content_provider_accepts_rad_pdf_mislabeled_as_html() -> None:
+    pdf = _minimal_pdf()
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.host == "www.rad.cvm.gov.br"
+        return httpx.Response(
+            200,
+            content=pdf,
+            headers={"content-type": "text/html; charset=utf-8"},
+        )
+
+    document = PublicDocument(
+        title="Documento RAD",
+        source_url="https://www.rad.cvm.gov.br/ENET/frmDownloadDocumento.aspx?numProtocolo=123",
+        source=_source(),
+    )
+    provider = CVMDocumentContentProvider(transport=httpx.MockTransport(handler))
+
+    fetched = asyncio.run(provider.fetch(document))
+
+    assert fetched.content == pdf
+    assert fetched.content_type == "application/pdf"
+
+
+def test_cvm_content_provider_keeps_html_mime_exception_rad_only() -> None:
+    pdf = _minimal_pdf()
+
+    document = PublicDocument(
+        title="Documento fora do RAD",
+        source_url="https://dados.cvm.gov.br/document.pdf",
+        source=_source(),
+    )
+    provider = CVMDocumentContentProvider(
+        transport=httpx.MockTransport(
+            lambda request: httpx.Response(
+                200,
+                content=pdf,
+                headers={"content-type": "text/html"},
+            )
+        )
+    )
+
+    with pytest.raises(ValueError, match="unsupported CVM document content-type: text/html"):
+        asyncio.run(provider.fetch(document))

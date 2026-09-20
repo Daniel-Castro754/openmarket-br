@@ -19,6 +19,7 @@ TRUSTED_CVM_HOSTS = frozenset(
 )
 REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})
 MAX_REDIRECTS = 5
+RAD_PDF_MIME_COMPAT_HOSTS = frozenset({"rad.cvm.gov.br", "www.rad.cvm.gov.br"})
 PDF_CONTENT_TYPES = frozenset(
     {
         "application/pdf",
@@ -81,10 +82,14 @@ class CVMDocumentContentProvider(DocumentContentProvider):
                     self._validate_content_length(response.headers.get("content-length"))
                     content = await self._read_limited(response)
                     content_type = self._content_type(response.headers.get("content-type"))
-                    self._validate_pdf(content, content_type)
+                    normalized_content_type = self._validate_pdf(
+                        content,
+                        content_type,
+                        final_url=str(response.url),
+                    )
                     return DocumentContent(
                         content=content,
-                        content_type=content_type,
+                        content_type=normalized_content_type,
                         final_url=str(response.url),
                     )
 
@@ -148,10 +153,22 @@ class CVMDocumentContentProvider(DocumentContentProvider):
         return (raw_value or "application/octet-stream").split(";", 1)[0].strip().casefold()
 
     @staticmethod
-    def _validate_pdf(content: bytes, content_type: str) -> None:
+    def _validate_pdf(
+        content: bytes,
+        content_type: str,
+        *,
+        final_url: str,
+    ) -> str:
         if b"%PDF-" not in content[:1024]:
             raise ValueError(
                 f"CVM document is not a PDF (content-type={content_type or 'unknown'})"
             )
-        if content_type not in PDF_CONTENT_TYPES:
-            raise ValueError(f"unsupported CVM document content-type: {content_type}")
+
+        if content_type in PDF_CONTENT_TYPES:
+            return "application/pdf"
+
+        hostname = (urlsplit(final_url).hostname or "").casefold()
+        if content_type == "text/html" and hostname in RAD_PDF_MIME_COMPAT_HOSTS:
+            return "application/pdf"
+
+        raise ValueError(f"unsupported CVM document content-type: {content_type}")
