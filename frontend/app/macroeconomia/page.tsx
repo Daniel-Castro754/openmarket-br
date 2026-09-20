@@ -1,6 +1,7 @@
 import Link from "next/link";
 
-import { getMacroSnapshot, type MacroIndicator, type MacroSeriesPoint } from "../../lib/macro-api";
+import { MacroSparkline } from "../../components/charts/macro-sparkline";
+import { getMacroSnapshot, type MacroIndicator } from "../../lib/macro-api";
 import styles from "./macro.module.css";
 
 function formatDate(value: string) {
@@ -30,22 +31,6 @@ function changeLabel(indicator: MacroIndicator) {
   const sign = delta > 0 ? "+" : "";
   const suffix = indicator.unit.startsWith("%") ? " p.p." : "";
   return `${sign}${new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 }).format(delta)}${suffix}`;
-}
-
-function sparkline(points: MacroSeriesPoint[]) {
-  if (points.length < 2) return "";
-  const values = points.map((point) => Number(point.value)).filter(Number.isFinite);
-  if (values.length < 2) return "";
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const range = max - min || 1;
-  return values
-    .map((value, index) => {
-      const x = (index / (values.length - 1)) * 240;
-      const y = 64 - ((value - min) / range) * 52;
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    })
-    .join(" ");
 }
 
 function movementSentence(indicator?: MacroIndicator) {
@@ -112,9 +97,12 @@ export default async function MacroPage() {
                     <span>{indicator.label}</span>
                     <strong>{formatNumber(indicator.latest_value, indicator.unit)}</strong>
                   </div>
-                  <svg className={styles.sparkline} viewBox="0 0 240 72" preserveAspectRatio="none" role="img" aria-label={`Histórico de ${indicator.label}`}>
-                    <polyline points={sparkline(indicator.points)} fill="none" vectorEffect="non-scaling-stroke" />
-                  </svg>
+                  <MacroSparkline
+                    points={indicator.points}
+                    label={indicator.label}
+                    unit={indicator.unit}
+                    className={styles.sparkline}
+                  />
                   <span className={Number(indicator.change ?? 0) > 0 ? styles.up : Number(indicator.change ?? 0) < 0 ? styles.down : styles.flat}>
                     {changeLabel(indicator)}
                   </span>
