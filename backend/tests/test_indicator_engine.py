@@ -352,6 +352,32 @@ def test_indicator_passport_exposes_exact_calculation_inputs() -> None:
     assert passport.warnings == []
 
 
+def test_indicator_passport_flattens_nested_calculation_chain() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+
+    with Session(engine) as session:
+        _seed(session)
+        passport = IndicatorPassportService(session).get_passport(
+            "PETR4",
+            "net-debt-to-equity",
+        )
+
+    assert passport.status == IndicatorPassportStatus.AVAILABLE
+    assert [item.metric for item in passport.inputs] == [
+        FinancialMetric.SHORT_TERM_DEBT,
+        FinancialMetric.LONG_TERM_DEBT,
+        FinancialMetric.CASH,
+        FinancialMetric.EQUITY,
+    ]
+    assert [item.value for item in passport.inputs] == [
+        Decimal(25),
+        Decimal(35),
+        Decimal(15),
+        Decimal(70),
+    ]
+
+
 def test_indicator_passport_reports_unavailable_indicator_without_guessing_inputs() -> None:
     engine = create_engine("sqlite+pysqlite:///:memory:")
     Base.metadata.create_all(engine)
