@@ -120,8 +120,8 @@ def test_cotahist_parser_ignores_other_tickers_and_non_cash_market() -> None:
 
     with Session(engine) as session:
         instrument = _instrument(session, "PETR4")
-        other = _cotahist_line("VALE3", date(2025, 1, 3), Decimal("50"))
-        fractional = list(_cotahist_line("PETR4", date(2025, 1, 3), Decimal("37")))
+        other = _cotahist_line("VALE3", date(2025, 1, 3), Decimal(50))
+        fractional = list(_cotahist_line("PETR4", date(2025, 1, 3), Decimal(37)))
         fractional[24:27] = list("020")
 
         quotes = B3CotahistParser.parse_text(
@@ -167,7 +167,7 @@ def test_performance_metrics_are_calculated_from_persisted_prices() -> None:
         _seed_quotes(
             session,
             "PETR4",
-            [Decimal("100"), Decimal("110"), Decimal("99"), Decimal("120")],
+            [Decimal(100), Decimal(110), Decimal(99), Decimal(120)],
         )
         snapshot = PerformanceRiskService(session).get_snapshot(
             "PETR4",
@@ -191,7 +191,7 @@ def test_performance_returns_explicit_insufficient_state() -> None:
     Base.metadata.create_all(engine)
 
     with Session(engine) as session:
-        _seed_quotes(session, "PETR4", [Decimal("100")])
+        _seed_quotes(session, "PETR4", [Decimal(100)])
         snapshot = PerformanceRiskService(session).get_snapshot(
             "PETR4",
             window=PerformanceWindow.MAX,
@@ -208,8 +208,8 @@ def test_performance_supports_persisted_benchmark() -> None:
     Base.metadata.create_all(engine)
 
     with Session(engine) as session:
-        _seed_quotes(session, "PETR4", [Decimal("100"), Decimal("120")])
-        _seed_quotes(session, "BOVA11", [Decimal("100"), Decimal("110")])
+        _seed_quotes(session, "PETR4", [Decimal(100), Decimal(120)])
+        _seed_quotes(session, "BOVA11", [Decimal(100), Decimal(110)])
         snapshot = PerformanceRiskService(session).get_snapshot(
             "PETR4",
             window=PerformanceWindow.MAX,
@@ -226,7 +226,7 @@ def test_performance_and_price_routes_use_persisted_data_only() -> None:
     Base.metadata.create_all(engine)
 
     with Session(engine) as session:
-        _seed_quotes(session, "PETR4", [Decimal("100"), Decimal("105")])
+        _seed_quotes(session, "PETR4", [Decimal(100), Decimal(105)])
         history = get_asset_prices(
             ticker="PETR4",
             session=session,
@@ -237,7 +237,7 @@ def test_performance_and_price_routes_use_persisted_data_only() -> None:
             ticker="PETR4",
             session=session,
             window=PerformanceWindow.MAX,
-            risk_free_rate=Decimal("0"),
+            risk_free_rate=Decimal(0),
             benchmark=None,
         )
 
