@@ -80,10 +80,14 @@ class B3CotahistParser:
                 int(line[8:10]),
             )
             raw_price = Decimal(line[108:121].strip())
+            raw_factor = line[210:217].strip()
+            factor = Decimal(raw_factor or "1")
         except (ValueError, InvalidOperation):
             return None
 
-        price = raw_price / Decimal("100")
+        if factor <= 0:
+            return None
+        price = raw_price / Decimal("100") / factor
         if price <= 0:
             return None
 
