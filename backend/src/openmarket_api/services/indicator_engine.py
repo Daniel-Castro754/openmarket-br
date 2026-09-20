@@ -4,7 +4,7 @@ from decimal import Decimal
 
 from sqlalchemy.orm import Session
 
-from openmarket_api.domain.analytics import FinancialMetric, SeriesFrequency, SeriesUnit
+from openmarket_api.domain.analytics import SeriesFrequency
 from openmarket_api.domain.indicators import (
     IndicatorDefinition,
     IndicatorGroup,
@@ -18,171 +18,8 @@ from openmarket_api.services.derived_indicator_series import (
     DerivedIndicatorSeriesService,
     IndicatorSeriesResult,
 )
+from openmarket_api.services.indicator_registry import indicator_registry
 from openmarket_api.services.liquidity_series import LiquidityFinancialSeriesService
-
-
-GROUP_LABELS: dict[IndicatorGroup, str] = {
-    IndicatorGroup.EFFICIENCY: "Eficiência",
-    IndicatorGroup.PROFITABILITY: "Rentabilidade",
-    IndicatorGroup.LEVERAGE: "Endividamento",
-    IndicatorGroup.LIQUIDITY: "Liquidez",
-    IndicatorGroup.GROWTH: "Crescimento",
-}
-
-
-INDICATOR_CATALOG: tuple[IndicatorDefinition, ...] = (
-    IndicatorDefinition(
-        slug="gross-margin",
-        metric=FinancialMetric.GROSS_MARGIN,
-        label="Margem Bruta",
-        group=IndicatorGroup.EFFICIENCY,
-        description="Lucro bruto como percentual da receita líquida.",
-        unit=SeriesUnit.PERCENT,
-        format="percent_2",
-        formula="gross_profit / revenue * 100",
-        dependencies=[FinancialMetric.GROSS_PROFIT, FinancialMetric.REVENUE],
-    ),
-    IndicatorDefinition(
-        slug="operating-margin",
-        metric=FinancialMetric.OPERATING_MARGIN,
-        label="Margem Operacional",
-        group=IndicatorGroup.EFFICIENCY,
-        description="Resultado operacional como percentual da receita líquida.",
-        unit=SeriesUnit.PERCENT,
-        format="percent_2",
-        formula="operating_result / revenue * 100",
-        dependencies=[FinancialMetric.OPERATING_RESULT, FinancialMetric.REVENUE],
-    ),
-    IndicatorDefinition(
-        slug="net-margin",
-        metric=FinancialMetric.NET_MARGIN,
-        label="Margem Líquida",
-        group=IndicatorGroup.EFFICIENCY,
-        description="Lucro líquido como percentual da receita líquida.",
-        unit=SeriesUnit.PERCENT,
-        format="percent_2",
-        formula="net_income / revenue * 100",
-        dependencies=[FinancialMetric.NET_INCOME, FinancialMetric.REVENUE],
-    ),
-    IndicatorDefinition(
-        slug="roe",
-        metric=FinancialMetric.ROE,
-        label="ROE",
-        group=IndicatorGroup.PROFITABILITY,
-        description="Retorno sobre o patrimônio líquido médio do período.",
-        unit=SeriesUnit.PERCENT,
-        format="percent_2",
-        formula="annual_net_income / average_equity * 100",
-        dependencies=[FinancialMetric.NET_INCOME, FinancialMetric.EQUITY],
-        available_frequencies=[SeriesFrequency.ANNUAL],
-    ),
-    IndicatorDefinition(
-        slug="roa",
-        label="ROA",
-        group=IndicatorGroup.PROFITABILITY,
-        description="Retorno anual sobre a média dos ativos totais do período.",
-        unit=SeriesUnit.PERCENT,
-        format="percent_2",
-        formula="annual_net_income / average_total_assets * 100",
-        dependencies=[FinancialMetric.NET_INCOME, FinancialMetric.TOTAL_ASSETS],
-        available_frequencies=[SeriesFrequency.ANNUAL],
-    ),
-    IndicatorDefinition(
-        slug="gross-debt",
-        metric=FinancialMetric.GROSS_DEBT,
-        label="Dívida Bruta",
-        group=IndicatorGroup.LEVERAGE,
-        description="Soma das dívidas financeiras de curto e longo prazo mapeadas.",
-        unit=SeriesUnit.CURRENCY,
-        format="currency_compact",
-        formula="short_term_debt + long_term_debt",
-        dependencies=[FinancialMetric.SHORT_TERM_DEBT, FinancialMetric.LONG_TERM_DEBT],
-    ),
-    IndicatorDefinition(
-        slug="net-debt",
-        metric=FinancialMetric.NET_DEBT,
-        label="Dívida Líquida",
-        group=IndicatorGroup.LEVERAGE,
-        description="Dívida bruta menos caixa e equivalentes.",
-        unit=SeriesUnit.CURRENCY,
-        format="currency_compact",
-        formula="gross_debt - cash",
-        dependencies=[
-            FinancialMetric.SHORT_TERM_DEBT,
-            FinancialMetric.LONG_TERM_DEBT,
-            FinancialMetric.CASH,
-        ],
-    ),
-    IndicatorDefinition(
-        slug="net-debt-to-equity",
-        label="Dívida Líquida / PL",
-        group=IndicatorGroup.LEVERAGE,
-        description="Dívida líquida como percentual do patrimônio líquido.",
-        unit=SeriesUnit.PERCENT,
-        format="percent_2",
-        formula="net_debt / equity * 100",
-        dependencies=[FinancialMetric.NET_DEBT, FinancialMetric.EQUITY],
-    ),
-    IndicatorDefinition(
-        slug="gross-debt-to-equity",
-        label="Dívida Bruta / PL",
-        group=IndicatorGroup.LEVERAGE,
-        description="Dívida bruta como percentual do patrimônio líquido.",
-        unit=SeriesUnit.PERCENT,
-        format="percent_2",
-        formula="gross_debt / equity * 100",
-        dependencies=[FinancialMetric.GROSS_DEBT, FinancialMetric.EQUITY],
-    ),
-    IndicatorDefinition(
-        slug="equity-to-assets",
-        label="Patrimônio / Ativos",
-        group=IndicatorGroup.LEVERAGE,
-        description="Participação do patrimônio líquido nos ativos totais.",
-        unit=SeriesUnit.PERCENT,
-        format="percent_2",
-        formula="equity / total_assets * 100",
-        dependencies=[FinancialMetric.EQUITY, FinancialMetric.TOTAL_ASSETS],
-    ),
-    IndicatorDefinition(
-        slug="current-ratio",
-        metric=FinancialMetric.CURRENT_RATIO,
-        label="Liquidez Corrente",
-        group=IndicatorGroup.LIQUIDITY,
-        description=(
-            "Ativo circulante dividido pelo passivo circulante no fechamento do período; "
-            "só é publicado quando as contas CVM 1.01 e 2.01 também têm os rótulos "
-            "Ativo Circulante e Passivo Circulante."
-        ),
-        unit=SeriesUnit.MULTIPLE,
-        format="multiple_2",
-        formula="current_assets / current_liabilities",
-        dependencies=[FinancialMetric.CURRENT_ASSETS, FinancialMetric.CURRENT_LIABILITIES],
-    ),
-    IndicatorDefinition(
-        slug="revenue-growth-yoy",
-        metric=FinancialMetric.REVENUE_GROWTH_YOY,
-        label="Crescimento da Receita",
-        group=IndicatorGroup.GROWTH,
-        description="Variação da receita contra o mesmo período do ano anterior.",
-        unit=SeriesUnit.PERCENT,
-        format="percent_2",
-        formula="(current / same_period_previous_year - 1) * 100",
-        dependencies=[FinancialMetric.REVENUE],
-    ),
-    IndicatorDefinition(
-        slug="net-income-growth-yoy",
-        label="Crescimento do Lucro",
-        group=IndicatorGroup.GROWTH,
-        description=(
-            "Variação do lucro líquido contra o mesmo período do ano anterior; "
-            "não é calculada quando a base anterior é nula ou negativa."
-        ),
-        unit=SeriesUnit.PERCENT,
-        format="percent_2",
-        formula="(current_net_income / same_period_previous_year - 1) * 100",
-        dependencies=[FinancialMetric.NET_INCOME],
-    ),
-)
 
 
 class IndicatorEngine:
@@ -190,18 +27,6 @@ class IndicatorEngine:
         self.assets = AssetReadService(session)
         self.series = LiquidityFinancialSeriesService(session)
         self.derived_series = DerivedIndicatorSeriesService(self.series)
-
-    @staticmethod
-    def get_catalog() -> list[IndicatorDefinition]:
-        return [definition.model_copy(deep=True) for definition in INDICATOR_CATALOG]
-
-    @staticmethod
-    def get_definition(slug: str) -> IndicatorDefinition:
-        normalized_slug = slug.strip().lower()
-        for definition in INDICATOR_CATALOG:
-            if definition.slug == normalized_slug:
-                return definition.model_copy(deep=True)
-        raise LookupError(f"indicator not found for slug {slug}")
 
     def get_summary(
         self,
@@ -213,10 +38,10 @@ class IndicatorEngine:
         self.assets.get_asset(normalized_ticker)
 
         grouped: dict[IndicatorGroup, list[IndicatorValue]] = {
-            group: [] for group in GROUP_LABELS
+            group: [] for group in indicator_registry.groups
         }
 
-        for definition in INDICATOR_CATALOG:
+        for definition in indicator_registry.get_catalog():
             series = self._resolve_series(
                 normalized_ticker,
                 definition,
@@ -242,10 +67,10 @@ class IndicatorEngine:
             groups=[
                 IndicatorGroupSummary(
                     group=group,
-                    label=label,
+                    label=indicator_registry.get_group_label(group),
                     indicators=grouped[group],
                 )
-                for group, label in GROUP_LABELS.items()
+                for group in indicator_registry.groups
             ],
         )
 
@@ -262,7 +87,7 @@ class IndicatorEngine:
 
         normalized_ticker = ticker.strip().upper()
         self.assets.get_asset(normalized_ticker)
-        definition = self.get_definition(slug)
+        definition = indicator_registry.get_definition(slug)
         series = self._resolve_series(
             normalized_ticker,
             definition,
