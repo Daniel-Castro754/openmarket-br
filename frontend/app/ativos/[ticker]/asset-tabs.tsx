@@ -10,6 +10,7 @@ export function AssetTabs({ ticker }: { ticker: string }) {
     { label: "Visão geral", href: base, exact: true },
     { label: "Indicadores", href: `${base}/indicadores` },
     { label: "Financeiro", href: `${base}/financeiro` },
+    { label: "Desempenho & risco", href: `${base}/desempenho` },
     { label: "Eventos", href: `${base}/eventos` },
     { label: "Relatórios", href: `${base}/relatorios` },
   ];
