@@ -1,6 +1,10 @@
 from sqlalchemy.orm import Session
 
-from openmarket_api.domain.analytics import FinancialMetric, FinancialSeriesPoint, SeriesFrequency
+from openmarket_api.domain.analytics import (
+    FinancialMetric,
+    FinancialSeriesPoint,
+    SeriesFrequency,
+)
 from openmarket_api.domain.comparison import (
     CompanyComparisonResponse,
     ComparisonAsset,
@@ -13,7 +17,6 @@ from openmarket_api.services.cash_flow_series import CASH_FLOW_METRICS, CashFlow
 from openmarket_api.services.indicator_engine import IndicatorEngine
 from openmarket_api.services.indicator_registry import indicator_registry
 from openmarket_api.services.liquidity_series import LiquidityFinancialSeriesService
-
 
 REGISTERED_METRIC_SLUGS: dict[FinancialMetric, str] = {
     definition.metric: definition.slug
