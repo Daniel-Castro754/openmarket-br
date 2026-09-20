@@ -146,6 +146,41 @@ export type IndicatorSummary = {
   groups: IndicatorGroupSummary[];
 };
 
+export type IndicatorPassportStatus = "available" | "unavailable";
+
+export type IndicatorPassportInput = {
+  metric: FinancialMetric;
+  label: string;
+  unit: SeriesUnit;
+  value?: string | null;
+  period_start?: string | null;
+  period_end: string;
+  currency?: string | null;
+  filing_reference_date?: string | null;
+  filing_version?: number | null;
+  source: SourceMetadata;
+  restricted: boolean;
+};
+
+export type IndicatorDataPassport = {
+  ticker: string;
+  definition: IndicatorDefinition;
+  frequency: SeriesFrequency;
+  status: IndicatorPassportStatus;
+  value?: string | null;
+  period_start?: string | null;
+  period_end?: string | null;
+  filing_reference_date?: string | null;
+  filing_version?: number | null;
+  formula?: string | null;
+  derived: boolean;
+  source?: SourceMetadata | null;
+  inputs: IndicatorPassportInput[];
+  input_sources: SourceMetadata[];
+  redistribution_scope?: string | null;
+  warnings: string[];
+};
+
 export type IndicatorHistory = {
   ticker: string;
   definition: IndicatorDefinition;
@@ -311,6 +346,23 @@ export async function getIndicatorHistory(
     throw new Error(`OpenMarket API returned ${response.status} for indicator ${slug}`);
   }
   return (await response.json()) as IndicatorHistory;
+}
+
+export async function getIndicatorPassport(
+  ticker: string,
+  slug: string,
+): Promise<IndicatorDataPassport | null> {
+  const response = await fetch(
+    `${apiBase}/api/v1/assets/${encodeURIComponent(ticker)}/indicators/${encodeURIComponent(slug)}/provenance?frequency=annual`,
+    { next: { revalidate: 60 } },
+  );
+  if (response.status === 404) {
+    return null;
+  }
+  if (!response.ok) {
+    throw new Error(`OpenMarket API returned ${response.status} for indicator provenance ${slug}`);
+  }
+  return (await response.json()) as IndicatorDataPassport;
 }
 
 export async function getScreener(filters?: ScreenerQuery): Promise<ScreenerResponse> {
