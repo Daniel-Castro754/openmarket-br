@@ -23,6 +23,7 @@ from openmarket_api.persistence.document_repository import PublicDocumentReposit
 from openmarket_api.persistence.repositories import CompanyRepository, InstrumentRepository
 from openmarket_api.providers.contracts import DocumentContent, DocumentContentProvider
 from openmarket_api.providers.cvm_document_content import CVMDocumentContentProvider
+from openmarket_api.services.document_hub import DocumentHubService
 from openmarket_api.services.document_processing import DocumentProcessingService
 
 
@@ -156,7 +157,7 @@ def test_document_processing_extracts_real_pdf_text_and_is_idempotent() -> None:
         assert detail.sections[0].page_start == 1
         assert "Receita cresceu dez por cento" in detail.sections[0].text
 
-        matches = PublicDocumentRepository(session).list_documents(
+        matches = DocumentHubService(session).list_documents(
             query_text="cresceu dez",
         )
         assert [item.id for item in matches] == [document.id]
@@ -178,7 +179,7 @@ def test_metadata_resync_does_not_reset_ready_processing_state() -> None:
 
         refreshed = document.model_copy(
             update={
-                "title": "Release operacional atualizado",
+                "source_category": "Comunicados",
                 "processing_status": DocumentProcessingStatus.PENDING,
                 "page_count": None,
             }
@@ -188,7 +189,8 @@ def test_metadata_resync_does_not_reset_ready_processing_state() -> None:
 
         detail = PublicDocumentRepository(session).get_document(document.id)
         assert detail is not None
-        assert detail.title == "Release operacional atualizado"
+        assert detail.title == "Release operacional"
+        assert detail.source_category == "Comunicados"
         assert detail.processing_status == DocumentProcessingStatus.READY
         assert detail.page_count == 1
         assert len(detail.sections) == 1
