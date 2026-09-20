@@ -22,7 +22,7 @@ from openmarket_api.persistence.models import (
 )
 from openmarket_api.services.cash_flow_series import CASH_FLOW_METRICS, CashFlowSeriesService
 from openmarket_api.services.derived_indicator_series import DerivedIndicatorSeriesService
-from openmarket_api.services.indicator_engine import IndicatorEngine
+from openmarket_api.services.indicator_registry import indicator_registry
 from openmarket_api.services.liquidity_series import LiquidityFinancialSeriesService
 
 SnapshotValue = tuple[Decimal | None, date | None]
@@ -171,7 +171,7 @@ class ScreenerSnapshotService:
     ) -> SnapshotValue:
         try:
             if isinstance(metric, DerivedScreenerMetric):
-                definition = IndicatorEngine.get_definition(metric.value)
+                definition = indicator_registry.get_definition(metric.value)
                 series = self.derived_service.get_series(
                     ticker,
                     definition,
