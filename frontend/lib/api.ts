@@ -193,6 +193,34 @@ export type IndicatorHistory = {
   points: FinancialSeriesPoint[];
 };
 
+export type ComparisonAsset = {
+  ticker: string;
+  company_name?: string | null;
+  synchronized: boolean;
+  financial_item_count: number;
+  latest_period?: string | null;
+};
+
+export type ComparisonValue = {
+  value?: string | null;
+  period_end?: string | null;
+  currency?: string | null;
+  derived: boolean;
+  source?: SourceMetadata | null;
+};
+
+export type ComparisonMetricResult = {
+  key: string;
+  values: Record<string, ComparisonValue>;
+};
+
+export type CompanyComparisonResponse = {
+  tickers: string[];
+  frequency: SeriesFrequency;
+  assets: ComparisonAsset[];
+  metrics: ComparisonMetricResult[];
+};
+
 export type DocumentType =
   | "dfp"
   | "itr"
@@ -364,6 +392,25 @@ export async function getIndicatorPassport(
     throw new Error(`OpenMarket API returned ${response.status} for indicator provenance ${slug}`);
   }
   return (await response.json()) as IndicatorDataPassport;
+}
+
+export async function getCompanyComparison(
+  tickers: string[],
+  metrics: string[],
+  frequency: SeriesFrequency = "annual",
+): Promise<CompanyComparisonResponse> {
+  const params = new URLSearchParams();
+  for (const ticker of tickers) params.append("ticker", ticker);
+  for (const metric of metrics) params.append("metric", metric);
+  params.set("frequency", frequency);
+
+  const response = await fetch(`${apiBase}/api/v1/comparison?${params.toString()}`, {
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(`OpenMarket API returned ${response.status} for company comparison`);
+  }
+  return (await response.json()) as CompanyComparisonResponse;
 }
 
 export async function getScreener(filters?: ScreenerQuery): Promise<ScreenerResponse> {
