@@ -65,10 +65,11 @@ Ele:
 3. executa `sync-ticker` de ponta a ponta;
 4. enriquece o histórico financeiro;
 5. sobe a API;
-6. valida asset, indicadores e documentos;
-7. executa Playwright com `QA_REQUIRE_DATA=1`;
-8. valida o Report Viewer com um documento oficial sincronizado;
-9. guarda relatório Playwright e log da API como artefatos.
+6. valida asset, indicadores, Data Passport e documentos;
+7. exige fonte no Passport e inputs auditáveis para indicador derivado;
+8. executa Playwright com `QA_REQUIRE_DATA=1`;
+9. valida o fluxo Screener → Data Passport e o Report Viewer com documento oficial sincronizado;
+10. guarda relatório Playwright e log da API como artefatos.
 
 O workflow é manual porque B3/CVM são dependências externas e não devem tornar todo PR instável.
 
@@ -82,6 +83,7 @@ O smoke visual cobre, entre outras:
 - Financeiro;
 - Comparador;
 - Screener;
+- Data Passport de indicador real;
 - Relatórios;
 - Report Viewer de documento oficial;
 - mobile;
