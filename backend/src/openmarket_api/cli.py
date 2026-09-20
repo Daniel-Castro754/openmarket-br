@@ -18,6 +18,7 @@ from openmarket_api.providers.contracts import (
 )
 from openmarket_api.providers.registry import registry
 from openmarket_api.services.asset_sync import AssetSyncService
+from openmarket_api.services.company_events import CompanyEventProjectionService
 from openmarket_api.services.data_platform import DataPlatformSyncService
 from openmarket_api.services.document_processing import DocumentProcessingService
 from openmarket_api.services.document_sync import DocumentSyncService
@@ -106,6 +107,12 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Do not retry documents already marked failed",
     )
+
+    project_events = subparsers.add_parser(
+        "project-events",
+        help="Backfill/update the unified company-event timeline from persisted documents",
+    )
+    project_events.add_argument("--ticker", required=True, help="B3 ticker, for example PETR4")
     return parser
 
 
@@ -240,6 +247,20 @@ async def _process_documents(
     return 0
 
 
+def _project_events(ticker: str) -> int:
+    factory = get_session_factory()
+    with factory() as session:
+        result = CompanyEventProjectionService(session).project_for_ticker(ticker)
+
+    logger.info(
+        "projected company events ticker=%s projected=%s skipped=%s",
+        result.ticker,
+        result.projected,
+        result.skipped,
+    )
+    return 0
+
+
 async def _sync_asset(ticker: str, *, start: date | None, end: date | None) -> int:
     if start is not None and end is not None and start > end:
         raise ValueError("start must be on or before end")
@@ -366,6 +387,8 @@ def main() -> int:
                 include_failed=not args.pending_only,
             )
         )
+    if args.command == "project-events":
+        return _project_events(args.ticker)
     raise RuntimeError(f"unsupported command: {args.command}")
 
 
