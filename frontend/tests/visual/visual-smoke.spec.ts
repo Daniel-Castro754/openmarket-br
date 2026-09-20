@@ -76,6 +76,14 @@ const visualMatrix: VisualCase[] = [
     requiresData: true,
   },
   {
+    name: "desempenho e risco · dark · topbar · desktop",
+    path: `/ativos/${ticker}/desempenho`,
+    mode: "dark",
+    navigation: "topbar",
+    viewport: desktop,
+    requiresData: true,
+  },
+  {
     name: "comparador · light · topbar · desktop",
     path: "/comparar",
     mode: "light",
