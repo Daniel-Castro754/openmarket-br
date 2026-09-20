@@ -22,6 +22,8 @@ def test_macro_snapshot_parses_sgs_and_focus_data() -> None:
             )
 
         if "ExpectativasMercadoAnuais" in path:
+            assert b"+" not in request.url.query
+            assert b"%20" in request.url.query
             filter_query = request.url.params.get("$filter", "")
             if "PIB Total" in filter_query:
                 medians = ("2.1", "2.0", "2.2")
@@ -106,3 +108,40 @@ def test_sgs_parser_ignores_invalid_rows_and_orders_points() -> None:
 
     assert [point.value for point in points] == [Decimal("1.25"), Decimal("2.50")]
     assert [point.reference_date.isoformat() for point in points] == ["2026-01-01", "2026-02-01"]
+
+
+def test_macro_snapshot_fails_when_all_focus_queries_fail() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        path = str(request.url)
+        if "bcdata.sgs." in path:
+            return httpx.Response(
+                200,
+                json=[
+                    {"data": "01/07/2026", "valor": "4.10"},
+                    {"data": "01/08/2026", "valor": "4.22"},
+                ],
+            )
+        if "ExpectativasMercadoAnuais" in path:
+            return httpx.Response(
+                400,
+                text=(
+                    "/*{\n"
+                    '  "codigo" : 400,\n'
+                    '  "mensagem" : "The types \'Edm.Boolean\' and \'Edm.String\' '
+                    'are not compatible."\n'
+                    "}*/"
+                ),
+            )
+        return httpx.Response(404)
+
+    provider = BCBMacroProvider(transport=httpx.MockTransport(handler))
+
+    try:
+        asyncio.run(provider.snapshot())
+    except RuntimeError as exc:
+        message = str(exc)
+    else:
+        raise AssertionError("snapshot should fail when all Focus queries fail")
+
+    assert "Focus expectations are unavailable" in message
+    assert "4/4 queries failed" in message
