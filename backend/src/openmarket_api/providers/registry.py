@@ -5,6 +5,7 @@ from openmarket_api.domain.platform import ProviderCapability, ProviderDescripto
 from .contracts import (
     CompanyProvider,
     ConsumerInsightProvider,
+    DocumentContentProvider,
     DocumentProvider,
     FinancialProvider,
     InstrumentProvider,
@@ -54,6 +55,8 @@ class ProviderRegistry:
             capabilities.append(ProviderCapability.FINANCIAL_STATEMENTS)
         if isinstance(provider, DocumentProvider):
             capabilities.append(ProviderCapability.DOCUMENTS)
+        if isinstance(provider, DocumentContentProvider):
+            capabilities.append(ProviderCapability.DOCUMENT_CONTENT)
         if isinstance(provider, MacroProvider):
             capabilities.append(ProviderCapability.MACRO_SNAPSHOT)
         if isinstance(provider, ConsumerInsightProvider):
