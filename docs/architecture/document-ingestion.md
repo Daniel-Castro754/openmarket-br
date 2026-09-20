@@ -57,6 +57,15 @@ Settings:
 
 Esses limites podem ser ajustados por ambiente sem alterar código.
 
+## Compatibilidade CVM observada em produção
+
+Dois detalhes da infraestrutura pública da CVM exigem tratamento explícito:
+
+- o diretório IPE usa caminho sensível a maiúsculas/minúsculas em `/dados/cia_aberta/DOC/IPE/DADOS`;
+- o endpoint RAD `frmDownloadDocumento.aspx` pode devolver bytes PDF válidos com `Content-Type: text/html`.
+
+O segundo caso só é aceito para hosts RAD confiáveis e somente quando os bytes contêm assinatura PDF. O tipo persistido é normalizado para `application/pdf`; qualquer HTML real continua rejeitado e o `pypdf` ainda valida a estrutura na etapa seguinte.
+
 ## Extração
 
 A extração usa `pypdf` e preserva a página de origem.
