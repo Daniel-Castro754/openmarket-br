@@ -14,9 +14,11 @@ Plataforma open source brasileira para dados, pesquisa e visualização do merca
 
 **Market Core e MVP do Report Viewer concluídos em código.** O projeto possui providers oficiais CVM/B3, resolução de ticker para companhia, ingestão de DFP/ITR, PostgreSQL, migrations Alembic, read-model de ativos, séries financeiras, indicadores derivados, Screener fundamentalista, Document Hub, provider CVM IPE, API, frontend, Docker Compose, testes e CI.
 
-O Report Viewer já cobre biblioteca e filtros, metadados/proveniência, visualização do documento oficial, seções extraídas, busca textual, navegação por seção/página e deep links por página. A próxima fronteira de produto é a camada de análise estruturada descrita em `docs/architecture/report-viewer.md`.
+O Report Viewer já cobre biblioteca e filtros, metadados/proveniência, visualização do documento oficial, navegação/deep links por página e, **quando existem `DocumentSection` persistidas**, seções extraídas e busca textual.
 
-**Checkpoint operacional ainda pendente:** validar o fluxo completo com documento real processado no ambiente PostgreSQL/Chromium, incluindo PDF incorporado, busca em seções extraídas e deep link por página. O código e o CI regular estão verdes, mas isso não substitui o QA data-backed do visualizador.
+A sincronização oficial atual (`sync-ticker` / `sync-documents`) persiste metadados CVM e o link do documento, mas ainda não baixa/processa o PDF para gerar `DocumentSection` automaticamente. Essa lacuna está rastreada na issue #117 e é pré-requisito para declarar busca textual validada com documento real.
+
+O checkpoint operacional reproduzível está documentado em `docs/qa/BASELINE.md`. O workflow manual `visual-smoke-data` usa PostgreSQL e dados oficiais para validar migrations, sincronização end-to-end, read-models, Screener e abertura do documento oficial no Report Viewer.
 
 ## Stack
 
