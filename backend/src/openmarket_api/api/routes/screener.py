@@ -95,6 +95,7 @@ class ScreenerResponse(BaseModel):
     offset: int
     sort: str
     direction: Literal["asc", "desc"]
+    logic: Literal["and", "or"] = "and"
     applied_filters: int
 
 
@@ -266,6 +267,7 @@ def get_screener(
     filters: Annotated[list[str] | None, Query(alias="filter")] = None,
     sort: Annotated[str, Query(max_length=40)] = "ticker",
     direction: Annotated[Literal["asc", "desc"], Query()] = "asc",
+    logic: Annotated[Literal["and", "or"], Query()] = "and",
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
     offset: Annotated[int, Query(ge=0)] = 0,
 ) -> ScreenerResponse:
@@ -309,10 +311,11 @@ def get_screener(
         scan_values = snapshot_service.ensure(records, scan_metrics)
 
         if parsed_filters:
+            predicate = all if logic == "and" else any
             records = [
                 record
                 for record in records
-                if all(
+                if predicate(
                     _matches_filter(
                         _snapshot_value(scan_values, record[0], rule.metric)[0],
                         rule,
@@ -361,5 +364,6 @@ def get_screener(
         offset=offset,
         sort=sort,
         direction=direction,
+        logic=logic,
         applied_filters=len(parsed_filters),
     )
