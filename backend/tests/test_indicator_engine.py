@@ -5,7 +5,12 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from openmarket_api.domain.analytics import FinancialMetric, SeriesFrequency
+from openmarket_api.domain.analytics import (
+    CalculationInput,
+    FinancialMetric,
+    SeriesFrequency,
+    SeriesUnit,
+)
 from openmarket_api.domain.common import (
     DataLicense,
     DataQuality,
@@ -18,7 +23,7 @@ from openmarket_api.domain.entities import (
     Instrument,
     InstrumentType,
 )
-from openmarket_api.domain.indicators import IndicatorGroup
+from openmarket_api.domain.indicators import IndicatorGroup, IndicatorPassportStatus
 from openmarket_api.persistence.base import Base
 from openmarket_api.persistence.repositories import (
     CompanyRepository,
@@ -26,6 +31,7 @@ from openmarket_api.persistence.repositories import (
     InstrumentRepository,
 )
 from openmarket_api.services.indicator_engine import IndicatorEngine
+from openmarket_api.services.indicator_passport import IndicatorPassportService
 from openmarket_api.services.indicator_registry import indicator_registry
 
 
@@ -319,3 +325,74 @@ def test_indicator_history_supports_one_year_and_unknown_slug() -> None:
     assert len(history.points) == 1
     assert history.current_value == Decimal("12.5")
     assert history.historical_average == Decimal("12.5")
+
+def test_indicator_passport_exposes_exact_calculation_inputs() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+
+    with Session(engine) as session:
+        _seed(session)
+        passport = IndicatorPassportService(session).get_passport("PETR4", "roa")
+
+    assert passport.status == IndicatorPassportStatus.AVAILABLE
+    assert passport.value == Decimal(10)
+    assert passport.period_end == date(2025, 12, 31)
+    assert passport.definition.methodology_version == "1.0"
+    assert passport.formula == "annual_net_income / average_total_assets * 100"
+    assert passport.source is not None
+    assert passport.source.provider == "openmarket-derived"
+    assert passport.redistribution_scope == RedistributionScope.ALLOWED
+    assert [(item.metric, item.value, item.period_end) for item in passport.inputs] == [
+        (FinancialMetric.TOTAL_ASSETS, Decimal(160), date(2024, 12, 31)),
+        (FinancialMetric.TOTAL_ASSETS, Decimal(140), date(2025, 12, 31)),
+        (FinancialMetric.NET_INCOME, Decimal(15), date(2025, 12, 31)),
+    ]
+    assert all(item.restricted is False for item in passport.inputs)
+    assert len(passport.input_sources) == 2
+    assert passport.warnings == []
+
+
+def test_indicator_passport_reports_unavailable_indicator_without_guessing_inputs() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+
+    with Session(engine) as session:
+        _seed(session)
+        passport = IndicatorPassportService(session).get_passport(
+            "PETR4",
+            "current-ratio",
+        )
+
+    assert passport.status == IndicatorPassportStatus.UNAVAILABLE
+    assert passport.value is None
+    assert passport.inputs == []
+    assert passport.source is None
+    assert passport.warnings
+
+
+def test_indicator_passport_hides_restricted_input_value() -> None:
+    restricted_source = SourceMetadata(
+        provider="restricted-provider",
+        source_name="Restricted fixture",
+        reference_date=date(2025, 12, 31),
+        quality=DataQuality.LICENSED,
+        license=DataLicense(
+            license_id="restricted",
+            redistribution=RedistributionScope.INTERNAL_ONLY,
+        ),
+    )
+    calculation_input = CalculationInput(
+        metric=FinancialMetric.REVENUE,
+        label="Receita",
+        unit=SeriesUnit.CURRENCY,
+        value=Decimal(123),
+        period_end=date(2025, 12, 31),
+        source=restricted_source,
+    )
+
+    public_input = IndicatorPassportService._public_input(calculation_input)
+
+    assert public_input.value is None
+    assert public_input.restricted is True
+    assert public_input.source.license.redistribution == RedistributionScope.INTERNAL_ONLY
+
