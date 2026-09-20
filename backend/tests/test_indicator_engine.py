@@ -416,6 +416,37 @@ def test_indicator_passport_reports_unavailable_indicator_without_guessing_input
     assert passport.warnings
 
 
+def test_indicator_passport_does_not_claim_single_url_for_multiple_sources() -> None:
+    first = _source(date(2024, 12, 31)).model_copy(
+        update={"source_url": "https://www.gov.br/cvm/pt-br"}
+    )
+    second = _source(date(2025, 12, 31)).model_copy(
+        update={"source_url": "https://dados.cvm.gov.br/"}
+    )
+    derived = SourceMetadata(
+        provider="openmarket-derived",
+        source_name="Derived fixture",
+        source_url=second.source_url,
+        reference_date=date(2025, 12, 31),
+        quality=DataQuality.SECONDARY,
+        license=second.license,
+    )
+
+    public = IndicatorPassportService._public_result_source(
+        derived,
+        [first, second],
+        derived=True,
+    )
+    shared = IndicatorPassportService._public_result_source(
+        derived,
+        [first, second.model_copy(update={"source_url": first.source_url})],
+        derived=True,
+    )
+
+    assert public.source_url is None
+    assert shared.source_url == first.source_url
+
+
 def test_indicator_passport_preserves_redistributable_official_fact() -> None:
     official_source = _source(date(2025, 12, 31))
     calculation_input = CalculationInput(
