@@ -23,7 +23,7 @@ from openmarket_api.domain.documents import (
 from openmarket_api.domain.entities import Company
 from openmarket_api.providers.contracts import DocumentProvider
 
-CVM_IPE_DATA_URL = "https://dados.cvm.gov.br/dados/CIA_ABERTA/DOC/IPE/DADOS"
+CVM_IPE_DATA_URL = "https://dados.cvm.gov.br/dados/cia_aberta/DOC/IPE/DADOS"
 CVM_IPE_DATASET_URL = "https://dados.cvm.gov.br/dataset/cia_aberta-doc-ipe"
 
 
