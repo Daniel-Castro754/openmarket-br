@@ -15,6 +15,7 @@ import styles from "./screener.module.css";
 type MetricKey = string;
 
 type Operator = "gt" | "gte" | "lt" | "lte";
+type FilterLogic = "and" | "or";
 type SortableKey = "ticker" | "company" | MetricKey;
 type ColumnKey = SortableKey | "latest_period";
 
@@ -147,6 +148,26 @@ const defaultColumns: ColumnKey[] = [
   "latest_period",
 ];
 
+function resolveInitialColumns(
+  requested: string[],
+  columns: ColumnDefinition[],
+  customized: boolean,
+): ColumnKey[] {
+  const available = new Set(columns.map((column) => column.key));
+  const requestedValid = requested.filter((key): key is ColumnKey => available.has(key));
+  const source = customized
+    ? requestedValid
+    : requestedValid.length
+      ? requestedValid
+      : defaultColumns.filter((key) => available.has(key));
+
+  return [
+    "ticker",
+    "company",
+    ...source.filter((key) => key !== "ticker" && key !== "company"),
+  ];
+}
+
 function parseNumber(value: string) {
   const trimmed = value.trim();
   if (!trimmed) return null;
@@ -204,12 +225,16 @@ function buildSearchParams({
   filters,
   sort,
   direction,
+  logic,
+  columns,
   offset,
 }: {
   query: string;
   filters: string[];
   sort: string;
   direction: "asc" | "desc";
+  logic: FilterLogic;
+  columns: ColumnKey[];
   offset?: number;
 }) {
   const params = new URLSearchParams();
@@ -217,6 +242,11 @@ function buildSearchParams({
   for (const filter of filters) params.append("filter", filter);
   if (sort !== "ticker") params.set("sort", sort);
   if (direction !== "asc") params.set("direction", direction);
+  if (logic !== "and") params.set("logic", logic);
+  params.set("columns", "custom");
+  for (const column of columns) {
+    if (column !== "ticker" && column !== "company") params.append("column", column);
+  }
   if (offset && offset > 0) params.set("offset", String(offset));
   return params;
 }
@@ -226,11 +256,17 @@ export function ScreenerWorkspace({
   indicatorCatalog,
   initialQuery,
   initialFilters,
+  initialLogic,
+  initialColumns,
+  initialColumnsCustomized,
 }: {
   response: ScreenerResponse;
   indicatorCatalog: IndicatorDefinition[];
   initialQuery: string;
   initialFilters: string[];
+  initialLogic: FilterLogic;
+  initialColumns: string[];
+  initialColumnsCustomized: boolean;
 }) {
   const router = useRouter();
   const metricOptions = resolveMetricOptions(indicatorCatalog);
@@ -243,10 +279,14 @@ export function ScreenerWorkspace({
   const [isPending, startTransition] = useTransition();
   const [rules, setRules] = useState<FilterRule[]>(() => rulesFromFilters(initialFilters));
   const [query, setQuery] = useState(initialQuery);
-  const [visibleColumns, setVisibleColumns] = useState<ColumnKey[]>(defaultColumns);
+  const [logic, setLogic] = useState<FilterLogic>(initialLogic);
+  const [visibleColumns, setVisibleColumns] = useState<ColumnKey[]>(
+    () => resolveInitialColumns(initialColumns, columns, initialColumnsCustomized),
+  );
   const [showColumns, setShowColumns] = useState(false);
 
-  const activeRuleCount = rules.filter((rule) => parseNumber(rule.value) != null).length;
+  const activeRules = rules.filter((rule) => parseNumber(rule.value) != null);
+  const activeRuleCount = activeRules.length;
   const activeColumns = columns.filter((column) => visibleColumns.includes(column.key));
   const pageStart = response.total === 0 ? 0 : response.offset + 1;
   const pageEnd = Math.min(response.offset + response.rows.length, response.total);
@@ -282,13 +322,23 @@ export function ScreenerWorkspace({
       filters,
       sort: response.sort,
       direction: response.direction,
+      logic,
+      columns: visibleColumns,
     }));
   }
 
   function clearFilters() {
     setRules([{ id: 1, metric: "roe", operator: "gte", value: "" }]);
     setQuery("");
-    navigate(new URLSearchParams());
+    setLogic("and");
+    navigate(buildSearchParams({
+      query: "",
+      filters: [],
+      sort: "ticker",
+      direction: "asc",
+      logic: "and",
+      columns: visibleColumns,
+    }));
   }
 
   function toggleColumn(key: ColumnKey) {
@@ -296,6 +346,19 @@ export function ScreenerWorkspace({
     setVisibleColumns((current) => current.includes(key)
       ? current.filter((item) => item !== key)
       : [...current, key]);
+  }
+
+  function applyColumns() {
+    navigate(buildSearchParams({
+      query: initialQuery,
+      filters: initialFilters,
+      sort: response.sort,
+      direction: response.direction,
+      logic: response.logic,
+      columns: visibleColumns,
+      offset: response.offset,
+    }));
+    setShowColumns(false);
   }
 
   function changeSort(key: SortableKey) {
@@ -307,6 +370,8 @@ export function ScreenerWorkspace({
       filters: initialFilters,
       sort: key,
       direction: nextDirection,
+      logic: response.logic,
+      columns: visibleColumns,
     }));
   }
 
@@ -316,6 +381,8 @@ export function ScreenerWorkspace({
       filters: initialFilters,
       sort: response.sort,
       direction: response.direction,
+      logic: response.logic,
+      columns: visibleColumns,
       offset: Math.max(0, nextOffset),
     }));
   }
@@ -339,6 +406,26 @@ export function ScreenerWorkspace({
             placeholder="PETR4, Petrobras..."
           />
         </label>
+
+        <div className={styles.logicControl}>
+          <span>Combinação dos critérios</span>
+          <div role="group" aria-label="Lógica dos filtros">
+            <button
+              type="button"
+              className={logic === "and" ? styles.logicActive : ""}
+              onClick={() => setLogic("and")}
+            >
+              Todas as condições
+            </button>
+            <button
+              type="button"
+              className={logic === "or" ? styles.logicActive : ""}
+              onClick={() => setLogic("or")}
+            >
+              Qualquer condição
+            </button>
+          </div>
+        </div>
 
         <div className={styles.rules}>
           {rules.map((rule) => {
@@ -382,6 +469,23 @@ export function ScreenerWorkspace({
           })}
         </div>
 
+        {activeRules.length ? (
+          <div className={styles.querySummary} aria-label="Resumo da consulta">
+            <strong>{logic === "and" ? "Todas devem ser verdadeiras" : "Basta uma ser verdadeira"}</strong>
+            <div>
+              {activeRules.map((rule) => {
+                const metric = metricOptions.find((item) => item.key === rule.metric);
+                return (
+                  <span key={rule.id}>
+                    {metric?.label ?? rule.metric} {operatorLabels[rule.operator]} {rule.value}
+                    {metric?.unit ? ` ${metric.unit}` : ""}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
+
         <button className={styles.applyButton} type="button" onClick={applyFilters} disabled={isPending}>
           {isPending ? "Aplicando..." : "Aplicar filtros"}
         </button>
@@ -398,6 +502,7 @@ export function ScreenerWorkspace({
         <div className={styles.summaryBar}>
           <div><span>Encontradas</span><strong>{response.total.toLocaleString("pt-BR")}</strong></div>
           <div><span>Filtros aplicados</span><strong>{response.applied_filters}</strong></div>
+          <div><span>Lógica</span><strong>{response.logic === "and" ? "E" : "OU"}</strong></div>
           <div><span>Página</span><strong>{pageStart}-{pageEnd}</strong></div>
           <div><span>Universo</span><strong>{response.universe_total.toLocaleString("pt-BR")}</strong></div>
           <button type="button" onClick={() => setShowColumns((current) => !current)}>Colunas</button>
@@ -421,6 +526,12 @@ export function ScreenerWorkspace({
                   <span>{column.label}</span>
                 </label>
               ))}
+            </div>
+            <div className={styles.columnPickerActions}>
+              <span>{visibleColumns.length} colunas selecionadas</span>
+              <button type="button" onClick={applyColumns} disabled={isPending}>
+                Aplicar colunas
+              </button>
             </div>
           </div>
         ) : null}
@@ -488,7 +599,11 @@ export function ScreenerWorkspace({
         </div>
 
         <footer className={styles.footer}>
-          <span>Condições são combinadas com lógica E: a empresa precisa atender a todos os filtros aplicados.</span>
+          <span>
+            {response.logic === "and"
+              ? "Lógica E: a empresa precisa atender a todos os filtros aplicados."
+              : "Lógica OU: basta a empresa atender a um dos filtros aplicados."}
+          </span>
           <span>Filtragem, ordenação por indicadores e paginação são processadas no backend sobre o universo pesquisado.</span>
         </footer>
       </div>

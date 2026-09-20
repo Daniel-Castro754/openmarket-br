@@ -294,6 +294,7 @@ export type ScreenerResponse = {
   offset: number;
   sort: string;
   direction: "asc" | "desc";
+  logic: "and" | "or";
   applied_filters: number;
 };
 
@@ -302,6 +303,7 @@ export type ScreenerQuery = {
   filters?: string[];
   sort?: string;
   direction?: "asc" | "desc";
+  logic?: "and" | "or";
   limit?: number;
   offset?: number;
 };
@@ -419,6 +421,7 @@ export async function getScreener(filters?: ScreenerQuery): Promise<ScreenerResp
   for (const filter of filters?.filters ?? []) params.append("filter", filter);
   if (filters?.sort) params.set("sort", filters.sort);
   if (filters?.direction) params.set("direction", filters.direction);
+  if (filters?.logic) params.set("logic", filters.logic);
   if (filters?.limit != null) params.set("limit", String(filters.limit));
   if (filters?.offset != null) params.set("offset", String(filters.offset));
   const suffix = params.size ? `?${params.toString()}` : "";
