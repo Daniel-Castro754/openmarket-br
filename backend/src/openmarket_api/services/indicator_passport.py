@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
 from openmarket_api.domain.analytics import CalculationInput, SeriesFrequency
-from openmarket_api.domain.common import RedistributionScope
+from openmarket_api.domain.common import RedistributionScope, SourceMetadata
 from openmarket_api.domain.indicators import (
     IndicatorDataPassport,
     IndicatorPassportInput,
@@ -64,6 +64,12 @@ class IndicatorPassportService:
             default=point.source.retrieved_at,
         )
 
+        result_source = self._public_result_source(
+            point.source,
+            input_sources,
+            derived=point.derived,
+        )
+
         return IndicatorDataPassport(
             ticker=normalized_ticker,
             definition=definition,
@@ -76,13 +82,31 @@ class IndicatorPassportService:
             filing_version=point.filing_version,
             formula=series.formula or point.derivation or definition.formula,
             derived=point.derived,
-            source=point.source,
+            source=result_source,
             inputs=inputs,
             input_sources=input_sources,
             collected_at=collected_at,
-            redistribution_scope=point.source.license.redistribution,
+            redistribution_scope=result_source.license.redistribution,
             warnings=warnings,
         )
+
+    @staticmethod
+    def _public_result_source(
+        source: SourceMetadata,
+        input_sources: list[SourceMetadata],
+        *,
+        derived: bool,
+    ) -> SourceMetadata:
+        if not derived:
+            return source.model_copy(deep=True)
+
+        source_urls = {
+            item.source_url
+            for item in input_sources
+            if item.source_url
+        }
+        public_url = next(iter(source_urls)) if len(source_urls) == 1 else None
+        return source.model_copy(deep=True, update={"source_url": public_url})
 
     @staticmethod
     def _public_input(item: CalculationInput) -> IndicatorPassportInput:
