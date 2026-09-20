@@ -3,6 +3,8 @@ import Link from "next/link";
 import {
   getCompanyComparison,
   getIndicatorCatalog,
+  type ComparisonAsset,
+  type ComparisonMetricResult,
   type ComparisonValue,
   type FinancialMetric,
   type IndicatorDefinition,
@@ -394,8 +396,8 @@ function FragmentGroup({
   group: string;
   metrics: ComparisonMetric[];
   comparisonTickers: string[];
-  assetByTicker: Map<string, { synchronized: boolean }>;
-  metricResults: Map<string, { key: string; values: Record<string, ComparisonValue> }>;
+  assetByTicker: Map<string, ComparisonAsset>;
+  metricResults: Map<string, ComparisonMetricResult>;
   frequency: SeriesFrequency;
 }) {
   const groupMetrics = metrics.filter((metric) => metric.group === group);
