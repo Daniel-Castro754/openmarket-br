@@ -1,7 +1,7 @@
 import asyncio
 from datetime import date
 
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
 
 from openmarket_api.domain.common import (
@@ -13,7 +13,7 @@ from openmarket_api.domain.common import (
 from openmarket_api.domain.documents import DocumentType, PublicDocument
 from openmarket_api.domain.entities import Company, Instrument
 from openmarket_api.persistence.base import Base
-from openmarket_api.persistence.models import PublicDocumentRecord
+from openmarket_api.persistence.models import CompanyEventRecord, PublicDocumentRecord
 from openmarket_api.persistence.repositories import CompanyRepository, InstrumentRepository
 from openmarket_api.providers.contracts import DocumentProvider
 from openmarket_api.services.document_sync import DocumentSyncService
@@ -86,6 +86,8 @@ def test_sync_documents_persists_provider_results_idempotently() -> None:
         first = asyncio.run(service.sync("PETR4"))
         second = asyncio.run(service.sync("PETR4"))
         stored = list(session.scalars(select(PublicDocumentRecord)))
+        event_count = session.scalar(select(func.count()).select_from(CompanyEventRecord))
+        event = session.scalar(select(CompanyEventRecord))
 
         assert first.documents == 1
         assert second.documents == 1
@@ -97,6 +99,10 @@ def test_sync_documents_persists_provider_results_idempotently() -> None:
         assert stored[0].source_species == "Fato relevante"
         assert stored[0].source_subject == "Fato relevante de teste"
         assert stored[0].source_presentation_type == "Única"
+        assert event_count == 1
+        assert event is not None
+        assert event.source_document_id == stored[0].id
+        assert event.category == "material"
 
 
 def test_sync_documents_requires_asset_to_be_persisted_first() -> None:

@@ -1,17 +1,24 @@
 import Link from "next/link";
 
-import { getDocuments } from "../../../../lib/api";
 import {
-  categoryCounts,
-  documentCategory,
-  documentCategoryLabel,
-  documentCategoryOptions,
-  sourceClassificationLabel,
-  type DocumentCategory,
-} from "../../../../lib/document-taxonomy";
+  getCompanyEvents,
+  type CompanyEvent,
+  type CompanyEventCategory,
+  type CompanyEventType,
+} from "../../../../lib/api";
 
-function formatDate(value?: string | null) {
-  if (!value) return "—";
+const categoryOptions: Array<{ value: CompanyEventCategory; label: string }> = [
+  { value: "results", label: "Resultados" },
+  { value: "material", label: "Comunicados" },
+  { value: "governance", label: "Governança" },
+  { value: "finance", label: "Financeiro / Dívida" },
+  { value: "operations", label: "Operacional" },
+  { value: "calendar", label: "Calendário" },
+  { value: "regulatory", label: "Regulatório" },
+  { value: "other", label: "Outros" },
+];
+
+function formatDate(value: string) {
   return new Intl.DateTimeFormat("pt-BR", {
     day: "2-digit",
     month: "short",
@@ -20,8 +27,7 @@ function formatDate(value?: string | null) {
   }).format(new Date(`${value}T00:00:00Z`));
 }
 
-function monthLabel(value?: string | null) {
-  if (!value) return "Sem data";
+function monthLabel(value: string) {
   return new Intl.DateTimeFormat("pt-BR", {
     month: "long",
     year: "numeric",
@@ -29,29 +35,57 @@ function monthLabel(value?: string | null) {
   }).format(new Date(`${value}T00:00:00Z`));
 }
 
-function documentTypeLabel(value: string) {
-  const labels: Record<string, string> = {
-    dfp: "DFP",
-    itr: "ITR",
-    fre: "FRE",
+function eventTypeLabel(value: CompanyEventType) {
+  const labels: Record<CompanyEventType, string> = {
     material_fact: "Fato relevante",
-    earnings_release: "Release",
+    earnings: "Resultados",
+    filing: "Documento periódico",
     presentation: "Apresentação",
     annual_report: "Relatório anual",
-    other: "Documento",
+    governance: "Governança",
+    document: "Documento",
   };
-  return labels[value] ?? value;
+  return labels[value];
 }
 
-function normalizeCategory(value?: string): DocumentCategory | null {
-  return documentCategoryOptions.some((item) => item.value === value)
-    ? (value as DocumentCategory)
+function categoryLabel(value: CompanyEventCategory) {
+  return categoryOptions.find((item) => item.value === value)?.label ?? "Outros";
+}
+
+function normalizeCategory(value?: string): CompanyEventCategory | null {
+  return categoryOptions.some((item) => item.value === value)
+    ? (value as CompanyEventCategory)
     : null;
 }
 
-function categoryHref(ticker: string, category: DocumentCategory | null) {
+function categoryHref(ticker: string, category: CompanyEventCategory | null) {
   if (!category) return `/ativos/${ticker}/eventos`;
   return `/ativos/${ticker}/eventos?category=${category}`;
+}
+
+function eventRow(event: CompanyEvent) {
+  return (
+    <>
+      <div className="asset-event-date">
+        <span>{formatDate(event.event_date)}</span>
+        <small>{eventTypeLabel(event.event_type)}</small>
+      </div>
+
+      <div className="asset-event-content">
+        <div className="asset-event-category">{categoryLabel(event.category)}</div>
+        <h3>{event.title}</h3>
+        <div className="asset-doc-subline">
+          {event.source_classification ? <span>CVM: {event.source_classification}</span> : null}
+          {event.reference_period ? <span>Referência: {event.reference_period}</span> : null}
+          <span>{event.source.source_name}</span>
+        </div>
+      </div>
+
+      <span className="asset-doc-open">
+        {event.source_document_id ? "Abrir →" : "Evento"}
+      </span>
+    </>
+  );
 }
 
 export default async function AssetEventsPage({
@@ -65,17 +99,25 @@ export default async function AssetEventsPage({
   const ticker = rawTicker.trim().toUpperCase();
   const rawCategory = Array.isArray(query.category) ? query.category[0] : query.category;
   const selectedCategory = normalizeCategory(rawCategory);
-  const documents = await getDocuments({ ticker, limit: 100 });
-  const counts = categoryCounts(documents);
-  const visibleDocuments = selectedCategory
-    ? documents.filter((document) => documentCategory(document) === selectedCategory)
-    : documents;
 
-  const groups = new Map<string, typeof visibleDocuments>();
-  for (const document of visibleDocuments) {
-    const key = document.published_at?.slice(0, 7) ?? "unknown";
+  const timeline = await getCompanyEvents({ ticker, limit: 100 });
+  const events = timeline.events;
+  const counts = new Map<CompanyEventCategory, number>(
+    categoryOptions.map((option) => [option.value, 0]),
+  );
+  for (const event of events) {
+    counts.set(event.category, (counts.get(event.category) ?? 0) + 1);
+  }
+
+  const visibleEvents = selectedCategory
+    ? events.filter((event) => event.category === selectedCategory)
+    : events;
+
+  const groups = new Map<string, CompanyEvent[]>();
+  for (const event of visibleEvents) {
+    const key = event.event_date.slice(0, 7);
     const current = groups.get(key) ?? [];
-    current.push(document);
+    current.push(event);
     groups.set(key, current);
   }
 
@@ -86,13 +128,13 @@ export default async function AssetEventsPage({
           <span className="eyebrow">EVENTOS E COMUNICADOS</span>
           <h2>Linha do tempo de {ticker}</h2>
           <p>
-            Publicações oficiais organizadas cronologicamente para mostrar o que mudou na companhia e em qual contexto.
+            Eventos corporativos derivados de fontes oficiais e organizados em uma timeline única da companhia.
           </p>
         </div>
 
         <div className="asset-doc-header-actions">
           <span className="asset-doc-source">Fonte oficial</span>
-          <span className="asset-doc-count">{visibleDocuments.length} eventos</span>
+          <span className="asset-doc-count">{visibleEvents.length} eventos</span>
           <Link className="asset-doc-header-link" href={`/ativos/${ticker}/relatorios`}>
             Ver biblioteca →
           </Link>
@@ -104,9 +146,9 @@ export default async function AssetEventsPage({
           href={categoryHref(ticker, null)}
           className={!selectedCategory ? "asset-doc-filter asset-doc-filter-active" : "asset-doc-filter"}
         >
-          Todos <strong>{documents.length}</strong>
+          Todos <strong>{events.length}</strong>
         </Link>
-        {documentCategoryOptions.map((option) => (
+        {categoryOptions.map((option) => (
           <Link
             href={categoryHref(ticker, option.value)}
             key={option.value}
@@ -122,50 +164,34 @@ export default async function AssetEventsPage({
       </nav>
 
       <div className="asset-event-timeline">
-        {[...groups.entries()].map(([month, monthDocuments]) => (
+        {[...groups.entries()].map(([month, monthEvents]) => (
           <section className="asset-event-month" key={month}>
             <div className="asset-event-month-label">
-              {month === "unknown" ? "Sem data" : monthLabel(`${month}-01`)}
-              <strong>{monthDocuments.length}</strong>
+              {monthLabel(`${month}-01`)}
+              <strong>{monthEvents.length}</strong>
             </div>
 
             <div className="asset-event-month-list">
-              {monthDocuments.map((document) => {
-                const category = documentCategory(document);
-                return (
+              {monthEvents.map((event) =>
+                event.source_document_id ? (
                   <Link
                     className="asset-event-row"
-                    href={`/relatorios/${document.id}`}
-                    key={document.id}
+                    href={`/relatorios/${event.source_document_id}`}
+                    key={event.id}
                   >
-                    <div className="asset-event-date">
-                      <span>{formatDate(document.published_at)}</span>
-                      <small>{documentTypeLabel(document.document_type)}</small>
-                    </div>
-
-                    <div className="asset-event-content">
-                      <div className="asset-event-category">
-                        {documentCategoryLabel(category)}
-                      </div>
-                      <h3>{document.title}</h3>
-                      <div className="asset-doc-subline">
-                        {sourceClassificationLabel(document) ? (
-                          <span>CVM: {sourceClassificationLabel(document)}</span>
-                        ) : null}
-                        {document.reference_period ? <span>Referência: {document.reference_period}</span> : null}
-                        <span>{document.source.source_name}</span>
-                      </div>
-                    </div>
-
-                    <span className="asset-doc-open">Abrir →</span>
+                    {eventRow(event)}
                   </Link>
-                );
-              })}
+                ) : (
+                  <article className="asset-event-row" key={event.id}>
+                    {eventRow(event)}
+                  </article>
+                ),
+              )}
             </div>
           </section>
         ))}
 
-        {visibleDocuments.length === 0 ? (
+        {visibleEvents.length === 0 ? (
           <div className="asset-doc-empty">
             Nenhum evento encontrado nesta categoria para {ticker}.
           </div>
@@ -173,9 +199,9 @@ export default async function AssetEventsPage({
       </div>
 
       <div className="asset-doc-note">
-        <strong>Linha do tempo</strong>
+        <strong>Timeline unificada</strong>
         <span>
-          Eventos prioriza sequência e contexto. Relatórios mantém a biblioteca completa para exploração documental.
+          A linha do tempo é um read-model derivado das fontes persistidas. Relatórios mantém o documento original e sua proveniência.
         </span>
       </div>
     </section>

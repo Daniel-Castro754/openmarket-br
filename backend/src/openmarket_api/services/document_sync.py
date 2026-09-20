@@ -8,6 +8,7 @@ from openmarket_api.domain.entities import Company
 from openmarket_api.persistence.document_repository import PublicDocumentRepository
 from openmarket_api.persistence.repositories import CompanyRepository, InstrumentRepository
 from openmarket_api.providers.contracts import DocumentProvider
+from openmarket_api.services.company_events import CompanyEventProjectionService
 
 
 @dataclass(frozen=True)
@@ -71,9 +72,11 @@ class DocumentSyncService:
                 end=end,
             )
             repository = PublicDocumentRepository(self.session)
+            projector = CompanyEventProjectionService(self.session)
             for document in documents:
                 document.company_id = company_record.id
-                repository.upsert(document)
+                record = repository.upsert(document)
+                projector.project_document(record)
             self.session.commit()
         except Exception:
             self.session.rollback()

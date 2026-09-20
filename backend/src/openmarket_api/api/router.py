@@ -4,6 +4,7 @@ from .routes.assets import router as assets_router
 from .routes.companies import router as companies_router
 from .routes.comparison import router as comparison_router
 from .routes.documents import router as documents_router
+from .routes.events import router as events_router
 from .routes.financials import router as financials_router
 from .routes.health import router as health_router
 from .routes.indicators import router as indicators_router
@@ -20,6 +21,7 @@ router.include_router(assets_router)
 router.include_router(companies_router)
 router.include_router(comparison_router)
 router.include_router(documents_router)
+router.include_router(events_router)
 router.include_router(financials_router)
 router.include_router(indicators_router)
 router.include_router(instruments_router)
