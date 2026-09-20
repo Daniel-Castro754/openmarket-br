@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID, uuid4
 
@@ -6,6 +6,7 @@ from sqlalchemy import (
     JSON,
     Boolean,
     Date,
+    DateTime,
     ForeignKey,
     Integer,
     Numeric,
@@ -72,6 +73,36 @@ class QuoteRecord(Base):
     price: Mapped[Decimal] = mapped_column(Numeric(28, 8))
     currency: Mapped[str] = mapped_column(String(8), default="BRL")
     source: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False)
+
+
+class ProviderSnapshotRecord(Base):
+    __tablename__ = "provider_snapshots"
+    __table_args__ = (
+        UniqueConstraint(
+            "dataset",
+            "provider",
+            name="uq_provider_snapshots_dataset_provider",
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    dataset: Mapped[str] = mapped_column(String(64), index=True)
+    provider: Mapped[str] = mapped_column(String(64), index=True)
+    payload: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False)
+    collected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class ProviderSyncRunRecord(Base):
+    __tablename__ = "provider_sync_runs"
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    provider: Mapped[str] = mapped_column(String(64), nullable=False)
+    dataset: Mapped[str] = mapped_column(String(64), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), index=True)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    finished_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    item_count: Mapped[int | None] = mapped_column(Integer)
+    error: Mapped[str | None] = mapped_column(Text)
 
 
 class ScreenerMetricSnapshotRecord(Base):
