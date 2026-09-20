@@ -153,6 +153,21 @@ jobs:
           if passport.get("derived") and not passport.get("inputs"):
               raise SystemExit("derived Data Passport has no auditable calculation inputs")
 
+          comparison = get(
+              f"/api/v1/comparison?ticker={quote(ticker)}"
+              "&metric=revenue&metric=net-margin&frequency=annual"
+          )
+          if comparison.get("tickers") != [ticker]:
+              raise SystemExit("comparison endpoint did not preserve requested ticker")
+          comparison_metrics = {
+              item["key"]: item
+              for item in comparison.get("metrics", [])
+          }
+          if comparison_metrics.get("revenue", {}).get("values", {}).get(ticker, {}).get("value") is None:
+              raise SystemExit("comparison endpoint has no raw revenue value")
+          if comparison_metrics.get("net-margin", {}).get("values", {}).get(ticker, {}).get("value") is None:
+              raise SystemExit("comparison endpoint has no registered net-margin value")
+
           documents = get(f"/api/v1/documents?ticker={quote(ticker)}&limit=50")
           if not documents:
               raise SystemExit("synchronized ticker has no document metadata in the selected window")
@@ -169,6 +184,7 @@ jobs:
               f"validated {ticker}: financial_items={asset['financial_item_count']} "
               f"indicators_with_value={sum(item.get('value') is not None for item in indicators)} "
               f"passport={indicator_slug} passport_inputs={len(passport.get('inputs', []))} "
+              f"comparison_metrics={len(comparison.get('metrics', []))} "
               f"documents={len(documents)} viewer_document={linked['id']} "
               f"sections={len(detail.get('sections', []))}"
           )
