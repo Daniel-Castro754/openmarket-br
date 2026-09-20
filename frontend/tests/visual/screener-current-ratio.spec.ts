@@ -13,7 +13,7 @@ test.describe("OpenMarket BR · screener data-backed behavior", () => {
     expect(response?.status() ?? 0).toBeLessThan(400);
 
     await page.getByLabel("Indicador").first().selectOption("current_ratio");
-    const valueInput = page.getByLabel("Valor para Liquidez corrente");
+    const valueInput = page.getByLabel("Valor para Liquidez Corrente");
     await expect(valueInput).toBeVisible();
     await valueInput.fill("0");
 
@@ -26,14 +26,14 @@ test.describe("OpenMarket BR · screener data-backed behavior", () => {
     await expect(row).toBeVisible();
 
     const headers = await page.locator("thead th").allTextContents();
-    const currentRatioColumn = headers.findIndex((label) => label.includes("Liquidez corrente"));
+    const currentRatioColumn = headers.findIndex((label) => label.includes("Liquidez Corrente"));
     expect(currentRatioColumn).toBeGreaterThanOrEqual(0);
 
     const currentRatioCell = row.locator("td").nth(currentRatioColumn);
     await expect(currentRatioCell).not.toHaveText("—");
     await expect(currentRatioCell).toContainText("x");
 
-    await page.getByRole("button", { name: /Liquidez corrente/ }).click();
+    await page.getByRole("button", { name: /Liquidez Corrente/ }).click();
     await page.waitForURL((url) =>
       url.searchParams.get("sort") === "current_ratio"
       && url.searchParams.get("direction") === "desc"
