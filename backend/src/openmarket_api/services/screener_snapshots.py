@@ -108,7 +108,7 @@ class ScreenerSnapshotService:
                         {
                             "id": snapshot.id if snapshot is not None else uuid4(),
                             "instrument_id": instrument.id,
-                            "metric": metric.value,
+                            "metric": screener_metric_value(metric),
                             "frequency": SeriesFrequency.ANNUAL.value,
                             "value": value,
                             "period_end": period_end,
