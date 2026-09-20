@@ -26,7 +26,7 @@ export function FinancialSeriesChart({
   const data = points
     .map((point) => ({
       period: point.period_end,
-      periodLabel: \`\${formatPeriod(point.period_end, series.frequency)}\${point.derived ? " · D" : ""}\`,
+      periodLabel: `${formatPeriod(point.period_end, series.frequency)}${point.derived ? " · D" : ""}`,
       value: Number(point.value),
       derived: point.derived,
     }))
@@ -47,7 +47,7 @@ export function FinancialSeriesChart({
     <div
       className="series-chart series-chart-interactive"
       role="img"
-      aria-label={\`Histórico \${series.frequency === "annual" ? "anual" : "trimestral"} de \${series.label}\`}
+      aria-label={`Histórico ${series.frequency === "annual" ? "anual" : "trimestral"} de ${series.label}`}
     >
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
