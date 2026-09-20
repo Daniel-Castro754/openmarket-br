@@ -28,6 +28,7 @@ export default async function ScreenerPage({
     direction?: string | string[];
     logic?: string | string[];
     column?: string | string[];
+    columns?: string | string[];
     offset?: string | string[];
   }>;
 }) {
@@ -38,6 +39,7 @@ export default async function ScreenerPage({
   const direction = firstValue(query.direction) === "desc" ? "desc" : "asc";
   const logic = firstValue(query.logic) === "or" ? "or" : "and";
   const columns = allValues(query.column);
+  const columnsCustomized = firstValue(query.columns) === "custom";
   const offset = parseOffset(firstValue(query.offset));
   const limit = 50;
 
@@ -63,13 +65,14 @@ export default async function ScreenerPage({
       </header>
 
       <ScreenerWorkspace
-        key={JSON.stringify({ q: q ?? "", filters, sort, direction, logic, columns, offset })}
+        key={JSON.stringify({ q: q ?? "", filters, sort, direction, logic, columns, columnsCustomized, offset })}
         response={screener}
         indicatorCatalog={indicatorCatalog}
         initialQuery={q ?? ""}
         initialFilters={filters}
         initialLogic={logic}
         initialColumns={columns}
+        initialColumnsCustomized={columnsCustomized}
       />
     </main>
   );
