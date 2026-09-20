@@ -73,6 +73,14 @@ python -m openmarket_api.cli process-documents --ticker PETR4 --limit 10
 python -m openmarket_api.cli process-document <document_uuid>
 ```
 
+A timeline corporativa é projetada automaticamente durante `sync-documents`. Para documentos já persistidos, o backfill é explícito e idempotente:
+
+```bash
+python -m openmarket_api.cli project-events --ticker PETR4
+```
+
+A API unificada fica em `GET /api/v1/assets/{ticker}/events`.
+
 O pipeline valida origem/licença/tamanho/MIME, extrai texto por página com `pypdf` e persiste `DocumentSection` para busca e Report Viewer. Veja `docs/architecture/document-ingestion.md`.
 
 
