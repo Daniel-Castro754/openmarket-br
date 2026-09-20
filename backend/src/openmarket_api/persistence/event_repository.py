@@ -1,7 +1,7 @@
 from datetime import date
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from openmarket_api.domain.common import SourceMetadata
@@ -85,14 +85,13 @@ class CompanyEventRepository:
         return [self._domain(record) for record in self.session.scalars(query)]
 
     def count_for_company(self, company_id: UUID) -> int:
-        return len(
-            list(
-                self.session.scalars(
-                    select(CompanyEventRecord.id).where(
-                        CompanyEventRecord.company_id == company_id
-                    )
-                )
+        return int(
+            self.session.scalar(
+                select(func.count())
+                .select_from(CompanyEventRecord)
+                .where(CompanyEventRecord.company_id == company_id)
             )
+            or 0
         )
 
     @staticmethod
