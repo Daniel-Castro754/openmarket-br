@@ -1,5 +1,3 @@
-# ruff: noqa: I001
-
 from decimal import Decimal
 
 from sqlalchemy.orm import Session
