@@ -6,6 +6,7 @@ import {
 } from "../../../../lib/api";
 import { DATA_EMPTY, formatDateShortPtBr, formatNumberPtBr } from "../../../../lib/format";
 import styles from "./performance.module.css";
+import { MarketPriceChart } from "./market-price-chart";
 import { PerformanceRiskCharts } from "./performance-risk-charts";
 
 const windows: Array<{ key: PerformanceWindow; label: string }> = [
@@ -125,6 +126,12 @@ export default async function PerformancePage({
             <MetricCard label="Calmar" value={ratio(snapshot.calmar_ratio)} hint="CAGR ÷ drawdown máximo" />
             <MetricCard label="Melhor / pior dia" value={`${percent(snapshot.best_day_percent)} / ${percent(snapshot.worst_day_percent)}`} hint="Retornos entre fechamentos consecutivos" />
           </section>
+
+          <MarketPriceChart
+            ticker={ticker}
+            points={snapshot.points}
+            priceBasis={snapshot.price_basis}
+          />
 
           <PerformanceRiskCharts
             points={snapshot.points}
