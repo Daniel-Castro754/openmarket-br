@@ -2,12 +2,11 @@ import Link from "next/link";
 
 import {
   getPerformanceRisk,
-  type PerformancePoint,
-  type PerformanceRiskSnapshot,
   type PerformanceWindow,
 } from "../../../../lib/api";
 import { DATA_EMPTY, formatDateShortPtBr, formatNumberPtBr } from "../../../../lib/format";
 import styles from "./performance.module.css";
+import { PerformanceRiskCharts } from "./performance-risk-charts";
 
 const windows: Array<{ key: PerformanceWindow; label: string }> = [
   { key: "1y", label: "1 ano" },
@@ -34,25 +33,6 @@ function ratio(value?: string | null) {
   return formatNumberPtBr(value, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function chartPoints(
-  points: PerformancePoint[],
-  accessor: (point: PerformancePoint) => number,
-  width = 900,
-  height = 240,
-) {
-  if (!points.length) return "";
-  const values = points.map(accessor);
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const span = Math.max(max - min, 0.000001);
-
-  return points.map((point, index) => {
-    const x = points.length === 1 ? width / 2 : (index / (points.length - 1)) * width;
-    const y = height - ((accessor(point) - min) / span) * height;
-    return `${x.toFixed(2)},${y.toFixed(2)}`;
-  }).join(" ");
-}
-
 function MetricCard({
   label,
   value,
@@ -68,63 +48,6 @@ function MetricCard({
       <strong>{value}</strong>
       <small>{hint}</small>
     </article>
-  );
-}
-
-function PerformanceCharts({ snapshot }: { snapshot: PerformanceRiskSnapshot }) {
-  const priceLine = chartPoints(snapshot.points, (point) => Number(point.normalized_value));
-  const drawdownLine = chartPoints(snapshot.points, (point) => Number(point.drawdown_percent));
-
-  return (
-    <div className={styles.chartGrid}>
-      <section className={styles.chartPanel}>
-        <header>
-          <div>
-            <span>PREÇO NORMALIZADO</span>
-            <h2>Base 100</h2>
-          </div>
-          <small>{snapshot.observations} pregões</small>
-        </header>
-        <svg
-          className={styles.chart}
-          viewBox="0 0 900 240"
-          role="img"
-          aria-label="Curva de preço normalizada"
-          preserveAspectRatio="none"
-        >
-          <line x1="0" y1="239" x2="900" y2="239" className={styles.axis} />
-          <polyline points={priceLine} className={styles.priceLine} />
-        </svg>
-        <footer>
-          <span>{formatDateShortPtBr(snapshot.start)}</span>
-          <span>{formatDateShortPtBr(snapshot.end)}</span>
-        </footer>
-      </section>
-
-      <section className={styles.chartPanel}>
-        <header>
-          <div>
-            <span>DRAWDOWN</span>
-            <h2>Queda desde o pico</h2>
-          </div>
-          <small>máx. {percent(snapshot.max_drawdown_percent)}</small>
-        </header>
-        <svg
-          className={styles.chart}
-          viewBox="0 0 900 240"
-          role="img"
-          aria-label="Curva de drawdown"
-          preserveAspectRatio="none"
-        >
-          <line x1="0" y1="1" x2="900" y2="1" className={styles.axis} />
-          <polyline points={drawdownLine} className={styles.drawdownLine} />
-        </svg>
-        <footer>
-          <span>0% = novo pico</span>
-          <span>quanto mais negativo, maior a queda</span>
-        </footer>
-      </section>
-    </div>
   );
 }
 
@@ -203,7 +126,13 @@ export default async function PerformancePage({
             <MetricCard label="Melhor / pior dia" value={`${percent(snapshot.best_day_percent)} / ${percent(snapshot.worst_day_percent)}`} hint="Retornos entre fechamentos consecutivos" />
           </section>
 
-          <PerformanceCharts snapshot={snapshot} />
+          <PerformanceRiskCharts
+            points={snapshot.points}
+            observations={snapshot.observations}
+            start={snapshot.start}
+            end={snapshot.end}
+            maxDrawdownPercent={snapshot.max_drawdown_percent}
+          />
 
           {snapshot.benchmark ? (
             <section className={styles.benchmarkPanel}>
