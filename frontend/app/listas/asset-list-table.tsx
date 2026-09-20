@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import type { FinancialMetric, ScreenerRow } from "../../lib/api";
 import styles from "./listas.module.css";
@@ -82,6 +82,22 @@ const presetLabels: Record<PresetKey, string> = {
 const defaultCustom: ColumnKey[] = ["ticker", "company_name", "revenue", "net_income", "net_margin", "roe", "net_debt"];
 const storageKey = "openmarket-custom-list-columns";
 
+function readStoredCustomColumns(): ColumnKey[] {
+  if (typeof window === "undefined") return defaultCustom;
+
+  const saved = window.localStorage.getItem(storageKey);
+  if (!saved) return defaultCustom;
+
+  try {
+    const parsed = JSON.parse(saved) as ColumnKey[];
+    const valid = parsed.filter((key) => columns.some((column) => column.key === key));
+    return valid.length >= 2 ? valid : defaultCustom;
+  } catch {
+    window.localStorage.removeItem(storageKey);
+    return defaultCustom;
+  }
+}
+
 function rawValue(row: ScreenerRow, column: ColumnDefinition): string | number | null {
   if (column.metric) {
     const value = row.metrics[column.metric];
@@ -120,22 +136,10 @@ function formatValue(row: ScreenerRow, column: ColumnDefinition) {
 
 export function AssetListTable({ rows, total }: { rows: ScreenerRow[]; total: number }) {
   const [preset, setPreset] = useState<PresetKey>("essential");
-  const [customColumns, setCustomColumns] = useState<ColumnKey[]>(defaultCustom);
+  const [customColumns, setCustomColumns] = useState<ColumnKey[]>(readStoredCustomColumns);
   const [query, setQuery] = useState("");
   const [sortKey, setSortKey] = useState<ColumnKey>("ticker");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-
-  useEffect(() => {
-    const saved = window.localStorage.getItem(storageKey);
-    if (!saved) return;
-    try {
-      const parsed = JSON.parse(saved) as ColumnKey[];
-      const valid = parsed.filter((key) => columns.some((column) => column.key === key));
-      if (valid.length >= 2) setCustomColumns(valid);
-    } catch {
-      window.localStorage.removeItem(storageKey);
-    }
-  }, []);
 
   const activeKeys = preset === "custom" ? customColumns : presets[preset];
   const activeColumns = activeKeys

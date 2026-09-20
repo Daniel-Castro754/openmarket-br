@@ -22,10 +22,6 @@ const navigationOptions: Array<{ value: NavigationPreference; label: string }> =
   { value: "topbar", label: "Superior" },
 ];
 
-function preferredMode(): ModePreference {
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-}
-
 function applyAppearance(
   mode: ModePreference,
   colorTheme: ColorThemePreference,
@@ -39,46 +35,44 @@ function applyAppearance(
   root.dataset.navigation = navigation;
 }
 
-function readMode(): ModePreference {
-  const stored = window.localStorage.getItem(MODE_KEY);
-  return stored === "light" || stored === "dark" ? stored : preferredMode();
-}
-
-function readColorTheme(): ColorThemePreference {
-  const stored = window.localStorage.getItem(COLOR_THEME_KEY);
-  return stored === "ocean" || stored === "terminal" || stored === "openmarket" ? stored : "openmarket";
-}
-
-function readNavigation(): NavigationPreference {
-  const stored = window.localStorage.getItem(NAVIGATION_KEY);
-  return stored === "sidebar" || stored === "rail" || stored === "topbar" ? stored : "topbar";
-}
-
 export function ThemeSwitcher() {
   const [mode, setMode] = useState<ModePreference>("light");
   const [colorTheme, setColorTheme] = useState<ColorThemePreference>("openmarket");
   const [navigation, setNavigation] = useState<NavigationPreference>("topbar");
 
   useEffect(() => {
-    const nextMode = readMode();
-    const nextColorTheme = readColorTheme();
-    const nextNavigation = readNavigation();
-
-    setMode(nextMode);
-    setColorTheme(nextColorTheme);
-    setNavigation(nextNavigation);
-    applyAppearance(nextMode, nextColorTheme, nextNavigation);
-
     const syncFromDocument = () => {
       const root = document.documentElement;
-      const nextNav = root.dataset.navigation;
-      if (nextNav === "sidebar" || nextNav === "rail" || nextNav === "topbar") {
-        setNavigation(nextNav);
+      const nextMode = root.dataset.mode;
+      const nextColorTheme = root.dataset.colorTheme;
+      const nextNavigation = root.dataset.navigation;
+
+      if (nextMode === "light" || nextMode === "dark") {
+        setMode(nextMode);
+      }
+      if (
+        nextColorTheme === "openmarket"
+        || nextColorTheme === "ocean"
+        || nextColorTheme === "terminal"
+      ) {
+        setColorTheme(nextColorTheme);
+      }
+      if (
+        nextNavigation === "sidebar"
+        || nextNavigation === "rail"
+        || nextNavigation === "topbar"
+      ) {
+        setNavigation(nextNavigation);
       }
     };
 
+    const frame = window.requestAnimationFrame(syncFromDocument);
     window.addEventListener("openmarket-appearance-change", syncFromDocument);
-    return () => window.removeEventListener("openmarket-appearance-change", syncFromDocument);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("openmarket-appearance-change", syncFromDocument);
+    };
   }, []);
 
   function chooseMode(nextMode: ModePreference) {

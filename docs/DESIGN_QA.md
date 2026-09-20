@@ -127,7 +127,11 @@ Por padrão, o Playwright inicia `npm run dev` e reutiliza um servidor já ativo
 
 Rotas que dependem de dados de empresa são marcadas como `requiresData`: se o backend/base local não estiver disponível e a rota responder com erro, o caso é pulado com motivo explícito em vez de gerar um falso diagnóstico visual. Com `QA_REQUIRE_DATA=1`, esses mesmos erros deixam de ser pulados e quebram a execução; esse modo é destinado ao ambiente completo com banco, API e dados sincronizados. A rota `/dev/design-system` entra automaticamente quando o harness inicia o servidor de desenvolvimento; em um `QA_BASE_URL` externo ela só entra com `QA_INCLUDE_DEV=1`.
 
-O workflow manual `.github/workflows/visual-smoke-data.yml` sobe PostgreSQL descartável, aplica as migrations, sincroniza um ticker via provedores oficiais B3/CVM, valida que há demonstrativos, indicadores e documentos disponíveis e então executa a matriz com `QA_REQUIRE_DATA=1`. Por ser dependente de fontes externas, ele não é gate obrigatório dos PRs comuns; deve ser executado antes de fechar auditorias visuais relevantes ou após mudanças grandes no fluxo de dados.
+O workflow manual `.github/workflows/visual-smoke-data.yml` sobe PostgreSQL descartável, aplica as migrations, executa `sync-ticker` de ponta a ponta, enriquece o histórico financeiro, valida demonstrativos/indicadores/documentos e então executa a matriz com `QA_REQUIRE_DATA=1`. O cenário `report-viewer-data.spec.ts` abre um documento oficial sincronizado e verifica o deep link do PDF.
+
+A sincronização atual ainda não gera `DocumentSection` a partir de PDFs reais; portanto busca textual data-backed só poderá virar critério obrigatório após a implementação da issue #117. Até lá, não inferir "texto real processado" a partir do fato de a UI suportar seções de fixture.
+
+Por depender de fontes externas, o workflow não é gate obrigatório dos PRs comuns; deve ser executado antes de fechar auditorias visuais relevantes ou após mudanças grandes no fluxo de dados.
 
 O harness não usa snapshots de pixel como critério de aprovação. As capturas são artefatos de inspeção, porque pequenas mudanças legítimas de dados reais não devem quebrar o teste por diferença visual irrelevante.
 

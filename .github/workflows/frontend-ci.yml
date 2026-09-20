@@ -20,5 +20,7 @@ jobs:
           cache-dependency-path: frontend/package.json
       - run: npm install
         working-directory: frontend
+      - run: npm run lint
+        working-directory: frontend
       - run: npm run build
         working-directory: frontend
