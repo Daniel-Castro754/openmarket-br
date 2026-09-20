@@ -4,6 +4,8 @@ from datetime import date
 
 from openmarket_api.domain.documents import PublicDocument
 from openmarket_api.domain.entities import Company, FinancialStatementItem, Instrument, Quote
+from openmarket_api.domain.insights import ConsumerInsightSnapshot
+from openmarket_api.domain.macro import MacroSnapshot
 
 
 class Provider(ABC):
@@ -56,4 +58,16 @@ class DocumentProvider(Provider):
         start: date | None = None,
         end: date | None = None,
     ) -> Sequence[PublicDocument]:
+        raise NotImplementedError
+
+
+class MacroProvider(Provider):
+    @abstractmethod
+    async def snapshot(self) -> MacroSnapshot:
+        raise NotImplementedError
+
+
+class ConsumerInsightProvider(Provider):
+    @abstractmethod
+    async def snapshot(self) -> ConsumerInsightSnapshot:
         raise NotImplementedError
