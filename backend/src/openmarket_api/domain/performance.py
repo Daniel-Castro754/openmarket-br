@@ -62,7 +62,7 @@ class PerformanceRiskSnapshot(BaseModel):
     start: date | None = None
     end: date | None = None
     price_basis: str = "unadjusted_close"
-    risk_free_rate_annual_percent: Decimal = Decimal("0")
+    risk_free_rate_annual_percent: Decimal = Decimal(0)
     total_return_percent: Decimal | None = None
     cagr_percent: Decimal | None = None
     annualized_volatility_percent: Decimal | None = None
