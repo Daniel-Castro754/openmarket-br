@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     cors_origins: Annotated[list[str], NoDecode] = ["http://localhost:3000"]
     b3_bdi_base_url: str = "https://arquivos.b3.com.br/bdi"
     request_timeout_seconds: float = 15.0
+    document_timeout_seconds: float = 45.0
+    document_max_bytes: int = 30_000_000
+    document_max_pages: int = 500
     user_agent: str = "OpenMarketBR/0.1 (+https://github.com/Daniel-Castro754/openmarket-br)"
 
     @field_validator("cors_origins", mode="before")

@@ -10,6 +10,7 @@ class ProviderCapability(StrEnum):
     QUOTES = "quotes"
     FINANCIAL_STATEMENTS = "financial_statements"
     DOCUMENTS = "documents"
+    DOCUMENT_CONTENT = "document_content"
     MACRO_SNAPSHOT = "macro_snapshot"
     CONSUMER_INSIGHTS = "consumer_insights"
 

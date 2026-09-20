@@ -66,6 +66,16 @@ python -m openmarket_api.cli sync-asset PETR4 --start 2025-01-01
 python -m openmarket_api.cli sync-documents PETR4 --start 2025-01-01
 ```
 
+Depois de sincronizar os metadados CVM, o conteúdo PDF é processado explicitamente fora das requisições públicas:
+
+```bash
+python -m openmarket_api.cli process-documents --ticker PETR4 --limit 10
+python -m openmarket_api.cli process-document <document_uuid>
+```
+
+O pipeline valida origem/licença/tamanho/MIME, extrai texto por página com `pypdf` e persiste `DocumentSection` para busca e Report Viewer. Veja `docs/architecture/document-ingestion.md`.
+
+
 Os dados macroeconômicos BCB e de consumo/conjuntura IBGE também são sincronizados fora do request path:
 
 ```bash

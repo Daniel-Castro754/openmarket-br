@@ -99,6 +99,13 @@ jobs:
         working-directory: backend
         run: python -m openmarket_api.cli sync-data-platform
 
+      - name: Process real CVM documents
+        working-directory: backend
+        run: >-
+          python -m openmarket_api.cli process-documents
+          --ticker "$QA_ASSET_TICKER"
+          --limit 25
+
       - name: Start API
         working-directory: backend
         run: |
@@ -208,13 +215,52 @@ jobs:
           if not documents:
               raise SystemExit("synchronized ticker has no document metadata in the selected window")
 
-          linked = next((item for item in documents if item.get("source_url")), None)
+          linked = next(
+              (
+                  item
+                  for item in documents
+                  if item.get("source_url")
+                  and item.get("processing_status") == "ready"
+              ),
+              None,
+          )
           if linked is None:
-              raise SystemExit("synchronized documents have no official source_url to validate in the viewer")
+              raise SystemExit("no synchronized CVM document was processed successfully")
 
           detail = get(f"/api/v1/documents/{quote(str(linked['id']))}")
           if detail.get("source_url") != linked.get("source_url"):
               raise SystemExit("document detail did not preserve the official source_url")
+          if detail.get("processing_status") != "ready":
+              raise SystemExit("processed document is not ready")
+          sections = detail.get("sections", [])
+          if not sections:
+              raise SystemExit("processed document has no extracted sections")
+          paged_section = next(
+              (
+                  section
+                  for section in sections
+                  if section.get("page_start") is not None
+                  and str(section.get("text", "")).strip()
+              ),
+              None,
+          )
+          if paged_section is None:
+              raise SystemExit("processed document has no text section with page_start")
+
+          search_terms = [
+              token.strip(".,:;()[]{}").casefold()
+              for token in str(paged_section["text"]).split()
+              if len(token.strip(".,:;()[]{}")) >= 6
+          ]
+          if search_terms:
+              term = search_terms[0]
+              matches = get(
+                  f"/api/v1/documents?ticker={quote(ticker)}&q={quote(term)}&limit=50"
+              )
+              if linked["id"] not in {item.get("id") for item in matches}:
+                  raise SystemExit(
+                      f"server-side document search did not find extracted term: {term}"
+                  )
 
           print(
               f"validated {ticker}: financial_items={asset['financial_item_count']} "
