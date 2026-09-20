@@ -3,6 +3,8 @@ from datetime import date
 from io import BytesIO
 
 import httpx
+import pytest
+from pypdf.errors import PdfReadError
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
@@ -205,17 +207,13 @@ def test_processing_failure_marks_document_failed_without_losing_metadata() -> N
         document = _seed_document(session)
         provider = FakeContentProvider(b"not-a-pdf")
 
-        try:
+        with pytest.raises(PdfReadError):
             asyncio.run(
                 DocumentProcessingService(
                     session=session,
                     content_provider=provider,
                 ).process_document(document.id)
             )
-        except Exception:
-            pass
-        else:
-            raise AssertionError("invalid PDF should fail processing")
 
         detail = PublicDocumentRepository(session).get_document(document.id)
         assert detail is not None
