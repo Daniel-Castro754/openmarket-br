@@ -1,9 +1,9 @@
 import asyncio
-from datetime import UTC, date, datetime
+from datetime import date
 from decimal import Decimal
 
 import pytest
-from sqlalchemy import create_engine, func, select
+from sqlalchemy import Engine, create_engine, func, select
 from sqlalchemy.orm import Session
 
 from openmarket_api.api.routes.insights import get_consumer_insights
@@ -25,8 +25,9 @@ from openmarket_api.domain.macro import MacroIndicator, MacroSeriesPoint, MacroS
 from openmarket_api.domain.platform import ProviderCapability, ProviderSyncStatus
 from openmarket_api.persistence.base import Base
 from openmarket_api.persistence.models import ProviderSnapshotRecord, ProviderSyncRunRecord
+from openmarket_api.providers.bootstrap import register_builtin_providers
 from openmarket_api.providers.contracts import ConsumerInsightProvider, MacroProvider
-from openmarket_api.providers.registry import ProviderRegistry
+from openmarket_api.providers.registry import ProviderRegistry, registry as builtin_registry
 from openmarket_api.services.data_platform import (
     DataPlatformSyncService,
     PersistedDataPlatformService,
@@ -99,13 +100,13 @@ class FakeConsumerProvider(ConsumerInsightProvider):
                     key="brasil",
                     label="Brasil",
                     description="fixture",
-                    average_monthly_consumption=Decimal("1000"),
+                    average_monthly_consumption=Decimal(1000),
                     items=[
                         ConsumptionItem(
                             key="housing",
                             label="Habitação",
-                            share_percent=Decimal("30"),
-                            monthly_value=Decimal("300"),
+                            share_percent=Decimal(30),
+                            monthly_value=Decimal(300),
                         )
                     ],
                     source=source,
@@ -127,7 +128,7 @@ class FakeConsumerProvider(ConsumerInsightProvider):
         )
 
 
-def _session() -> tuple[Session, object]:
+def _session() -> tuple[Session, Engine]:
     engine = create_engine("sqlite+pysqlite:///:memory:")
     Base.metadata.create_all(engine)
     return Session(engine), engine
@@ -144,6 +145,15 @@ def test_registry_describes_macro_and_consumer_capabilities() -> None:
     assert descriptors["fake-consumer"].capabilities == [
         ProviderCapability.CONSUMER_INSIGHTS
     ]
+
+
+def test_builtin_registry_includes_bcb_and_ibge() -> None:
+    register_builtin_providers()
+
+    descriptors = {item.name: item for item in builtin_registry.descriptors()}
+
+    assert ProviderCapability.MACRO_SNAPSHOT in descriptors["bcb-macro"].capabilities
+    assert ProviderCapability.CONSUMER_INSIGHTS in descriptors["ibge-consumer"].capabilities
 
 
 def test_macro_sync_upserts_one_snapshot_and_records_runs() -> None:
@@ -180,8 +190,10 @@ def test_failed_sync_preserves_previous_snapshot_and_records_failure() -> None:
             asyncio.run(service.sync_macro(FakeMacroProvider(fail=True)))
 
         persisted = PersistedDataPlatformService(session).macro("fake-macro")
+        registry = ProviderRegistry()
+        registry.register(FakeMacroProvider())
         latest = ProviderObservabilityService(session).status(
-            ProviderRegistryDescriptorFixture.macro()
+            registry.descriptors()
         ).providers[0].latest_syncs
 
         assert persisted is not None
@@ -191,14 +203,6 @@ def test_failed_sync_preserves_previous_snapshot_and_records_failure() -> None:
     finally:
         session.close()
         engine.dispose()
-
-
-class ProviderRegistryDescriptorFixture:
-    @staticmethod
-    def macro():
-        registry = ProviderRegistry()
-        registry.register(FakeMacroProvider())
-        return registry.descriptors()
 
 
 def test_consumer_sync_is_persisted_and_route_reads_database_only() -> None:
