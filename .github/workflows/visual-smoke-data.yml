@@ -9,7 +9,7 @@ on:
         default: PETR4
         type: string
       financial_start:
-        description: First CVM financial reference date
+        description: First CVM financial reference date used to enrich history
         required: true
         default: "2021-01-01"
         type: string
@@ -19,12 +19,12 @@ on:
         default: "2026-12-31"
         type: string
       documents_start:
-        description: First CVM document delivery date
+        description: First CVM document delivery date and end-to-end sync start
         required: true
         default: "2025-01-01"
         type: string
       documents_end:
-        description: Last CVM document delivery date
+        description: Last CVM document delivery date and end-to-end sync end
         required: true
         default: "2026-12-31"
         type: string
@@ -77,23 +77,23 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ./backend
 
-      - name: Migrate database
+      - name: Migrate empty database
         working-directory: backend
         run: alembic upgrade head
 
-      - name: Synchronize official financial data
+      - name: Synchronize ticker end-to-end
+        working-directory: backend
+        run: >-
+          python -m openmarket_api.cli sync-ticker "$QA_ASSET_TICKER"
+          --start "$DOCUMENTS_START"
+          --end "$DOCUMENTS_END"
+
+      - name: Enrich official financial history
         working-directory: backend
         run: >-
           python -m openmarket_api.cli sync-asset "$QA_ASSET_TICKER"
           --start "$FINANCIAL_START"
           --end "$FINANCIAL_END"
-
-      - name: Synchronize official document metadata
-        working-directory: backend
-        run: >-
-          python -m openmarket_api.cli sync-documents "$QA_ASSET_TICKER"
-          --start "$DOCUMENTS_START"
-          --end "$DOCUMENTS_END"
 
       - name: Start API
         working-directory: backend
@@ -112,7 +112,7 @@ jobs:
           cat "$RUNNER_TEMP/openmarket-api.log"
           exit 1
 
-      - name: Verify synchronized data
+      - name: Verify synchronized read models
         run: |
           python - <<'PY'
           import json
@@ -136,14 +136,23 @@ jobs:
           if not any(item.get("value") is not None for item in indicators):
               raise SystemExit("indicator summary has no available values")
 
-          documents = get(f"/api/v1/documents?ticker={quote(ticker)}&limit=1")
+          documents = get(f"/api/v1/documents?ticker={quote(ticker)}&limit=50")
           if not documents:
               raise SystemExit("synchronized ticker has no document metadata in the selected window")
+
+          linked = next((item for item in documents if item.get("source_url")), None)
+          if linked is None:
+              raise SystemExit("synchronized documents have no official source_url to validate in the viewer")
+
+          detail = get(f"/api/v1/documents/{quote(str(linked['id']))}")
+          if detail.get("source_url") != linked.get("source_url"):
+              raise SystemExit("document detail did not preserve the official source_url")
 
           print(
               f"validated {ticker}: financial_items={asset['financial_item_count']} "
               f"indicators_with_value={sum(item.get('value') is not None for item in indicators)} "
-              f"documents_sample={len(documents)}"
+              f"documents={len(documents)} viewer_document={linked['id']} "
+              f"sections={len(detail.get('sections', []))}"
           )
           PY
 
