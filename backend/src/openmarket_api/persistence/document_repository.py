@@ -1,12 +1,14 @@
+from datetime import datetime
 from hashlib import sha256
 from uuid import UUID
 
-from sqlalchemy import delete, func, or_, select
+from sqlalchemy import delete, exists, func, or_, select
 from sqlalchemy.orm import Session
 
 from openmarket_api.domain.common import SourceMetadata
 from openmarket_api.domain.documents import (
     DocumentDetail,
+    DocumentProcessingStatus,
     DocumentSection,
     DocumentSummary,
     PublicDocument,
@@ -54,7 +56,7 @@ class PublicDocumentRepository:
                     )
                 )
 
-        values = {
+        metadata_values = {
             "natural_key": natural_key,
             "company_id": document.company_id,
             "title": document.title,
@@ -68,15 +70,22 @@ class PublicDocumentRepository:
             "source_subject": document.source_subject,
             "source_presentation_type": document.source_presentation_type,
             "content_type": document.content_type,
-            "page_count": document.page_count,
-            "processing_status": document.processing_status.value,
             "source": document.source.model_dump(mode="json"),
         }
         if record is None:
-            record = PublicDocumentRecord(id=document.id, **values)
+            record = PublicDocumentRecord(
+                id=document.id,
+                page_count=document.page_count,
+                processing_status=document.processing_status.value,
+                content_size_bytes=document.content_size_bytes,
+                content_sha256=document.content_sha256,
+                processed_at=document.processed_at,
+                processing_error=document.processing_error,
+                **metadata_values,
+            )
             self.session.add(record)
         else:
-            for field, value in values.items():
+            for field, value in metadata_values.items():
                 setattr(record, field, value)
         self.session.flush()
         return record
@@ -103,6 +112,100 @@ class PublicDocumentRepository:
             )
         self.session.flush()
 
+    def get_record(self, document_id: UUID) -> PublicDocumentRecord | None:
+        return self.session.get(PublicDocumentRecord, document_id)
+
+    def public_document(self, record: PublicDocumentRecord) -> PublicDocument:
+        return PublicDocument(
+            id=record.id,
+            company_id=record.company_id,
+            title=record.title,
+            document_type=record.document_type,
+            source_url=record.source_url,
+            published_at=record.published_at,
+            reference_period=record.reference_period,
+            source_category=record.source_category,
+            source_document_type=record.source_document_type,
+            source_species=record.source_species,
+            source_subject=record.source_subject,
+            source_presentation_type=record.source_presentation_type,
+            content_type=record.content_type,
+            page_count=record.page_count,
+            processing_status=record.processing_status,
+            content_size_bytes=record.content_size_bytes,
+            content_sha256=record.content_sha256,
+            processed_at=record.processed_at,
+            processing_error=record.processing_error,
+            source=SourceMetadata.model_validate(record.source),
+        )
+
+    def list_for_processing(
+        self,
+        *,
+        company_id: UUID | None = None,
+        include_failed: bool = True,
+        limit: int = 25,
+    ) -> list[PublicDocumentRecord]:
+        statuses = [DocumentProcessingStatus.PENDING.value]
+        if include_failed:
+            statuses.append(DocumentProcessingStatus.FAILED.value)
+        query = select(PublicDocumentRecord).where(
+            PublicDocumentRecord.processing_status.in_(statuses),
+            PublicDocumentRecord.source_url.is_not(None),
+        )
+        if company_id is not None:
+            query = query.where(PublicDocumentRecord.company_id == company_id)
+        query = query.order_by(
+            PublicDocumentRecord.published_at.desc(),
+            PublicDocumentRecord.id,
+        ).limit(limit)
+        return list(self.session.scalars(query))
+
+    def section_count(self, document_id: UUID) -> int:
+        return int(
+            self.session.scalar(
+                select(func.count())
+                .select_from(DocumentSectionRecord)
+                .where(DocumentSectionRecord.document_id == document_id)
+            )
+            or 0
+        )
+
+    def mark_ready(
+        self,
+        document_id: UUID,
+        *,
+        page_count: int,
+        content_size_bytes: int,
+        content_sha256: str,
+        processed_at: datetime,
+    ) -> None:
+        record = self.session.get(PublicDocumentRecord, document_id)
+        if record is None:
+            raise LookupError(f"document not found: {document_id}")
+        record.page_count = page_count
+        record.processing_status = DocumentProcessingStatus.READY.value
+        record.content_size_bytes = content_size_bytes
+        record.content_sha256 = content_sha256
+        record.processed_at = processed_at
+        record.processing_error = None
+        self.session.flush()
+
+    def mark_failed(
+        self,
+        document_id: UUID,
+        *,
+        error: str,
+        processed_at: datetime,
+    ) -> None:
+        record = self.session.get(PublicDocumentRecord, document_id)
+        if record is None:
+            raise LookupError(f"document not found: {document_id}")
+        record.processing_status = DocumentProcessingStatus.FAILED.value
+        record.processed_at = processed_at
+        record.processing_error = error[:4000]
+        self.session.flush()
+
     def list_documents(
         self,
         *,
@@ -119,6 +222,15 @@ class PublicDocumentRepository:
             query = query.where(PublicDocumentRecord.document_type == document_type)
         if query_text:
             needle = query_text.strip().casefold()
+            section_match = exists(
+                select(DocumentSectionRecord.id).where(
+                    DocumentSectionRecord.document_id == PublicDocumentRecord.id,
+                    or_(
+                        func.lower(DocumentSectionRecord.text).contains(needle),
+                        func.lower(func.coalesce(DocumentSectionRecord.heading, "")).contains(needle),
+                    ),
+                )
+            )
             query = query.where(
                 or_(
                     func.lower(PublicDocumentRecord.title).contains(needle),
@@ -127,6 +239,7 @@ class PublicDocumentRepository:
                     func.lower(func.coalesce(PublicDocumentRecord.source_document_type, "")).contains(needle),
                     func.lower(func.coalesce(PublicDocumentRecord.source_species, "")).contains(needle),
                     func.lower(func.coalesce(PublicDocumentRecord.source_subject, "")).contains(needle),
+                    section_match,
                 )
             )
         query = query.order_by(
@@ -207,5 +320,9 @@ class PublicDocumentRepository:
             content_type=record.content_type,
             page_count=record.page_count,
             processing_status=record.processing_status,
+            content_size_bytes=record.content_size_bytes,
+            content_sha256=record.content_sha256,
+            processed_at=record.processed_at,
+            processing_error=record.processing_error,
             source=SourceMetadata.model_validate(record.source),
         )
