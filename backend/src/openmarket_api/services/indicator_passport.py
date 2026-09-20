@@ -58,6 +58,12 @@ class IndicatorPassportService:
                 "estruturados com valor individual."
             )
 
+        input_sources = point.input_sources or [point.source]
+        collected_at = max(
+            (source.retrieved_at for source in input_sources),
+            default=point.source.retrieved_at,
+        )
+
         return IndicatorDataPassport(
             ticker=normalized_ticker,
             definition=definition,
@@ -72,7 +78,8 @@ class IndicatorPassportService:
             derived=point.derived,
             source=point.source,
             inputs=inputs,
-            input_sources=point.input_sources or [point.source],
+            input_sources=input_sources,
+            collected_at=collected_at,
             redistribution_scope=point.source.license.redistribution,
             warnings=warnings,
         )
