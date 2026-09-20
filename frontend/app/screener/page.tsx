@@ -1,4 +1,4 @@
-import { getScreener } from "../../lib/api";
+import { getIndicatorCatalog, getScreener } from "../../lib/api";
 import { ScreenerWorkspace } from "./screener-workspace";
 import styles from "./screener.module.css";
 
@@ -37,7 +37,10 @@ export default async function ScreenerPage({
   const offset = parseOffset(firstValue(query.offset));
   const limit = 50;
 
-  const screener = await getScreener({ q, filters, sort, direction, offset, limit });
+  const [screener, indicatorCatalog] = await Promise.all([
+    getScreener({ q, filters, sort, direction, offset, limit }),
+    getIndicatorCatalog(),
+  ]);
 
   return (
     <main className={styles.page}>
@@ -55,7 +58,12 @@ export default async function ScreenerPage({
         </div>
       </header>
 
-      <ScreenerWorkspace response={screener} initialQuery={q ?? ""} initialFilters={filters} />
+      <ScreenerWorkspace
+        response={screener}
+        indicatorCatalog={indicatorCatalog}
+        initialQuery={q ?? ""}
+        initialFilters={filters}
+      />
     </main>
   );
 }
