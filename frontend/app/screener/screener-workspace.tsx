@@ -4,12 +4,11 @@ import {
   columnPinningFeature,
   columnSizingFeature,
   columnVisibilityFeature,
-  createColumnHelper,
   rowSortingFeature,
   tableFeatures,
   useTable,
 } from "@tanstack/react-table";
-import type { Column, VisibilityState } from "@tanstack/react-table";
+import type { Column, ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { CSSProperties } from "react";
@@ -52,7 +51,6 @@ const screenerTableFeatures = tableFeatures({
   rowSortingFeature,
 });
 
-const screenerColumnHelper = createColumnHelper<typeof screenerTableFeatures, ScreenerRow>();
 
 function columnSize(column: ColumnDefinition) {
   if (column.key === "ticker") return 92;
@@ -66,15 +64,12 @@ function pinnedCellStyle(
   header = false,
 ): CSSProperties {
   const pinned = column.getIsPinned();
-  const isLastStart = pinned === "start" && column.getIsLastColumn("start");
-  const isFirstEnd = pinned === "end" && column.getIsFirstColumn("end");
+  const isLastStart = pinned === "start" && column.id === "company";
 
   return {
     boxShadow: isLastStart
       ? "-4px 0 4px -4px var(--border-strong) inset"
-      : isFirstEnd
-        ? "4px 0 4px -4px var(--border-strong) inset"
-        : undefined,
+      : undefined,
     insetInlineStart: pinned === "start" ? `${column.getStart("start")}px` : undefined,
     insetInlineEnd: pinned === "end" ? `${column.getAfter("end")}px` : undefined,
     position: pinned ? "sticky" : undefined,
@@ -343,7 +338,7 @@ export function ScreenerWorkspace({
   const pageEnd = Math.min(response.offset + response.rows.length, response.total);
   const canGoBack = response.offset > 0;
   const canGoForward = response.offset + response.limit < response.total;
-  const columnVisibility = useMemo<VisibilityState>(
+  const columnVisibility = useMemo<Record<string, boolean>>(
     () => Object.fromEntries(
       columns.map((column) => [String(column.key), visibleColumns.includes(column.key)]),
     ),
@@ -353,45 +348,45 @@ export function ScreenerWorkspace({
     () => [{ id: response.sort, desc: response.direction === "desc" }],
     [response.direction, response.sort],
   );
-  const tableColumns = useMemo(
-    () => columns.map((column) => screenerColumnHelper.accessor(
-      (row) => {
+  const tableColumns = useMemo<
+    ColumnDef<typeof screenerTableFeatures, ScreenerRow, unknown>[]
+  >(
+    () => columns.map((column) => ({
+      id: String(column.key),
+      accessorFn: (row) => {
         if (column.key === "ticker") return row.ticker;
         if (column.key === "company") return row.company_name;
         if (column.key === "latest_period") return row.latest_period?.slice(0, 4) ?? "—";
         return column.metric ? metricNumber(row, column.metric) : null;
       },
-      {
-        id: String(column.key),
-        header: column.label,
-        size: columnSize(column),
-        enableHiding: column.key !== "ticker" && column.key !== "company",
-        enableSorting: Boolean(column.sortable),
-        sortDescFirst: column.key !== "ticker" && column.key !== "company",
-        cell: ({ row }) => {
-          const source = row.original;
-          if (column.key === "ticker") {
-            return <Link className={styles.ticker} href={`/ativos/${source.ticker}`}>{source.ticker}</Link>;
-          }
-          if (column.key === "company") return source.company_name;
-          if (column.key === "latest_period") return source.latest_period ? source.latest_period.slice(0, 4) : "—";
+      header: column.label,
+      size: columnSize(column),
+      enableHiding: column.key !== "ticker" && column.key !== "company",
+      enableSorting: Boolean(column.sortable),
+      sortDescFirst: column.key !== "ticker" && column.key !== "company",
+      cell: ({ row }) => {
+        const source = row.original;
+        if (column.key === "ticker") {
+          return <Link className={styles.ticker} href={`/ativos/${source.ticker}`}>{source.ticker}</Link>;
+        }
+        if (column.key === "company") return source.company_name;
+        if (column.key === "latest_period") return source.latest_period ? source.latest_period.slice(0, 4) : "—";
 
-          const passportSlug = column.metric
-            ? passportSlugByMetric.get(column.metric)
-            : undefined;
-          const renderedValue = formatMetric(source, column);
-          return passportSlug ? (
-            <Link
-              className={styles.metricPassportLink}
-              href={`/ativos/${source.ticker}/indicadores?passport=${encodeURIComponent(passportSlug)}#data-passport`}
-              title={`Ver proveniência de ${column.label} para ${source.ticker}`}
-            >
-              {renderedValue}
-            </Link>
-          ) : renderedValue;
-        },
+        const passportSlug = column.metric
+          ? passportSlugByMetric.get(column.metric)
+          : undefined;
+        const renderedValue = formatMetric(source, column);
+        return passportSlug ? (
+          <Link
+            className={styles.metricPassportLink}
+            href={`/ativos/${source.ticker}/indicadores?passport=${encodeURIComponent(passportSlug)}#data-passport`}
+            title={`Ver proveniência de ${column.label} para ${source.ticker}`}
+          >
+            {renderedValue}
+          </Link>
+        ) : renderedValue;
       },
-    )),
+    })),
     [columns, passportSlugByMetric],
   );
 
