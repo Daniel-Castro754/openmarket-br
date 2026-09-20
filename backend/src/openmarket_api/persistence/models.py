@@ -195,3 +195,33 @@ class DocumentSectionRecord(Base):
     page_end: Mapped[int | None] = mapped_column(Integer)
     heading: Mapped[str | None] = mapped_column(String(500))
     text: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class CompanyEventRecord(Base):
+    __tablename__ = "company_events"
+    __table_args__ = (
+        UniqueConstraint("natural_key", name="uq_company_events_natural_key"),
+        UniqueConstraint("source_document_id", name="uq_company_events_source_document_id"),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    natural_key: Mapped[str] = mapped_column(String(160), nullable=False)
+    company_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("companies.id", ondelete="CASCADE"), index=True
+    )
+    event_date: Mapped[date] = mapped_column(Date, index=True)
+    event_type: Mapped[str] = mapped_column(String(32), index=True)
+    category: Mapped[str] = mapped_column(String(32), index=True)
+    origin: Mapped[str] = mapped_column(String(32))
+    title: Mapped[str] = mapped_column(Text, nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    reference_period: Mapped[str | None] = mapped_column(String(64))
+    source_document_id: Mapped[UUID | None] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("public_documents.id", ondelete="CASCADE"),
+        index=True,
+    )
+    source_url: Mapped[str | None] = mapped_column(String(1500))
+    source_classification: Mapped[str | None] = mapped_column(String(500))
+    source: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False)
+    projected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
