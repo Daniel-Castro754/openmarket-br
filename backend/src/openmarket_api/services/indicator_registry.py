@@ -7,7 +7,6 @@ from openmarket_api.domain.analytics import (
 )
 from openmarket_api.domain.indicators import IndicatorDefinition, IndicatorGroup
 
-
 GROUP_LABELS: dict[IndicatorGroup, str] = {
     IndicatorGroup.EFFICIENCY: "Eficiência",
     IndicatorGroup.PROFITABILITY: "Rentabilidade",
