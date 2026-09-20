@@ -17,7 +17,7 @@ O MVP de leitura está implementado em código:
 - links de resultados da busca e das seções para a página correspondente;
 - painel de proveniência.
 
-Ainda falta o checkpoint data-backed do visualizador com documento real processado em PostgreSQL/Chromium. Build e testes regulares verdes não provam que a origem da CVM permitirá `iframe` em todos os documentos nem que todo PDF respeitará o fragmento `#page=N`; por isso o fallback para nova aba permanece obrigatório.
+O pipeline de ingestão real da #117 processa PDFs CVM fora do request path, persiste texto por página e alimenta a busca e os deep links do visualizador. O workflow data-backed passa a exigir ao menos um documento real `ready` com seção paginada. A origem da CVM ainda pode bloquear `iframe` em documentos específicos ou um leitor pode ignorar o fragmento `#page=N`; por isso o fallback para nova aba permanece obrigatório.
 
 A camada de análise estruturada e a comparação entre relatórios continuam como etapas posteriores.
 
