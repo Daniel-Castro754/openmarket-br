@@ -278,6 +278,164 @@
 }
 .methodologyNote strong { color: var(--text); }
 
+
+.compareControls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.compareControls .viewTabs {
+  flex: 1 1 auto;
+  border-bottom: 0;
+}
+
+.frequencyForm {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.frequencyForm label {
+  color: var(--muted);
+  font-size: .49rem;
+  font-weight: 800;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.frequencyForm select,
+.frequencyForm button {
+  min-height: 27px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
+  color: var(--text);
+  font: inherit;
+  font-size: .54rem;
+}
+
+.frequencyForm select {
+  padding: 0 7px;
+}
+
+.frequencyForm button {
+  padding: 0 8px;
+  cursor: pointer;
+}
+
+.frequencyForm button:hover {
+  border-color: var(--accent-border);
+  background: var(--surface-hover);
+}
+
+.metricPicker {
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-soft) 58%, var(--surface));
+}
+
+.metricPicker summary {
+  padding: 7px 2px;
+  color: var(--muted);
+  font-size: .53rem;
+  font-weight: 760;
+  cursor: pointer;
+  user-select: none;
+}
+
+.metricPicker[open] summary {
+  color: var(--text);
+}
+
+.metricPicker > form {
+  padding: 4px 0 10px;
+}
+
+.metricPickerGroups {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.metricPicker fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.metricPicker legend {
+  padding: 0 4px;
+  color: var(--muted);
+  font-size: .47rem;
+  font-weight: 850;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.metricPicker fieldset label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 24px;
+  color: var(--text);
+  font-size: .54rem;
+  cursor: pointer;
+}
+
+.metricPicker fieldset input {
+  accent-color: var(--accent);
+}
+
+.metricPickerActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 8px;
+}
+
+.metricPickerActions small {
+  color: var(--muted);
+  font-size: .49rem;
+}
+
+.metricPickerActions button {
+  min-height: 27px;
+  border: 1px solid var(--control-primary-bg);
+  border-radius: var(--radius-sm);
+  padding: 0 10px;
+  background: var(--control-primary-bg);
+  color: var(--control-primary-text);
+  font: inherit;
+  font-size: .53rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.passportValue {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.passportValue strong {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: color-mix(in srgb, var(--muted) 55%, transparent);
+  text-underline-offset: 3px;
+}
+
+.passportValue:hover strong {
+  color: var(--accent-readable);
+  text-decoration-color: var(--accent);
+}
+
 :global(html[data-navigation="sidebar"]) .page {
   width: min(1280px, calc(100% - 40px));
 }
@@ -288,6 +446,9 @@
   .statusStrip span:first-child { padding-left: 0; }
   .toolbar { grid-template-columns: 1fr; }
   .selectionSummary { justify-content: flex-start; }
+  .compareControls { align-items: flex-start; flex-direction: column; gap: 0; }
+  .frequencyForm { width: 100%; padding: 0 0 7px; }
+  .metricPickerGroups { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .tableWrap { max-height: none; }
 }
 
@@ -306,6 +467,10 @@
   .formControls { grid-template-columns: 1fr auto; }
   .form small { white-space: normal; }
   .assetChip { max-width: 160px; }
+  .frequencyForm { align-items: stretch; flex-wrap: wrap; }
+  .metricPickerGroups { grid-template-columns: 1fr; }
+  .metricPickerActions { align-items: stretch; flex-direction: column; }
+  .metricPickerActions button { align-self: flex-start; }
   .methodologyNote { flex-direction: column; }
   .methodologyNote span + span::before { content: none; }
 }

@@ -82,7 +82,7 @@ class IndicatorEngine:
         normalized_ticker = ticker.strip().upper()
         self.assets.get_asset(normalized_ticker)
         definition = indicator_registry.get_definition(slug)
-        series = self._resolve_series(
+        series = self.resolve_definition_series(
             normalized_ticker,
             definition,
             frequency=frequency,
@@ -129,6 +129,19 @@ class IndicatorEngine:
             current_period=current.period_end if current else None,
             historical_average=average,
             points=points,
+        )
+
+    def resolve_definition_series(
+        self,
+        ticker: str,
+        definition: IndicatorDefinition,
+        *,
+        frequency: SeriesFrequency,
+    ) -> IndicatorSeriesResult:
+        return self._resolve_series(
+            ticker.strip().upper(),
+            definition,
+            frequency=frequency,
         )
 
     def _resolve_series(
