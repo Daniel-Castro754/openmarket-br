@@ -123,8 +123,8 @@ class DerivedIndicatorSeriesService:
                     derivation=definition.formula,
                     input_sources=inputs,
                     calculation_inputs=[
-                        self._calculation_input(numerator_series, numerator_point),
-                        self._calculation_input(denominator_series, denominator_point),
+                        *self._calculation_inputs(numerator_series, numerator_point),
+                        *self._calculation_inputs(denominator_series, denominator_point),
                     ],
                 )
             )
@@ -195,9 +195,9 @@ class DerivedIndicatorSeriesService:
                     derivation=definition.formula,
                     input_sources=inputs,
                     calculation_inputs=[
-                        self._calculation_input(balance_series, previous_balance),
-                        self._calculation_input(balance_series, current_balance),
-                        self._calculation_input(numerator_series, numerator_point),
+                        *self._calculation_inputs(balance_series, previous_balance),
+                        *self._calculation_inputs(balance_series, current_balance),
+                        *self._calculation_inputs(numerator_series, numerator_point),
                     ],
                 )
             )
@@ -247,13 +247,23 @@ class DerivedIndicatorSeriesService:
                     derivation=definition.formula,
                     input_sources=inputs,
                     calculation_inputs=[
-                        self._calculation_input(base, previous),
-                        self._calculation_input(base, point),
+                        *self._calculation_inputs(base, previous),
+                        *self._calculation_inputs(base, point),
                     ],
                 )
             )
 
         return IndicatorSeriesResult(formula=definition.formula, points=points)
+
+    @classmethod
+    def _calculation_inputs(
+        cls,
+        series: FinancialSeries,
+        point: FinancialSeriesPoint,
+    ) -> list[CalculationInput]:
+        if point.calculation_inputs:
+            return [item.model_copy(deep=True) for item in point.calculation_inputs]
+        return [cls._calculation_input(series, point)]
 
     @staticmethod
     def _calculation_input(
