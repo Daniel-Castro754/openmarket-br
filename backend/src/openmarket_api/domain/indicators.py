@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from enum import StrEnum
 
@@ -77,6 +77,7 @@ class IndicatorDataPassport(BaseModel):
     source: SourceMetadata | None = None
     inputs: list[IndicatorPassportInput] = Field(default_factory=list)
     input_sources: list[SourceMetadata] = Field(default_factory=list)
+    collected_at: datetime | None = None
     redistribution_scope: RedistributionScope | None = None
     warnings: list[str] = Field(default_factory=list)
 
