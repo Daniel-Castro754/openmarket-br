@@ -97,3 +97,9 @@ def test_document_type_mapping_is_conservative() -> None:
     assert provider._document_type("Apresentação institucional") == DocumentType.PRESENTATION
     assert provider._document_type("Relato Integrado 2025") == DocumentType.ANNUAL_REPORT
     assert provider._document_type("Aviso aos Acionistas") == DocumentType.OTHER
+
+def test_archive_url_uses_live_case_sensitive_cvm_path() -> None:
+    assert CVMIpeDocumentProvider.archive_url(2026) == (
+        "https://dados.cvm.gov.br/dados/cia_aberta/DOC/IPE/DADOS/"
+        "ipe_cia_aberta_2026.zip"
+    )
