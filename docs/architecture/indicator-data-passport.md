@@ -78,14 +78,23 @@ Para `conditional`, `internal_only` ou `unknown`, o Passport preserva os metadad
 
 Isso permite auditar a origem sem redistribuir conteúdo que o contrato não autoriza.
 
+## Navegação para fontes
+
+O Passport não afirma que um cálculo com múltiplas origens veio de um único documento.
+
+- se todos os fatos-base compartilham o mesmo `source_url`, o resultado pode manter esse link comum;
+- se os fatos-base apontam para URLs diferentes, o `source_url` do resultado derivado é omitido;
+- cada input mantém seu próprio `source_url` e a UI oferece navegação individual quando disponível.
+
 ## Datas
 
 Duas datas não devem ser confundidas:
 
 - `reference_date`: referência econômica/contábil da fonte;
-- `retrieved_at`: momento em que o OpenMarket registrou/coletou a fonte.
+- `retrieved_at`: momento em que o OpenMarket registrou/coletou cada fonte-base;
+- `collected_at`: no Passport, a coleta mais recente entre os fatos usados no cálculo.
 
-A UI apresenta as duas separadamente.
+A UI apresenta referência e coleta separadamente e não usa o timestamp de criação da fonte derivada como se fosse a data de coleta dos fatos.
 
 ## Frontend
 
