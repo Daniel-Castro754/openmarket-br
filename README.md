@@ -66,6 +66,15 @@ python -m openmarket_api.cli sync-asset PETR4 --start 2025-01-01
 python -m openmarket_api.cli sync-documents PETR4 --start 2025-01-01
 ```
 
+Para adicionar histórico oficial de preços a um ticker já sincronizado, baixe um arquivo COTAHIST da B3 e importe o TXT ou ZIP localmente:
+
+```bash
+python -m openmarket_api.cli import-cotahist PETR4 /caminho/COTAHIST.2025.TXT
+```
+
+A série COTAHIST é armazenada como preço de fechamento não ajustado por inflação ou proventos. A aba `Desempenho & risco` calcula retorno de preço, CAGR, volatilidade, drawdown, Sharpe, Sortino e Calmar apenas sobre esses dados persistidos.
+
+
 Depois da sincronização:
 
 ```text
