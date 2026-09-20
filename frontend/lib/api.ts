@@ -177,6 +177,7 @@ export type IndicatorDataPassport = {
   source?: SourceMetadata | null;
   inputs: IndicatorPassportInput[];
   input_sources: SourceMetadata[];
+  collected_at?: string | null;
   redistribution_scope?: string | null;
   warnings: string[];
 };
