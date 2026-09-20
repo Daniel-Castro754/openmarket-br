@@ -116,7 +116,9 @@ export type IndicatorDefinition = {
   slug: string;
   metric?: FinancialMetric | null;
   label: string;
+  short_label?: string | null;
   group: IndicatorGroup;
+  group_label?: string | null;
   description: string;
   unit: SeriesUnit;
   format: string;
@@ -126,6 +128,8 @@ export type IndicatorDefinition = {
   supports_history: boolean;
   supports_sector_benchmark: boolean;
   requires_market_data: boolean;
+  methodology_version: string;
+  methodology_notes?: string | null;
 };
 
 export type IndicatorValue = IndicatorDefinition & {
@@ -274,6 +278,16 @@ export async function getFinancialSeries(
     throw new Error(`OpenMarket API returned ${response.status} for ${metric}`);
   }
   return (await response.json()) as FinancialSeries;
+}
+
+export async function getIndicatorCatalog(): Promise<IndicatorDefinition[]> {
+  const response = await fetch(`${apiBase}/api/v1/indicators/catalog`, {
+    next: { revalidate: 300 },
+  });
+  if (!response.ok) {
+    throw new Error(`OpenMarket API returned ${response.status} for indicator catalog`);
+  }
+  return (await response.json()) as IndicatorDefinition[];
 }
 
 export async function getIndicatorSummary(ticker: string): Promise<IndicatorSummary> {
