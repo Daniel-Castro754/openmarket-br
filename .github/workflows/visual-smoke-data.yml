@@ -1,6 +1,8 @@
 name: visual-smoke-data
 
 on:
+  pull_request:
+    branches: [main]
   workflow_dispatch:
     inputs:
       ticker:
@@ -34,6 +36,7 @@ permissions:
 
 jobs:
   playwright-data:
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'chore/platform-baseline-v2'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
