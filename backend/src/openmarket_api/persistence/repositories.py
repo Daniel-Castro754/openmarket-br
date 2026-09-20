@@ -5,11 +5,12 @@ from uuid import UUID
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from openmarket_api.domain.entities import Company, FinancialStatementItem, Instrument
+from openmarket_api.domain.entities import Company, FinancialStatementItem, Instrument, Quote
 from openmarket_api.persistence.models import (
     CompanyRecord,
     FinancialStatementRecord,
     InstrumentRecord,
+    QuoteRecord,
 )
 
 
@@ -91,6 +92,58 @@ class InstrumentRepository:
 
         self.session.flush()
         return record
+
+
+class QuoteRepository:
+    def __init__(self, session: Session) -> None:
+        self.session = session
+
+    def upsert_many(self, quotes: Iterable[Quote], *, instrument_id: UUID) -> int:
+        changed = 0
+        for quote in quotes:
+            provider = quote.source.provider
+            record = self.session.scalar(
+                select(QuoteRecord).where(
+                    QuoteRecord.instrument_id == instrument_id,
+                    QuoteRecord.as_of == quote.as_of,
+                    QuoteRecord.provider == provider,
+                )
+            )
+            values = {
+                "instrument_id": instrument_id,
+                "as_of": quote.as_of,
+                "provider": provider,
+                "price": quote.price,
+                "currency": quote.currency,
+                "source": quote.source.model_dump(mode="json"),
+            }
+            if record is None:
+                self.session.add(QuoteRecord(**values))
+            else:
+                for field, value in values.items():
+                    setattr(record, field, value)
+            changed += 1
+
+        self.session.flush()
+        return changed
+
+    def list_history(
+        self,
+        instrument_id: UUID,
+        *,
+        start: date | None = None,
+        end: date | None = None,
+        provider: str | None = None,
+    ) -> list[QuoteRecord]:
+        query = select(QuoteRecord).where(QuoteRecord.instrument_id == instrument_id)
+        if start is not None:
+            query = query.where(QuoteRecord.as_of >= start)
+        if end is not None:
+            query = query.where(QuoteRecord.as_of <= end)
+        if provider is not None:
+            query = query.where(QuoteRecord.provider == provider)
+        query = query.order_by(QuoteRecord.as_of.asc())
+        return list(self.session.scalars(query))
 
 
 class FinancialStatementRepository:
