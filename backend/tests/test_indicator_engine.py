@@ -5,6 +5,7 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
+from openmarket_api.api.routes.assets import get_asset_indicator_provenance
 from openmarket_api.domain.analytics import (
     CalculationInput,
     FinancialMetric,
@@ -325,6 +326,25 @@ def test_indicator_history_supports_one_year_and_unknown_slug() -> None:
     assert len(history.points) == 1
     assert history.current_value == Decimal("12.5")
     assert history.historical_average == Decimal("12.5")
+
+def test_indicator_provenance_route_returns_data_passport_contract() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+
+    with Session(engine) as session:
+        _seed(session)
+        passport = get_asset_indicator_provenance(
+            ticker="PETR4",
+            slug="roa",
+            session=session,
+            frequency=SeriesFrequency.ANNUAL,
+        )
+
+    assert passport.ticker == "PETR4"
+    assert passport.definition.slug == "roa"
+    assert passport.status == IndicatorPassportStatus.AVAILABLE
+    assert passport.inputs
+
 
 def test_indicator_passport_exposes_exact_calculation_inputs() -> None:
     engine = create_engine("sqlite+pysqlite:///:memory:")
