@@ -4,7 +4,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import type { ScreenerMetric, ScreenerResponse, ScreenerRow } from "../../lib/api";
+import type {
+  IndicatorDefinition,
+  ScreenerMetric,
+  ScreenerResponse,
+  ScreenerRow,
+  SeriesUnit,
+} from "../../lib/api";
 import styles from "./screener.module.css";
 
 type MetricKey = Exclude<
@@ -31,7 +37,7 @@ type ColumnDefinition = {
   sortable?: boolean;
 };
 
-const metricOptions: Array<{ key: MetricKey; label: string; unit: "%" | "R$" | "x"; group: string }> = [
+const baseMetricOptions: Array<{ key: MetricKey; label: string; unit: "%" | "R$" | "x"; group: string }> = [
   { key: "revenue_growth_yoy", label: "Crescimento da receita", unit: "%", group: "Crescimento" },
   { key: "net-income-growth-yoy", label: "Crescimento do lucro", unit: "%", group: "Crescimento" },
   { key: "roe", label: "ROE", unit: "%", group: "Rentabilidade" },
@@ -58,7 +64,7 @@ const metricOptions: Array<{ key: MetricKey; label: string; unit: "%" | "R$" | "
   { key: "net_change_in_cash", label: "Variação líquida de caixa", unit: "R$", group: "Fluxo de caixa" },
 ];
 
-const metricKeys = new Set<MetricKey>(metricOptions.map((item) => item.key));
+const metricKeys = new Set<MetricKey>(baseMetricOptions.map((item) => item.key));
 const operatorKeys = new Set<Operator>(["gt", "gte", "lt", "lte"]);
 
 const operatorLabels: Record<Operator, string> = {
@@ -68,7 +74,7 @@ const operatorLabels: Record<Operator, string> = {
   lte: "≤",
 };
 
-const columns: ColumnDefinition[] = [
+const baseColumns: ColumnDefinition[] = [
   { key: "ticker", label: "Ticker", kind: "text", sortable: true },
   { key: "company", label: "Empresa", kind: "text", sortable: true },
   { key: "revenue", label: "Receita", kind: "currency", metric: "revenue", sortable: true },
@@ -97,6 +103,60 @@ const columns: ColumnDefinition[] = [
   { key: "net_change_in_cash", label: "Variação caixa", kind: "currency", metric: "net_change_in_cash", sortable: true },
   { key: "latest_period", label: "Último período", kind: "date" },
 ];
+
+function screenerKeyForIndicator(definition: IndicatorDefinition): MetricKey | null {
+  const candidate = (definition.metric ?? definition.slug) as MetricKey;
+  return metricKeys.has(candidate) ? candidate : null;
+}
+
+function optionUnit(unit: SeriesUnit): "%" | "R$" | "x" {
+  if (unit === "percent") return "%";
+  if (unit === "multiple") return "x";
+  return "R$";
+}
+
+function columnKind(unit: SeriesUnit): ColumnDefinition["kind"] {
+  if (unit === "percent") return "percent";
+  if (unit === "multiple") return "multiple";
+  return "currency";
+}
+
+function canonicalIndicatorMap(catalog: IndicatorDefinition[]) {
+  const byMetric = new Map<MetricKey, IndicatorDefinition>();
+  for (const definition of catalog) {
+    const key = screenerKeyForIndicator(definition);
+    if (key) byMetric.set(key, definition);
+  }
+  return byMetric;
+}
+
+function resolveMetricOptions(catalog: IndicatorDefinition[]) {
+  const canonical = canonicalIndicatorMap(catalog);
+  return baseMetricOptions.map((option) => {
+    const definition = canonical.get(option.key);
+    if (!definition) return option;
+    return {
+      ...option,
+      label: definition.label,
+      unit: optionUnit(definition.unit),
+      group: definition.group_label ?? option.group,
+    };
+  });
+}
+
+function resolveColumns(catalog: IndicatorDefinition[]) {
+  const canonical = canonicalIndicatorMap(catalog);
+  return baseColumns.map((column) => {
+    if (!column.metric) return column;
+    const definition = canonical.get(column.metric);
+    if (!definition) return column;
+    return {
+      ...column,
+      label: definition.short_label ?? definition.label,
+      kind: columnKind(definition.unit),
+    };
+  });
+}
 
 const defaultColumns: ColumnKey[] = [
   "ticker",
@@ -185,14 +245,18 @@ function buildSearchParams({
 
 export function ScreenerWorkspace({
   response,
+  indicatorCatalog,
   initialQuery,
   initialFilters,
 }: {
   response: ScreenerResponse;
+  indicatorCatalog: IndicatorDefinition[];
   initialQuery: string;
   initialFilters: string[];
 }) {
   const router = useRouter();
+  const metricOptions = resolveMetricOptions(indicatorCatalog);
+  const columns = resolveColumns(indicatorCatalog);
   const [isPending, startTransition] = useTransition();
   const [rules, setRules] = useState<FilterRule[]>(() => rulesFromFilters(initialFilters));
   const [query, setQuery] = useState(initialQuery);
