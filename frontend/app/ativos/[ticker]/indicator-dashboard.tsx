@@ -253,10 +253,28 @@ function DataPassportPanel({
                     <td className={input.restricted ? styles.restrictedValue : ""}>
                       {formatPassportInput(input)}
                     </td>
-                    <td>{formatDate(input.period_end)}</td>
+                    <td>
+                      {formatDate(input.period_end)}
+                      {input.filing_reference_date ? (
+                        <small>
+                          filing {formatDate(input.filing_reference_date)}
+                          {input.filing_version != null ? ` · v${input.filing_version}` : ""}
+                        </small>
+                      ) : null}
+                    </td>
                     <td>
                       <strong>{input.source.provider}</strong>
                       <small>{input.source.source_name}</small>
+                      {input.source.source_url ? (
+                        <a
+                          className={styles.inputSourceLink}
+                          href={input.source.source_url}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Abrir fonte ↗
+                        </a>
+                      ) : null}
                     </td>
                   </tr>
                 ))}
