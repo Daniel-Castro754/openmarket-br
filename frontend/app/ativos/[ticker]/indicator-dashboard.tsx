@@ -11,6 +11,7 @@ import type {
 } from "../../../lib/api";
 import { provenanceKind, provenanceLabel } from "../../../lib/data-semantics";
 import { formatFinancialValue, formatYear } from "../../../lib/format";
+import { IndicatorHistoryChart } from "./indicator-history-chart";
 import styles from "./indicator-dashboard.module.css";
 
 type ChartMode = "bar" | "line";
@@ -29,14 +30,6 @@ type Props = {
 
 function formatIndicatorValue(value: string | number | null | undefined, unit: SeriesUnit) {
   return formatFinancialValue(value, unit, {
-    percentDigits: 2,
-    multipleDigits: 2,
-  });
-}
-
-function formatChartValue(value: number, unit: SeriesUnit) {
-  return formatFinancialValue(value, unit, {
-    showCurrency: false,
     percentDigits: 2,
     multipleDigits: 2,
   });
@@ -338,121 +331,6 @@ function DataPassportPanel({
   );
 }
 
-function HistoricalChart({ history, mode }: { history: IndicatorHistory; mode: ChartMode }) {
-  const values = history.points.map((point) => Number(point.value)).filter(Number.isFinite);
-  if (!values.length) {
-    return <div className={styles.emptyChart}>Não há histórico suficiente para este indicador.</div>;
-  }
-
-  const width = 920;
-  const height = 260;
-  const left = 64;
-  const right = 28;
-  const top = 24;
-  const bottom = 40;
-  const plotWidth = width - left - right;
-  const plotHeight = height - top - bottom;
-  const rawMin = Math.min(...values);
-  const rawMax = Math.max(...values);
-  let min = mode === "bar" ? Math.min(0, rawMin) : rawMin;
-  let max = mode === "bar" ? Math.max(0, rawMax) : rawMax;
-
-  if (min === max) {
-    const pad = Math.abs(min) * 0.1 || 1;
-    min -= pad;
-    max += pad;
-  } else if (mode === "line") {
-    const pad = (max - min) * 0.12;
-    min -= pad;
-    max += pad;
-  }
-
-  const y = (value: number) => top + ((max - value) / (max - min)) * plotHeight;
-  const x = (index: number) => left + ((index + 0.5) / history.points.length) * plotWidth;
-  const zeroY = y(0);
-  const gridValues = Array.from({ length: 5 }, (_, index) => max - ((max - min) * index) / 4);
-  const average = history.historical_average == null ? null : Number(history.historical_average);
-  const linePoints = history.points
-    .map((point, index) => `${x(index).toFixed(2)},${y(Number(point.value)).toFixed(2)}`)
-    .join(" ");
-  const barWidth = Math.min(56, Math.max(18, plotWidth / Math.max(history.points.length * 1.8, 1)));
-
-  return (
-    <svg className={styles.chart} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`Histórico de ${history.definition.label}`}>
-      {gridValues.map((gridValue) => {
-        const gridY = y(gridValue);
-        return (
-          <g key={gridValue.toFixed(6)}>
-            <line className={styles.gridLine} x1={left} y1={gridY} x2={width - right} y2={gridY} />
-            <text className={styles.axisLabel} x={left - 9} y={gridY + 4} textAnchor="end">
-              {formatChartValue(gridValue, history.definition.unit)}
-            </text>
-          </g>
-        );
-      })}
-
-      {mode === "bar" ? <line className={styles.zeroLine} x1={left} y1={zeroY} x2={width - right} y2={zeroY} /> : null}
-
-      {average != null && Number.isFinite(average) ? (
-        <g>
-          <line className={styles.averageLine} x1={left} y1={y(average)} x2={width - right} y2={y(average)} />
-          <text className={styles.averageLabel} x={width - right} y={y(average) - 7} textAnchor="end">
-            média {formatIndicatorValue(average, history.definition.unit)}
-          </text>
-        </g>
-      ) : null}
-
-      {mode === "bar" ? (
-        history.points.map((point, index) => {
-          const value = Number(point.value);
-          const valueY = y(value);
-          const rectY = Math.min(valueY, zeroY);
-          const rectHeight = Math.max(2, Math.abs(zeroY - valueY));
-          return (
-            <g key={point.period_end}>
-              <rect
-                className={styles.bar}
-                x={x(index) - barWidth / 2}
-                y={rectY}
-                width={barWidth}
-                height={rectHeight}
-                rx="3"
-              />
-              <text
-                className={styles.valueLabel}
-                x={x(index)}
-                y={value >= 0 ? rectY - 7 : rectY + rectHeight + 14}
-                textAnchor="middle"
-              >
-                {formatChartValue(value, history.definition.unit)}
-              </text>
-            </g>
-          );
-        })
-      ) : (
-        <g>
-          <polyline className={styles.line} points={linePoints} />
-          {history.points.map((point, index) => (
-            <circle
-              className={styles.point}
-              cx={x(index)}
-              cy={y(Number(point.value))}
-              r="4"
-              key={point.period_end}
-            />
-          ))}
-        </g>
-      )}
-
-      {history.points.map((point, index) => (
-        <text className={styles.xLabel} x={x(index)} y={height - 13} textAnchor="middle" key={`x-${point.period_end}`}>
-          {yearLabel(point.period_end)}
-        </text>
-      ))}
-    </svg>
-  );
-}
-
 function HistoryPanel({
   ticker,
   summary,
@@ -527,7 +405,7 @@ function HistoryPanel({
       </div>
 
       <div className={styles.chartSurface}>
-        <HistoricalChart history={history} mode={chartMode} />
+        <IndicatorHistoryChart history={history} mode={chartMode} />
       </div>
 
       <div className={styles.historyTableWrap}>
