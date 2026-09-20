@@ -9,7 +9,6 @@ from openmarket_api.domain.indicators import (
 )
 from openmarket_api.services.indicator_engine import IndicatorEngine
 
-
 PUBLIC_REDISTRIBUTION_SCOPES = {
     RedistributionScope.ALLOWED,
     RedistributionScope.ATTRIBUTION_REQUIRED,
