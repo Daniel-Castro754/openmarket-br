@@ -14,7 +14,7 @@ The frontend baseline before this pilot is intentionally small: Next.js 16, Reac
 | Area | OSS source | Decision | Why |
 | --- | --- | --- | --- |
 | Fundamental and macro charts | Recharts | Adopt | React-native, composable, MIT, supports React 19 |
-| Screener / assets / documents tables | TanStack Table | Next | Headless; preserves OpenMarket styling and server-driven query state |
+| Screener / assets / documents tables | TanStack Table | Pilot | Headless; preserves OpenMarket styling and server-driven query state |
 | Large table virtualization | TanStack Virtual | Later | Useful when row counts justify it |
 | Tooltips / popovers / selects | Radix Primitives | Next | Accessible behavior without imposing visual design |
 | Market price / OHLC / volume | TradingView Lightweight Charts | Later | Purpose-built financial time-series renderer |
@@ -67,14 +67,18 @@ OpenMarket use:
 Important integration rule:
 OpenMarket already performs filtering, sorting and pagination in the backend and stores the research query in the URL. TanStack must be used in manual/server-driven mode; the library should own table behavior and state primitives, not duplicate business filtering in the browser.
 
-Target capabilities:
-- column visibility
-- column pinning
-- accessible sortable headers
-- grouping
-- future column resizing
-- keep Ticker/Empresa pinned
-- preserve current Data Passport links
+Pilot status:
+- Screener rendering migrated to TanStack Table
+- server remains the source of truth for sorting, filtering and pagination
+- Ticker and Empresa are pinned during horizontal scroll
+- column visibility remains serializable back to the URL
+- sortable headers now use TanStack sorting state/APIs
+- current Data Passport links are preserved
+
+Next capabilities:
+- grouping where it improves analysis
+- optional column resizing after visual validation
+- TanStack Virtual only when row counts justify it
 
 ### Radix Primitives
 
@@ -239,7 +243,7 @@ Target primitives:
 2. Review visual result and bundle impact.
 3. Shared chart primitives: tooltip, axis formatting, empty/loading states.
 4. Indicator history migration.
-5. TanStack Table pilot in Screener, preserving backend/URL semantics.
+5. TanStack Table pilot in Screener, preserving backend/URL semantics. **Implemented in the stacked Screener branch.**
 6. Radix primitives for column picker and provenance help.
 7. Recharts small multiples in Compare.
 8. Lightweight Charts for persisted market-price history.

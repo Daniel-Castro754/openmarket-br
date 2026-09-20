@@ -1,8 +1,18 @@
 "use client";
 
+import {
+  columnPinningFeature,
+  columnSizingFeature,
+  columnVisibilityFeature,
+  rowSortingFeature,
+  tableFeatures,
+  useTable,
+} from "@tanstack/react-table";
+import type { Column, ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import type { CSSProperties } from "react";
+import { useMemo, useState, useTransition } from "react";
 
 import type {
   IndicatorDefinition,
@@ -33,6 +43,40 @@ type ColumnDefinition = {
   metric?: MetricKey;
   sortable?: boolean;
 };
+
+const screenerTableFeatures = tableFeatures({
+  columnVisibilityFeature,
+  columnPinningFeature,
+  columnSizingFeature,
+  rowSortingFeature,
+});
+
+
+function columnSize(column: ColumnDefinition) {
+  if (column.key === "ticker") return 92;
+  if (column.key === "company") return 240;
+  if (column.key === "latest_period") return 112;
+  return column.kind === "currency" ? 148 : 124;
+}
+
+function pinnedCellStyle(
+  column: Column<typeof screenerTableFeatures, ScreenerRow>,
+  header = false,
+): CSSProperties {
+  const pinned = column.getIsPinned();
+  const isLastStart = pinned === "start" && column.id === "company";
+
+  return {
+    boxShadow: isLastStart
+      ? "-4px 0 4px -4px var(--border-strong) inset"
+      : undefined,
+    insetInlineStart: pinned === "start" ? `${column.getStart("start")}px` : undefined,
+    insetInlineEnd: pinned === "end" ? `${column.getAfter("end")}px` : undefined,
+    position: pinned ? "sticky" : undefined,
+    width: column.getSize(),
+    zIndex: pinned && !header ? 2 : undefined,
+  };
+}
 
 const baseMetricOptions: Array<{ key: MetricKey; label: string; unit: "%" | "R$" | "x"; group: string }> = [
   { key: "revenue", label: "Receita", unit: "R$", group: "Resultados" },
@@ -269,12 +313,15 @@ export function ScreenerWorkspace({
   initialColumnsCustomized: boolean;
 }) {
   const router = useRouter();
-  const metricOptions = resolveMetricOptions(indicatorCatalog);
-  const columns = resolveColumns(indicatorCatalog);
-  const passportSlugByMetric = new Map(
-    indicatorCatalog
-      .filter(supportsAnnualScreener)
-      .map((definition) => [screenerKeyForIndicator(definition), definition.slug] as const),
+  const metricOptions = useMemo(() => resolveMetricOptions(indicatorCatalog), [indicatorCatalog]);
+  const columns = useMemo(() => resolveColumns(indicatorCatalog), [indicatorCatalog]);
+  const passportSlugByMetric = useMemo(
+    () => new Map(
+      indicatorCatalog
+        .filter(supportsAnnualScreener)
+        .map((definition) => [screenerKeyForIndicator(definition), definition.slug] as const),
+    ),
+    [indicatorCatalog],
   );
   const [isPending, startTransition] = useTransition();
   const [rules, setRules] = useState<FilterRule[]>(() => rulesFromFilters(initialFilters));
@@ -287,11 +334,61 @@ export function ScreenerWorkspace({
 
   const activeRules = rules.filter((rule) => parseNumber(rule.value) != null);
   const activeRuleCount = activeRules.length;
-  const activeColumns = columns.filter((column) => visibleColumns.includes(column.key));
   const pageStart = response.total === 0 ? 0 : response.offset + 1;
   const pageEnd = Math.min(response.offset + response.rows.length, response.total);
   const canGoBack = response.offset > 0;
   const canGoForward = response.offset + response.limit < response.total;
+  const columnVisibility = useMemo<Record<string, boolean>>(
+    () => Object.fromEntries(
+      columns.map((column) => [String(column.key), visibleColumns.includes(column.key)]),
+    ),
+    [columns, visibleColumns],
+  );
+  const sortingState = useMemo(
+    () => [{ id: response.sort, desc: response.direction === "desc" }],
+    [response.direction, response.sort],
+  );
+  const tableColumns = useMemo<
+    ColumnDef<typeof screenerTableFeatures, ScreenerRow, unknown>[]
+  >(
+    () => columns.map((column) => ({
+      id: String(column.key),
+      accessorFn: (row) => {
+        if (column.key === "ticker") return row.ticker;
+        if (column.key === "company") return row.company_name;
+        if (column.key === "latest_period") return row.latest_period?.slice(0, 4) ?? "—";
+        return column.metric ? metricNumber(row, column.metric) : null;
+      },
+      header: column.label,
+      size: columnSize(column),
+      enableHiding: column.key !== "ticker" && column.key !== "company",
+      enableSorting: Boolean(column.sortable),
+      sortDescFirst: column.key !== "ticker" && column.key !== "company",
+      cell: ({ row }) => {
+        const source = row.original;
+        if (column.key === "ticker") {
+          return <Link className={styles.ticker} href={`/ativos/${source.ticker}`}>{source.ticker}</Link>;
+        }
+        if (column.key === "company") return source.company_name;
+        if (column.key === "latest_period") return source.latest_period ? source.latest_period.slice(0, 4) : "—";
+
+        const passportSlug = column.metric
+          ? passportSlugByMetric.get(column.metric)
+          : undefined;
+        const renderedValue = formatMetric(source, column);
+        return passportSlug ? (
+          <Link
+            className={styles.metricPassportLink}
+            href={`/ativos/${source.ticker}/indicadores?passport=${encodeURIComponent(passportSlug)}#data-passport`}
+            title={`Ver proveniência de ${column.label} para ${source.ticker}`}
+          >
+            {renderedValue}
+          </Link>
+        ) : renderedValue;
+      },
+    })),
+    [columns, passportSlugByMetric],
+  );
 
   function navigate(params: URLSearchParams) {
     const suffix = params.size ? `?${params.toString()}` : "";
@@ -341,13 +438,6 @@ export function ScreenerWorkspace({
     }));
   }
 
-  function toggleColumn(key: ColumnKey) {
-    if (key === "ticker" || key === "company") return;
-    setVisibleColumns((current) => current.includes(key)
-      ? current.filter((item) => item !== key)
-      : [...current, key]);
-  }
-
   function applyColumns() {
     navigate(buildSearchParams({
       query: initialQuery,
@@ -361,20 +451,6 @@ export function ScreenerWorkspace({
     setShowColumns(false);
   }
 
-  function changeSort(key: SortableKey) {
-    const nextDirection = response.sort === key
-      ? (response.direction === "asc" ? "desc" : "asc")
-      : (key === "ticker" || key === "company" ? "asc" : "desc");
-    navigate(buildSearchParams({
-      query: initialQuery,
-      filters: initialFilters,
-      sort: key,
-      direction: nextDirection,
-      logic: response.logic,
-      columns: visibleColumns,
-    }));
-  }
-
   function changePage(nextOffset: number) {
     navigate(buildSearchParams({
       query: initialQuery,
@@ -386,6 +462,59 @@ export function ScreenerWorkspace({
       offset: Math.max(0, nextOffset),
     }));
   }
+
+  const table = useTable(
+    {
+      features: screenerTableFeatures,
+      columns: tableColumns,
+      data: response.rows,
+      manualSorting: true,
+      enableMultiSort: false,
+      enableSortingRemoval: false,
+      initialState: {
+        columnPinning: {
+          start: ["ticker", "company"],
+          end: [],
+        },
+      },
+      state: {
+        columnVisibility,
+        sorting: sortingState,
+      },
+      onColumnVisibilityChange: (updater) => {
+        const next = typeof updater === "function"
+          ? updater(columnVisibility)
+          : updater;
+        setVisibleColumns([
+          "ticker",
+          "company",
+          ...columns
+            .filter((column) => column.key !== "ticker" && column.key !== "company")
+            .filter((column) => next[String(column.key)] !== false)
+            .map((column) => column.key),
+        ]);
+      },
+      onSortingChange: (updater) => {
+        const next = typeof updater === "function"
+          ? updater(sortingState)
+          : updater;
+        const primary = next[0];
+        const sort = primary?.id ?? "ticker";
+        const direction = primary?.desc ? "desc" : "asc";
+        navigate(buildSearchParams({
+          query: initialQuery,
+          filters: initialFilters,
+          sort,
+          direction,
+          logic: response.logic,
+          columns: visibleColumns,
+        }));
+      },
+    },
+    (state) => state,
+  );
+
+  const columnByKey = new Map(columns.map((column) => [String(column.key), column]));
 
   return (
     <section className={styles.workspace} aria-busy={isPending}>
@@ -515,15 +644,15 @@ export function ScreenerWorkspace({
               <span>Ticker e empresa permanecem fixos.</span>
             </div>
             <div className={styles.columnOptions}>
-              {columns.map((column) => (
-                <label key={column.key}>
+              {table.getAllLeafColumns().map((column) => (
+                <label key={column.id}>
                   <input
                     type="checkbox"
-                    checked={visibleColumns.includes(column.key)}
-                    disabled={column.key === "ticker" || column.key === "company"}
-                    onChange={() => toggleColumn(column.key)}
+                    checked={column.getIsVisible()}
+                    disabled={!column.getCanHide()}
+                    onChange={column.getToggleVisibilityHandler()}
                   />
-                  <span>{column.label}</span>
+                  <span>{columnByKey.get(column.id)?.label ?? column.id}</span>
                 </label>
               ))}
             </div>
@@ -537,56 +666,89 @@ export function ScreenerWorkspace({
         ) : null}
 
         <div className={styles.tableShell}>
-          <table className={styles.table}>
+          <table
+            className={styles.table}
+            style={{
+              width: Math.max(
+                table.getVisibleLeafColumns().reduce((total, column) => total + column.getSize(), 0),
+                920,
+              ),
+            }}
+          >
             <thead>
-              <tr>
-                {activeColumns.map((column) => (
-                  <th key={column.key} className={column.kind === "currency" || column.kind === "percent" || column.kind === "multiple" ? styles.numeric : ""}>
-                    {column.sortable ? (
-                      <button type="button" onClick={() => changeSort(column.key as SortableKey)} disabled={isPending}>
-                        {column.label}
-                        {response.sort === column.key ? <span>{response.direction === "asc" ? "↑" : "↓"}</span> : null}
-                      </button>
-                    ) : column.label}
-                  </th>
-                ))}
-              </tr>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    const definition = columnByKey.get(header.column.id);
+                    const isNumeric = definition?.kind === "currency"
+                      || definition?.kind === "percent"
+                      || definition?.kind === "multiple";
+                    const sorted = header.column.getIsSorted();
+                    const pinned = Boolean(header.column.getIsPinned());
+                    return (
+                      <th
+                        key={header.id}
+                        colSpan={header.colSpan}
+                        className={[
+                          isNumeric ? styles.numeric : "",
+                          pinned ? styles.pinnedCell : "",
+                        ].filter(Boolean).join(" ")}
+                        style={pinnedCellStyle(header.column, true)}
+                        aria-sort={sorted === "asc" ? "ascending" : sorted === "desc" ? "descending" : undefined}
+                      >
+                        {header.isPlaceholder ? null : header.column.getCanSort() ? (
+                          <button
+                            type="button"
+                            onClick={header.column.getToggleSortingHandler()}
+                            disabled={isPending}
+                            title={sorted === "asc" ? "Ordenar decrescente" : "Ordenar crescente"}
+                          >
+                            <table.FlexRender header={header} />
+                            {sorted ? <span>{sorted === "asc" ? "↑" : "↓"}</span> : null}
+                          </button>
+                        ) : (
+                          <table.FlexRender header={header} />
+                        )}
+                      </th>
+                    );
+                  })}
+                </tr>
+              ))}
             </thead>
             <tbody>
-              {response.rows.map((row) => (
-                <tr key={`${row.exchange}-${row.ticker}`}>
-                  {activeColumns.map((column) => {
-                    if (column.key === "ticker") {
-                      return <td key={column.key}><Link className={styles.ticker} href={`/ativos/${row.ticker}`}>{row.ticker}</Link></td>;
-                    }
-                    if (column.key === "company") {
-                      return <td className={styles.company} key={column.key}>{row.company_name}</td>;
-                    }
-                    if (column.key === "latest_period") {
-                      return <td key={column.key}>{row.latest_period ? row.latest_period.slice(0, 4) : "—"}</td>;
-                    }
-                    const passportSlug = column.metric
-                      ? passportSlugByMetric.get(column.metric)
-                      : undefined;
-                    const renderedValue = formatMetric(row, column);
+              {table.getRowModel().rows.map((row) => (
+                <tr key={row.id}>
+                  {row.getVisibleCells().map((cell) => {
+                    const definition = columnByKey.get(cell.column.id);
+                    const isNumeric = definition?.kind === "currency"
+                      || definition?.kind === "percent"
+                      || definition?.kind === "multiple";
+                    const pinned = Boolean(cell.column.getIsPinned());
                     return (
-                      <td className={column.kind === "currency" || column.kind === "percent" || column.kind === "multiple" ? styles.numeric : ""} key={column.key}>
-                        {passportSlug ? (
-                          <Link
-                            className={styles.metricPassportLink}
-                            href={`/ativos/${row.ticker}/indicadores?passport=${encodeURIComponent(passportSlug)}#data-passport`}
-                            title={`Ver proveniência de ${column.label} para ${row.ticker}`}
-                          >
-                            {renderedValue}
-                          </Link>
-                        ) : renderedValue}
+                      <td
+                        key={cell.id}
+                        className={[
+                          isNumeric ? styles.numeric : "",
+                          definition?.key === "company" ? styles.company : "",
+                          pinned ? styles.pinnedCell : "",
+                        ].filter(Boolean).join(" ")}
+                        style={pinnedCellStyle(cell.column)}
+                      >
+                        <table.FlexRender cell={cell} />
                       </td>
                     );
                   })}
                 </tr>
               ))}
-              {response.rows.length === 0 ? (
-                <tr><td className={styles.empty} colSpan={Math.max(1, activeColumns.length)}>Nenhuma empresa atende aos critérios aplicados.</td></tr>
+              {table.getRowModel().rows.length === 0 ? (
+                <tr>
+                  <td
+                    className={styles.empty}
+                    colSpan={Math.max(1, table.getVisibleLeafColumns().length)}
+                  >
+                    Nenhuma empresa atende aos critérios aplicados.
+                  </td>
+                </tr>
               ) : null}
             </tbody>
           </table>
