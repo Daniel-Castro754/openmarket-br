@@ -285,8 +285,13 @@ function DataPassportPanel({
         </div>
         <div>
           <span>Coletado em</span>
-          <strong>{formatDateTime(source?.retrieved_at)}</strong>
-          <small>Momento em que o OpenMarket registrou a fonte</small>
+          <strong>{formatDateTime(passport.collected_at)}</strong>
+          <small>Coleta mais recente entre os fatos-base usados</small>
+        </div>
+        <div>
+          <span>Qualidade</span>
+          <strong>{source?.quality ?? "—"}</strong>
+          <small>Classificação da fonte do resultado</small>
         </div>
         <div>
           <span>Licença</span>
