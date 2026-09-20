@@ -22,10 +22,6 @@ const navigationOptions: Array<{ value: NavigationPreference; label: string }> =
   { value: "topbar", label: "Superior" },
 ];
 
-function preferredMode(): ModePreference {
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-}
-
 function applyAppearance(
   mode: ModePreference,
   colorTheme: ColorThemePreference,
@@ -37,21 +33,6 @@ function applyAppearance(
   root.dataset.themePreference = mode;
   root.dataset.colorTheme = colorTheme;
   root.dataset.navigation = navigation;
-}
-
-function readMode(): ModePreference {
-  const stored = window.localStorage.getItem(MODE_KEY);
-  return stored === "light" || stored === "dark" ? stored : preferredMode();
-}
-
-function readColorTheme(): ColorThemePreference {
-  const stored = window.localStorage.getItem(COLOR_THEME_KEY);
-  return stored === "ocean" || stored === "terminal" || stored === "openmarket" ? stored : "openmarket";
-}
-
-function readNavigation(): NavigationPreference {
-  const stored = window.localStorage.getItem(NAVIGATION_KEY);
-  return stored === "sidebar" || stored === "rail" || stored === "topbar" ? stored : "topbar";
 }
 
 export function ThemeSwitcher() {
