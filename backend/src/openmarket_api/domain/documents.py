@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from enum import StrEnum
 from uuid import UUID, uuid4
 
@@ -40,6 +40,10 @@ class PublicDocument(BaseModel):
     content_type: str = "application/pdf"
     page_count: int | None = None
     processing_status: DocumentProcessingStatus = DocumentProcessingStatus.PENDING
+    content_size_bytes: int | None = None
+    content_sha256: str | None = None
+    processed_at: datetime | None = None
+    processing_error: str | None = None
     source: SourceMetadata
 
 
@@ -71,6 +75,10 @@ class DocumentSummary(BaseModel):
     content_type: str
     page_count: int | None = None
     processing_status: DocumentProcessingStatus
+    content_size_bytes: int | None = None
+    content_sha256: str | None = None
+    processed_at: datetime | None = None
+    processing_error: str | None = None
     source: SourceMetadata
 
 
