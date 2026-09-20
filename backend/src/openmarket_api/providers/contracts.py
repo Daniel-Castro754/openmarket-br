@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
+from dataclasses import dataclass
 from datetime import date
 
 from openmarket_api.domain.documents import PublicDocument
@@ -70,4 +71,17 @@ class MacroProvider(Provider):
 class ConsumerInsightProvider(Provider):
     @abstractmethod
     async def snapshot(self) -> ConsumerInsightSnapshot:
+        raise NotImplementedError
+
+
+@dataclass(frozen=True)
+class DocumentContent:
+    content: bytes
+    content_type: str
+    final_url: str
+
+
+class DocumentContentProvider(Provider):
+    @abstractmethod
+    async def fetch(self, document: PublicDocument) -> DocumentContent:
         raise NotImplementedError
