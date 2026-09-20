@@ -1,5 +1,6 @@
 import {
   getIndicatorHistory,
+  getIndicatorPassport,
   getIndicatorSummary,
 } from "../../../../lib/api";
 import { IndicatorDashboard } from "../indicator-dashboard";
@@ -17,6 +18,7 @@ export default async function AssetIndicatorsPage({
     indicator?: string | string[];
     years?: string | string[];
     chart?: string | string[];
+    passport?: string | string[];
   }>;
 }) {
   const [{ ticker: rawTicker }, query] = await Promise.all([params, searchParams]);
@@ -24,11 +26,15 @@ export default async function AssetIndicatorsPage({
   const requestedIndicator = firstValue(query.indicator)?.trim().toLowerCase() || null;
   const indicatorYears = firstValue(query.years) === "10" ? 10 : 5;
   const indicatorChart = firstValue(query.chart) === "line" ? "line" : "bar";
+  const requestedPassport = firstValue(query.passport)?.trim().toLowerCase() || null;
 
-  const [summary, history] = await Promise.all([
+  const [summary, history, passport] = await Promise.all([
     getIndicatorSummary(ticker),
     requestedIndicator
       ? getIndicatorHistory(ticker, requestedIndicator, indicatorYears)
+      : Promise.resolve(null),
+    requestedPassport
+      ? getIndicatorPassport(ticker, requestedPassport)
       : Promise.resolve(null),
   ]);
 
@@ -41,6 +47,8 @@ export default async function AssetIndicatorsPage({
       years={indicatorYears}
       chartMode={indicatorChart}
       pageFrequency="annual"
+      passport={passport}
+      passportSlug={passport ? requestedPassport : null}
     />
   );
 }
