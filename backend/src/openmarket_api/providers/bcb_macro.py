@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 from typing import Any
+from urllib.parse import quote, urlencode
 
 import httpx
 
@@ -160,8 +161,23 @@ class BCBMacroProvider(MacroProvider):
         ]
         expectations.sort(key=lambda item: (item.reference_year, item.label))
 
-        if not indicators and not expectations:
-            raise RuntimeError("Banco Central macroeconomic sources are unavailable")
+        if not indicators:
+            raise RuntimeError("Banco Central SGS macroeconomic series are unavailable")
+        if not expectations:
+            focus_errors = [
+                item
+                for item in focus_results
+                if isinstance(item, Exception)
+            ]
+            if focus_errors:
+                error_types = ", ".join(
+                    sorted({type(error).__name__ for error in focus_errors})
+                )
+                raise RuntimeError(
+                    "Banco Central Focus expectations are unavailable "
+                    f"({len(focus_errors)}/{len(FOCUS)} queries failed: {error_types})"
+                )
+            raise RuntimeError("Banco Central Focus returned no annual expectations")
         return MacroSnapshot(indicators=indicators, expectations=expectations)
 
     async def _fetch_series(self, spec: MacroSeriesSpec) -> MacroIndicator:
@@ -221,15 +237,14 @@ class BCBMacroProvider(MacroProvider):
             "$orderby": "Data desc",
             "$top": "400",
         }
+        query = urlencode(params, quote_via=quote)
+        url = f"{BCB_FOCUS_BASE_URL}/ExpectativasMercadoAnuais?{query}"
         async with httpx.AsyncClient(
             timeout=self.settings.request_timeout_seconds,
             transport=self.transport,
             headers={"User-Agent": self.settings.user_agent},
         ) as client:
-            response = await client.get(
-                f"{BCB_FOCUS_BASE_URL}/ExpectativasMercadoAnuais",
-                params=params,
-            )
+            response = await client.get(url)
             response.raise_for_status()
             payload = response.json()
 
