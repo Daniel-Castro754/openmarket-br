@@ -221,6 +221,52 @@ export type CompanyComparisonResponse = {
   metrics: ComparisonMetricResult[];
 };
 
+export type PerformanceWindow = "1y" | "3y" | "5y" | "max";
+export type PerformanceStatus = "available" | "insufficient_data";
+
+export type PerformancePoint = {
+  as_of: string;
+  price: string;
+  normalized_value: string;
+  drawdown_percent: string;
+};
+
+export type BenchmarkPerformance = {
+  ticker: string;
+  status: PerformanceStatus;
+  observations: number;
+  start?: string | null;
+  end?: string | null;
+  total_return_percent?: string | null;
+  cagr_percent?: string | null;
+  annualized_volatility_percent?: string | null;
+  max_drawdown_percent?: string | null;
+};
+
+export type PerformanceRiskSnapshot = {
+  ticker: string;
+  window: PerformanceWindow;
+  status: PerformanceStatus;
+  observations: number;
+  start?: string | null;
+  end?: string | null;
+  price_basis: string;
+  risk_free_rate_annual_percent: string;
+  total_return_percent?: string | null;
+  cagr_percent?: string | null;
+  annualized_volatility_percent?: string | null;
+  max_drawdown_percent?: string | null;
+  sharpe_ratio?: string | null;
+  sortino_ratio?: string | null;
+  calmar_ratio?: string | null;
+  best_day_percent?: string | null;
+  worst_day_percent?: string | null;
+  points: PerformancePoint[];
+  source?: SourceMetadata | null;
+  benchmark?: BenchmarkPerformance | null;
+  warnings: string[];
+};
+
 export type DocumentType =
   | "dfp"
   | "itr"
@@ -413,6 +459,24 @@ export async function getCompanyComparison(
     throw new Error(`OpenMarket API returned ${response.status} for company comparison`);
   }
   return (await response.json()) as CompanyComparisonResponse;
+}
+
+export async function getPerformanceRisk(
+  ticker: string,
+  window: PerformanceWindow = "1y",
+  benchmark?: string | null,
+): Promise<PerformanceRiskSnapshot | null> {
+  const params = new URLSearchParams({ window });
+  if (benchmark) params.set("benchmark", benchmark);
+  const response = await fetch(
+    `${apiBase}/api/v1/assets/${encodeURIComponent(ticker)}/performance?${params.toString()}`,
+    { next: { revalidate: 60 } },
+  );
+  if (response.status === 404) return null;
+  if (!response.ok) {
+    throw new Error(`OpenMarket API returned ${response.status} for performance ${ticker}`);
+  }
+  return (await response.json()) as PerformanceRiskSnapshot;
 }
 
 export async function getScreener(filters?: ScreenerQuery): Promise<ScreenerResponse> {
