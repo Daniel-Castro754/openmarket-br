@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from enum import StrEnum
 
@@ -10,7 +10,7 @@ from openmarket_api.domain.analytics import (
     SeriesFrequency,
     SeriesUnit,
 )
-from openmarket_api.domain.common import SourceMetadata
+from openmarket_api.domain.common import RedistributionScope, SourceMetadata
 
 
 class IndicatorGroup(StrEnum):
@@ -41,6 +41,45 @@ class IndicatorDefinition(BaseModel):
     requires_market_data: bool = False
     methodology_version: str = "1.0"
     methodology_notes: str | None = None
+
+
+class IndicatorPassportStatus(StrEnum):
+    AVAILABLE = "available"
+    UNAVAILABLE = "unavailable"
+
+
+class IndicatorPassportInput(BaseModel):
+    metric: FinancialMetric
+    label: str
+    unit: SeriesUnit
+    value: Decimal | None = None
+    period_start: date | None = None
+    period_end: date
+    currency: str | None = None
+    filing_reference_date: date | None = None
+    filing_version: int | None = None
+    source: SourceMetadata
+    restricted: bool = False
+
+
+class IndicatorDataPassport(BaseModel):
+    ticker: str
+    definition: IndicatorDefinition
+    frequency: SeriesFrequency
+    status: IndicatorPassportStatus
+    value: Decimal | None = None
+    period_start: date | None = None
+    period_end: date | None = None
+    filing_reference_date: date | None = None
+    filing_version: int | None = None
+    formula: str | None = None
+    derived: bool = False
+    source: SourceMetadata | None = None
+    inputs: list[IndicatorPassportInput] = Field(default_factory=list)
+    input_sources: list[SourceMetadata] = Field(default_factory=list)
+    collected_at: datetime | None = None
+    redistribution_scope: RedistributionScope | None = None
+    warnings: list[str] = Field(default_factory=list)
 
 
 class IndicatorValue(IndicatorDefinition):

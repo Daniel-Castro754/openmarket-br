@@ -72,6 +72,26 @@ class IndicatorEngine:
             ],
         )
 
+    def get_resolved_series(
+        self,
+        ticker: str,
+        slug: str,
+        *,
+        frequency: SeriesFrequency = SeriesFrequency.ANNUAL,
+    ) -> tuple[str, IndicatorDefinition, IndicatorSeriesResult]:
+        normalized_ticker = ticker.strip().upper()
+        self.assets.get_asset(normalized_ticker)
+        definition = indicator_registry.get_definition(slug)
+        series = self._resolve_series(
+            normalized_ticker,
+            definition,
+            frequency=frequency,
+        )
+        resolved_definition = definition.model_copy(
+            update={"formula": series.formula or definition.formula}
+        )
+        return normalized_ticker, resolved_definition, series
+
     def get_history(
         self,
         ticker: str,
@@ -83,12 +103,9 @@ class IndicatorEngine:
         if years < 1:
             raise ValueError("years must be at least 1")
 
-        normalized_ticker = ticker.strip().upper()
-        self.assets.get_asset(normalized_ticker)
-        definition = indicator_registry.get_definition(slug)
-        series = self._resolve_series(
-            normalized_ticker,
-            definition,
+        normalized_ticker, resolved_definition, series = self.get_resolved_series(
+            ticker,
+            slug,
             frequency=frequency,
         )
 
@@ -103,9 +120,6 @@ class IndicatorEngine:
             average = sum((point.value for point in points), Decimal(0)) / Decimal(len(points))
 
         current = points[-1] if points else None
-        resolved_definition = definition.model_copy(
-            update={"formula": series.formula or definition.formula}
-        )
         return IndicatorHistory(
             ticker=normalized_ticker,
             definition=resolved_definition,

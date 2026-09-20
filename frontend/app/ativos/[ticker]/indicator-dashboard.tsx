@@ -1,7 +1,9 @@
 import Link from "next/link";
 
 import type {
+  IndicatorDataPassport,
   IndicatorHistory,
+  IndicatorPassportInput,
   IndicatorSummary,
   IndicatorValue,
   SeriesFrequency,
@@ -21,6 +23,8 @@ type Props = {
   years: 5 | 10;
   chartMode: ChartMode;
   pageFrequency: SeriesFrequency;
+  passport?: IndicatorDataPassport | null;
+  passportSlug?: string | null;
 };
 
 function formatIndicatorValue(value: string | number | null | undefined, unit: SeriesUnit) {
@@ -53,6 +57,34 @@ function historyHref(ticker: string, slug: string, years: 5 | 10, chartMode: Cha
     chart: chartMode,
   });
   return `/ativos/${ticker}/indicadores?${params.toString()}#indicator-history`;
+}
+
+function passportHref(ticker: string, slug: string) {
+  const params = new URLSearchParams({ passport: slug });
+  return `/ativos/${ticker}/indicadores?${params.toString()}#data-passport`;
+}
+
+function formatDate(value?: string | null) {
+  if (!value) return "—";
+  const parsed = new Date(`${value.slice(0, 10)}T12:00:00`);
+  return Number.isNaN(parsed.getTime()) ? value : new Intl.DateTimeFormat("pt-BR").format(parsed);
+}
+
+function formatDateTime(value?: string | null) {
+  if (!value) return "—";
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime())
+    ? value
+    : new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(parsed);
+}
+
+function formatPassportInput(input: IndicatorPassportInput) {
+  if (input.restricted || input.value == null) return "Restrito pela licença";
+  return formatFinancialValue(input.value, input.unit, {
+    currency: input.currency,
+    percentDigits: 2,
+    multipleDigits: 2,
+  });
 }
 
 function groupDescription(label: string) {
@@ -99,7 +131,14 @@ function IndicatorCard({
     >
       <div className={styles.cardHeading}>
         <span>{indicator.label}</span>
-        <span className={styles.help} title={indicator.description} aria-label={`Sobre ${indicator.label}`}>?</span>
+        <Link
+          className={styles.help}
+          href={passportHref(ticker, indicator.slug)}
+          title={`${indicator.description} · Ver Data Passport`}
+          aria-label={`Ver proveniência de ${indicator.label}`}
+        >
+          i
+        </Link>
       </div>
 
       <div className={styles.cardValueRow}>
@@ -127,6 +166,175 @@ function IndicatorCard({
         ) : null}
       </div>
     </article>
+  );
+}
+
+function DataPassportPanel({
+  ticker,
+  passport,
+}: {
+  ticker: string;
+  passport: IndicatorDataPassport;
+}) {
+  const available = passport.status === "available";
+  const source = passport.source;
+
+  return (
+    <section className={styles.passportPanel} id="data-passport" aria-labelledby="data-passport-title">
+      <header className={styles.passportHeader}>
+        <div>
+          <span className="eyebrow">DATA PASSPORT · PROVENIÊNCIA</span>
+          <h2 id="data-passport-title">{passport.definition.label} · {ticker}</h2>
+          <p>Metodologia, fontes e valores usados para produzir o indicador.</p>
+        </div>
+        <Link className={styles.closeHistory} href={`/ativos/${ticker}/indicadores`}>
+          Fechar
+        </Link>
+      </header>
+
+      <div className={styles.passportStats}>
+        <div>
+          <span>Valor</span>
+          <strong>
+            {available
+              ? formatIndicatorValue(passport.value, passport.definition.unit)
+              : "Indisponível"}
+          </strong>
+        </div>
+        <div><span>Período</span><strong>{yearLabel(passport.period_end)}</strong></div>
+        <div>
+          <span>Metodologia</span>
+          <strong>v{passport.definition.methodology_version}</strong>
+        </div>
+        <div>
+          <span>Natureza</span>
+          <strong>{passport.derived ? "Calculado" : "Oficial"}</strong>
+        </div>
+      </div>
+
+      <div className={styles.passportMethod}>
+        <div>
+          <span>Definição</span>
+          <p>{passport.definition.description}</p>
+        </div>
+        <div>
+          <span>Fórmula</span>
+          <code>{passport.formula ?? "Dado direto da demonstração"}</code>
+        </div>
+      </div>
+
+      <div className={styles.passportSection}>
+        <div className={styles.passportSectionHeading}>
+          <div>
+            <h3>Dados usados no cálculo</h3>
+            <p>Valores efetivamente preservados pelo motor de séries para este ponto.</p>
+          </div>
+          <span>{passport.inputs.length} input(s)</span>
+        </div>
+
+        {passport.inputs.length ? (
+          <div className={styles.passportTableWrap}>
+            <table className={styles.passportTable}>
+              <thead>
+                <tr>
+                  <th>Input</th>
+                  <th>Valor</th>
+                  <th>Período</th>
+                  <th>Fonte</th>
+                </tr>
+              </thead>
+              <tbody>
+                {passport.inputs.map((input, index) => (
+                  <tr key={`${input.metric}-${input.period_end}-${index}`}>
+                    <td>
+                      <strong>{input.label}</strong>
+                      <small>{input.metric}</small>
+                    </td>
+                    <td className={input.restricted ? styles.restrictedValue : ""}>
+                      {formatPassportInput(input)}
+                    </td>
+                    <td>
+                      {formatDate(input.period_end)}
+                      {input.filing_reference_date ? (
+                        <small>
+                          filing {formatDate(input.filing_reference_date)}
+                          {input.filing_version != null ? ` · v${input.filing_version}` : ""}
+                        </small>
+                      ) : null}
+                    </td>
+                    <td>
+                      <strong>{input.source.provider}</strong>
+                      <small>{input.source.source_name}</small>
+                      {input.source.source_url ? (
+                        <a
+                          className={styles.inputSourceLink}
+                          href={input.source.source_url}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Abrir fonte ↗
+                        </a>
+                      ) : null}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className={styles.passportEmpty}>
+            {available
+              ? "As fontes estão preservadas, mas este ponto não possui inputs estruturados."
+              : "Não há inputs porque o indicador não pôde ser calculado para o período."}
+          </div>
+        )}
+      </div>
+
+      <div className={styles.passportSourceGrid}>
+        <div>
+          <span>Fonte do resultado</span>
+          <strong>{source?.source_name ?? "—"}</strong>
+          <small>{source?.provider ?? "—"}</small>
+        </div>
+        <div>
+          <span>Data de referência</span>
+          <strong>{formatDate(source?.reference_date)}</strong>
+          <small>Período econômico/contábil da fonte</small>
+        </div>
+        <div>
+          <span>Coletado em</span>
+          <strong>{formatDateTime(passport.collected_at)}</strong>
+          <small>Coleta mais recente entre os fatos-base usados</small>
+        </div>
+        <div>
+          <span>Qualidade</span>
+          <strong>{source?.quality ?? "—"}</strong>
+          <small>Classificação da fonte do resultado</small>
+        </div>
+        <div>
+          <span>Licença</span>
+          <strong>{source?.license.license_id ?? "—"}</strong>
+          <small>{passport.redistribution_scope ?? source?.license.redistribution ?? "—"}</small>
+        </div>
+      </div>
+
+      {source?.source_url ? (
+        <a
+          className={styles.passportSourceLink}
+          href={source.source_url}
+          target="_blank"
+          rel="noreferrer"
+        >
+          Abrir fonte de origem ↗
+        </a>
+      ) : null}
+
+      {passport.warnings.length ? (
+        <div className={styles.passportWarnings}>
+          {passport.warnings.map((warning) => <p key={warning}>{warning}</p>)}
+        </div>
+      ) : null}
+    </section>
   );
 }
 
@@ -357,6 +565,8 @@ export function IndicatorDashboard({
   selectedSlug,
   years,
   chartMode,
+  passport,
+  passportSlug,
 }: Props) {
   const allIndicators = summary.groups.flatMap((group) => group.indicators);
   const availableIndicators = allIndicators.filter(hasIndicatorValue).length;
@@ -403,6 +613,10 @@ export function IndicatorDashboard({
           );
         })}
       </div>
+
+      {passport && passportSlug ? (
+        <DataPassportPanel ticker={ticker} passport={passport} />
+      ) : null}
 
       <div className={styles.methodologyNote}>
         <strong>Metodologia aberta</strong>

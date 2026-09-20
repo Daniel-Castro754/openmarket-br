@@ -44,6 +44,19 @@ class SeriesUnit(StrEnum):
     MULTIPLE = "multiple"
 
 
+class CalculationInput(BaseModel):
+    metric: FinancialMetric
+    label: str
+    unit: SeriesUnit
+    value: Decimal
+    period_start: date | None = None
+    period_end: date
+    currency: str | None = None
+    filing_reference_date: date | None = None
+    filing_version: int | None = None
+    source: SourceMetadata
+
+
 class FinancialSeriesPoint(BaseModel):
     period_start: date | None = None
     period_end: date
@@ -55,6 +68,7 @@ class FinancialSeriesPoint(BaseModel):
     derived: bool = False
     derivation: str | None = None
     input_sources: list[SourceMetadata] = Field(default_factory=list)
+    calculation_inputs: list[CalculationInput] = Field(default_factory=list)
 
 
 class FinancialSeries(BaseModel):

@@ -5,7 +5,13 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from openmarket_api.domain.analytics import FinancialMetric, SeriesFrequency
+from openmarket_api.api.routes.assets import get_asset_indicator_provenance
+from openmarket_api.domain.analytics import (
+    CalculationInput,
+    FinancialMetric,
+    SeriesFrequency,
+    SeriesUnit,
+)
 from openmarket_api.domain.common import (
     DataLicense,
     DataQuality,
@@ -18,7 +24,7 @@ from openmarket_api.domain.entities import (
     Instrument,
     InstrumentType,
 )
-from openmarket_api.domain.indicators import IndicatorGroup
+from openmarket_api.domain.indicators import IndicatorGroup, IndicatorPassportStatus
 from openmarket_api.persistence.base import Base
 from openmarket_api.persistence.repositories import (
     CompanyRepository,
@@ -26,6 +32,7 @@ from openmarket_api.persistence.repositories import (
     InstrumentRepository,
 )
 from openmarket_api.services.indicator_engine import IndicatorEngine
+from openmarket_api.services.indicator_passport import IndicatorPassportService
 from openmarket_api.services.indicator_registry import indicator_registry
 
 
@@ -319,3 +326,170 @@ def test_indicator_history_supports_one_year_and_unknown_slug() -> None:
     assert len(history.points) == 1
     assert history.current_value == Decimal("12.5")
     assert history.historical_average == Decimal("12.5")
+
+def test_indicator_provenance_route_returns_data_passport_contract() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+
+    with Session(engine) as session:
+        _seed(session)
+        passport = get_asset_indicator_provenance(
+            ticker="PETR4",
+            slug="roa",
+            session=session,
+            frequency=SeriesFrequency.ANNUAL,
+        )
+
+    assert passport.ticker == "PETR4"
+    assert passport.definition.slug == "roa"
+    assert passport.status == IndicatorPassportStatus.AVAILABLE
+    assert passport.inputs
+
+
+def test_indicator_passport_exposes_exact_calculation_inputs() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+
+    with Session(engine) as session:
+        _seed(session)
+        passport = IndicatorPassportService(session).get_passport("PETR4", "roa")
+
+    assert passport.status == IndicatorPassportStatus.AVAILABLE
+    assert passport.value == Decimal(10)
+    assert passport.period_end == date(2025, 12, 31)
+    assert passport.definition.methodology_version == "1.0"
+    assert passport.formula == "annual_net_income / average_total_assets * 100"
+    assert passport.source is not None
+    assert passport.source.provider == "openmarket-derived"
+    assert passport.redistribution_scope == RedistributionScope.ALLOWED
+    assert [(item.metric, item.value, item.period_end) for item in passport.inputs] == [
+        (FinancialMetric.TOTAL_ASSETS, Decimal(160), date(2024, 12, 31)),
+        (FinancialMetric.TOTAL_ASSETS, Decimal(140), date(2025, 12, 31)),
+        (FinancialMetric.NET_INCOME, Decimal(15), date(2025, 12, 31)),
+    ]
+    assert all(item.restricted is False for item in passport.inputs)
+    assert len(passport.input_sources) == 2
+    assert passport.warnings == []
+
+
+def test_indicator_passport_flattens_nested_calculation_chain() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+
+    with Session(engine) as session:
+        _seed(session)
+        passport = IndicatorPassportService(session).get_passport(
+            "PETR4",
+            "net-debt-to-equity",
+        )
+
+    assert passport.status == IndicatorPassportStatus.AVAILABLE
+    assert [item.metric for item in passport.inputs] == [
+        FinancialMetric.SHORT_TERM_DEBT,
+        FinancialMetric.LONG_TERM_DEBT,
+        FinancialMetric.CASH,
+        FinancialMetric.EQUITY,
+    ]
+    assert [item.value for item in passport.inputs] == [
+        Decimal(25),
+        Decimal(35),
+        Decimal(15),
+        Decimal(70),
+    ]
+
+
+def test_indicator_passport_reports_unavailable_indicator_without_guessing_inputs() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+
+    with Session(engine) as session:
+        _seed(session)
+        passport = IndicatorPassportService(session).get_passport(
+            "PETR4",
+            "current-ratio",
+        )
+
+    assert passport.status == IndicatorPassportStatus.UNAVAILABLE
+    assert passport.value is None
+    assert passport.inputs == []
+    assert passport.source is None
+    assert passport.warnings
+
+
+def test_indicator_passport_does_not_claim_single_url_for_multiple_sources() -> None:
+    first = _source(date(2024, 12, 31)).model_copy(
+        update={"source_url": "https://www.gov.br/cvm/pt-br"}
+    )
+    second = _source(date(2025, 12, 31)).model_copy(
+        update={"source_url": "https://dados.cvm.gov.br/"}
+    )
+    derived = SourceMetadata(
+        provider="openmarket-derived",
+        source_name="Derived fixture",
+        source_url=second.source_url,
+        reference_date=date(2025, 12, 31),
+        quality=DataQuality.SECONDARY,
+        license=second.license,
+    )
+
+    public = IndicatorPassportService._public_result_source(
+        derived,
+        [first, second],
+        derived=True,
+    )
+    shared = IndicatorPassportService._public_result_source(
+        derived,
+        [first, second.model_copy(update={"source_url": first.source_url})],
+        derived=True,
+    )
+
+    assert public.source_url is None
+    assert shared.source_url == first.source_url
+
+
+def test_indicator_passport_preserves_redistributable_official_fact() -> None:
+    official_source = _source(date(2025, 12, 31))
+    calculation_input = CalculationInput(
+        metric=FinancialMetric.REVENUE,
+        label="Receita",
+        unit=SeriesUnit.CURRENCY,
+        value=Decimal(123),
+        period_end=date(2025, 12, 31),
+        currency="BRL",
+        source=official_source,
+    )
+
+    public_input = IndicatorPassportService._public_input(calculation_input)
+
+    assert public_input.value == Decimal(123)
+    assert public_input.restricted is False
+    assert public_input.source.quality == DataQuality.OFFICIAL
+    assert public_input.source.license.redistribution == RedistributionScope.ALLOWED
+
+
+def test_indicator_passport_hides_restricted_input_value() -> None:
+    restricted_source = SourceMetadata(
+        provider="restricted-provider",
+        source_name="Restricted fixture",
+        reference_date=date(2025, 12, 31),
+        quality=DataQuality.LICENSED,
+        license=DataLicense(
+            license_id="restricted",
+            redistribution=RedistributionScope.INTERNAL_ONLY,
+        ),
+    )
+    calculation_input = CalculationInput(
+        metric=FinancialMetric.REVENUE,
+        label="Receita",
+        unit=SeriesUnit.CURRENCY,
+        value=Decimal(123),
+        period_end=date(2025, 12, 31),
+        source=restricted_source,
+    )
+
+    public_input = IndicatorPassportService._public_input(calculation_input)
+
+    assert public_input.value is None
+    assert public_input.restricted is True
+    assert public_input.source.license.redistribution == RedistributionScope.INTERNAL_ONLY
+

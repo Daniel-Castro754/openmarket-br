@@ -133,8 +133,25 @@ jobs:
 
           summary = get(f"/api/v1/assets/{quote(ticker)}/indicator-summary?frequency=annual")
           indicators = [item for group in summary.get("groups", []) for item in group.get("indicators", [])]
-          if not any(item.get("value") is not None for item in indicators):
+          available_indicator = next(
+              (item for item in indicators if item.get("value") is not None),
+              None,
+          )
+          if available_indicator is None:
               raise SystemExit("indicator summary has no available values")
+
+          indicator_slug = available_indicator["slug"]
+          passport = get(
+              f"/api/v1/assets/{quote(ticker)}/indicators/{quote(indicator_slug)}/provenance?frequency=annual"
+          )
+          if passport.get("status") != "available":
+              raise SystemExit(f"Data Passport unavailable for {indicator_slug}")
+          if passport.get("definition", {}).get("slug") != indicator_slug:
+              raise SystemExit("Data Passport definition does not match requested indicator")
+          if not passport.get("source"):
+              raise SystemExit("Data Passport has no result source")
+          if passport.get("derived") and not passport.get("inputs"):
+              raise SystemExit("derived Data Passport has no auditable calculation inputs")
 
           documents = get(f"/api/v1/documents?ticker={quote(ticker)}&limit=50")
           if not documents:
@@ -151,6 +168,7 @@ jobs:
           print(
               f"validated {ticker}: financial_items={asset['financial_item_count']} "
               f"indicators_with_value={sum(item.get('value') is not None for item in indicators)} "
+              f"passport={indicator_slug} passport_inputs={len(passport.get('inputs', []))} "
               f"documents={len(documents)} viewer_document={linked['id']} "
               f"sections={len(detail.get('sections', []))}"
           )

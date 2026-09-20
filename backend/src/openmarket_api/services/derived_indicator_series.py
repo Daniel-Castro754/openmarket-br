@@ -3,7 +3,9 @@ from datetime import date
 from decimal import Decimal
 
 from openmarket_api.domain.analytics import (
+    CalculationInput,
     FinancialMetric,
+    FinancialSeries,
     FinancialSeriesPoint,
     SeriesFrequency,
 )
@@ -120,6 +122,10 @@ class DerivedIndicatorSeriesService:
                     derived=True,
                     derivation=definition.formula,
                     input_sources=inputs,
+                    calculation_inputs=[
+                        *self._calculation_inputs(numerator_series, numerator_point),
+                        *self._calculation_inputs(denominator_series, denominator_point),
+                    ],
                 )
             )
 
@@ -188,6 +194,11 @@ class DerivedIndicatorSeriesService:
                     derived=True,
                     derivation=definition.formula,
                     input_sources=inputs,
+                    calculation_inputs=[
+                        *self._calculation_inputs(balance_series, previous_balance),
+                        *self._calculation_inputs(balance_series, current_balance),
+                        *self._calculation_inputs(numerator_series, numerator_point),
+                    ],
                 )
             )
 
@@ -235,10 +246,42 @@ class DerivedIndicatorSeriesService:
                     derived=True,
                     derivation=definition.formula,
                     input_sources=inputs,
+                    calculation_inputs=[
+                        *self._calculation_inputs(base, previous),
+                        *self._calculation_inputs(base, point),
+                    ],
                 )
             )
 
         return IndicatorSeriesResult(formula=definition.formula, points=points)
+
+    @classmethod
+    def _calculation_inputs(
+        cls,
+        series: FinancialSeries,
+        point: FinancialSeriesPoint,
+    ) -> list[CalculationInput]:
+        if point.calculation_inputs:
+            return [item.model_copy(deep=True) for item in point.calculation_inputs]
+        return [cls._calculation_input(series, point)]
+
+    @staticmethod
+    def _calculation_input(
+        series: FinancialSeries,
+        point: FinancialSeriesPoint,
+    ) -> CalculationInput:
+        return CalculationInput(
+            metric=series.metric,
+            label=series.label,
+            unit=series.unit,
+            value=point.value,
+            period_start=point.period_start,
+            period_end=point.period_end,
+            currency=point.currency,
+            filing_reference_date=point.filing_reference_date,
+            filing_version=point.filing_version,
+            source=point.source,
+        )
 
     @staticmethod
     def _same_reporting_context(
