@@ -37,7 +37,6 @@ function ratio(value?: string | null) {
 function chartPoints(
   points: PerformancePoint[],
   accessor: (point: PerformancePoint) => number,
-  *,
   width = 900,
   height = 240,
 ) {
