@@ -87,7 +87,7 @@ class B3CotahistParser:
 
         if factor <= 0:
             return None
-        price = raw_price / Decimal("100") / factor
+        price = raw_price / Decimal(100) / factor
         if price <= 0:
             return None
 
