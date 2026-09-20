@@ -807,6 +807,19 @@
   font-size: .47rem;
 }
 
+.inputSourceLink {
+  display: inline-block;
+  margin-top: 4px;
+  color: var(--accent);
+  font-size: .47rem;
+  font-weight: 720;
+  text-decoration: none;
+}
+
+.inputSourceLink:hover {
+  text-decoration: underline;
+}
+
 .restrictedValue {
   color: var(--muted);
   font-style: italic;
