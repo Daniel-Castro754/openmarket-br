@@ -456,7 +456,7 @@ function FragmentGroup({
                   ) : (
                     <>
                       <strong>{metricValueLabel(value, metric)}</strong>
-                      <small>{metricPeriodLabel(value)}</small>
+                      <small>{metricPeriodLabel(value, frequency)}</small>
                     </>
                   )}
                 </td>
