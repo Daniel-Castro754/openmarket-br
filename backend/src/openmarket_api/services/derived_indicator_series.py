@@ -5,6 +5,7 @@ from decimal import Decimal
 from openmarket_api.domain.analytics import (
     CalculationInput,
     FinancialMetric,
+    FinancialSeries,
     FinancialSeriesPoint,
     SeriesFrequency,
 )
@@ -256,7 +257,7 @@ class DerivedIndicatorSeriesService:
 
     @staticmethod
     def _calculation_input(
-        series,
+        series: FinancialSeries,
         point: FinancialSeriesPoint,
     ) -> CalculationInput:
         return CalculationInput(
