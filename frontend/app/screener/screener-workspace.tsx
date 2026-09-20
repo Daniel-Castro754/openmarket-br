@@ -235,6 +235,11 @@ export function ScreenerWorkspace({
   const router = useRouter();
   const metricOptions = resolveMetricOptions(indicatorCatalog);
   const columns = resolveColumns(indicatorCatalog);
+  const passportSlugByMetric = new Map(
+    indicatorCatalog
+      .filter(supportsAnnualScreener)
+      .map((definition) => [screenerKeyForIndicator(definition), definition.slug] as const),
+  );
   const [isPending, startTransition] = useTransition();
   const [rules, setRules] = useState<FilterRule[]>(() => rulesFromFilters(initialFilters));
   const [query, setQuery] = useState(initialQuery);
@@ -449,9 +454,21 @@ export function ScreenerWorkspace({
                     if (column.key === "latest_period") {
                       return <td key={column.key}>{row.latest_period ? row.latest_period.slice(0, 4) : "—"}</td>;
                     }
+                    const passportSlug = column.metric
+                      ? passportSlugByMetric.get(column.metric)
+                      : undefined;
+                    const renderedValue = formatMetric(row, column);
                     return (
                       <td className={column.kind === "currency" || column.kind === "percent" || column.kind === "multiple" ? styles.numeric : ""} key={column.key}>
-                        {formatMetric(row, column)}
+                        {passportSlug ? (
+                          <Link
+                            className={styles.metricPassportLink}
+                            href={`/ativos/${row.ticker}/indicadores?passport=${encodeURIComponent(passportSlug)}#data-passport`}
+                            title={`Ver proveniência de ${column.label} para ${row.ticker}`}
+                          >
+                            {renderedValue}
+                          </Link>
+                        ) : renderedValue}
                       </td>
                     );
                   })}
