@@ -314,6 +314,47 @@ export type DocumentDetail = DocumentSummary & {
   sections: DocumentSection[];
 };
 
+export type CompanyEventType =
+  | "material_fact"
+  | "earnings"
+  | "filing"
+  | "presentation"
+  | "annual_report"
+  | "governance"
+  | "document";
+
+export type CompanyEventCategory =
+  | "results"
+  | "material"
+  | "governance"
+  | "finance"
+  | "operations"
+  | "calendar"
+  | "regulatory"
+  | "other";
+
+export type CompanyEvent = {
+  id: string;
+  company_id: string;
+  event_date: string;
+  event_type: CompanyEventType;
+  category: CompanyEventCategory;
+  origin: "cvm_document";
+  title: string;
+  description?: string | null;
+  reference_period?: string | null;
+  source_document_id?: string | null;
+  source_url?: string | null;
+  source_classification?: string | null;
+  source: SourceMetadata;
+  projected_at: string;
+};
+
+export type CompanyEventTimeline = {
+  ticker: string;
+  events: CompanyEvent[];
+};
+
 export type ScreenerRow = {
   ticker: string;
   company_name: string;
@@ -524,6 +565,38 @@ export async function getDocuments(filters?: {
   }
   return (await response.json()) as DocumentSummary[];
 }
+
+export async function getCompanyEvents(filters: {
+  ticker: string;
+  category?: CompanyEventCategory;
+  eventType?: CompanyEventType;
+  start?: string;
+  end?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<CompanyEventTimeline> {
+  const params = new URLSearchParams();
+  if (filters.category) params.set("category", filters.category);
+  if (filters.eventType) params.set("event_type", filters.eventType);
+  if (filters.start) params.set("start", filters.start);
+  if (filters.end) params.set("end", filters.end);
+  if (filters.limit != null) params.set("limit", String(filters.limit));
+  if (filters.offset != null) params.set("offset", String(filters.offset));
+
+  const suffix = params.size ? `?${params.toString()}` : "";
+  const response = await fetch(
+    `${apiBase}/api/v1/assets/${encodeURIComponent(filters.ticker)}/events${suffix}`,
+    { next: { revalidate: 60 } },
+  );
+  if (response.status === 404) {
+    return { ticker: filters.ticker.toUpperCase(), events: [] };
+  }
+  if (!response.ok) {
+    throw new Error(`OpenMarket API returned ${response.status} for company events`);
+  }
+  return (await response.json()) as CompanyEventTimeline;
+}
+
 
 export async function getDocument(documentId: string): Promise<DocumentDetail | null> {
   const response = await fetch(`${apiBase}/api/v1/documents/${encodeURIComponent(documentId)}`, {
