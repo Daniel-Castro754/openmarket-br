@@ -151,12 +151,15 @@ const defaultColumns: ColumnKey[] = [
 function resolveInitialColumns(
   requested: string[],
   columns: ColumnDefinition[],
+  customized: boolean,
 ): ColumnKey[] {
   const available = new Set(columns.map((column) => column.key));
   const requestedValid = requested.filter((key): key is ColumnKey => available.has(key));
-  const source = requestedValid.length
+  const source = customized
     ? requestedValid
-    : defaultColumns.filter((key) => available.has(key));
+    : requestedValid.length
+      ? requestedValid
+      : defaultColumns.filter((key) => available.has(key));
 
   return [
     "ticker",
@@ -240,6 +243,7 @@ function buildSearchParams({
   if (sort !== "ticker") params.set("sort", sort);
   if (direction !== "asc") params.set("direction", direction);
   if (logic !== "and") params.set("logic", logic);
+  params.set("columns", "custom");
   for (const column of columns) {
     if (column !== "ticker" && column !== "company") params.append("column", column);
   }
@@ -254,6 +258,7 @@ export function ScreenerWorkspace({
   initialFilters,
   initialLogic,
   initialColumns,
+  initialColumnsCustomized,
 }: {
   response: ScreenerResponse;
   indicatorCatalog: IndicatorDefinition[];
@@ -261,6 +266,7 @@ export function ScreenerWorkspace({
   initialFilters: string[];
   initialLogic: FilterLogic;
   initialColumns: string[];
+  initialColumnsCustomized: boolean;
 }) {
   const router = useRouter();
   const metricOptions = resolveMetricOptions(indicatorCatalog);
@@ -275,7 +281,7 @@ export function ScreenerWorkspace({
   const [query, setQuery] = useState(initialQuery);
   const [logic, setLogic] = useState<FilterLogic>(initialLogic);
   const [visibleColumns, setVisibleColumns] = useState<ColumnKey[]>(
-    () => resolveInitialColumns(initialColumns, columns),
+    () => resolveInitialColumns(initialColumns, columns, initialColumnsCustomized),
   );
   const [showColumns, setShowColumns] = useState(false);
 
@@ -593,7 +599,11 @@ export function ScreenerWorkspace({
         </div>
 
         <footer className={styles.footer}>
-          <span>Condições são combinadas com lógica E: a empresa precisa atender a todos os filtros aplicados.</span>
+          <span>
+            {response.logic === "and"
+              ? "Lógica E: a empresa precisa atender a todos os filtros aplicados."
+              : "Lógica OU: basta a empresa atender a um dos filtros aplicados."}
+          </span>
           <span>Filtragem, ordenação por indicadores e paginação são processadas no backend sobre o universo pesquisado.</span>
         </footer>
       </div>
