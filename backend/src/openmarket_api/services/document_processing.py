@@ -216,7 +216,7 @@ class DocumentProcessingService:
         for document_id in document_ids:
             try:
                 result = await self.process_document(document_id)
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 - batch isolates per-document failures
                 failed += 1
                 error = f"{document_id}: {type(exc).__name__}: {exc}"
                 errors.append(error)
