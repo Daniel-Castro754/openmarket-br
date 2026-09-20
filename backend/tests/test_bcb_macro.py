@@ -29,10 +29,12 @@ def test_macro_snapshot_parses_sgs_and_focus_data() -> None:
                 medians = ("2.1", "2.0", "2.2")
             elif "IPCA" in filter_query:
                 medians = ("4.2", "3.8", "3.5")
-            elif "over-selic" in filter_query:
+            elif "Selic" in filter_query:
                 medians = ("14.0", "11.5", "10.0")
-            else:
+            elif "Câmbio" in filter_query:
                 medians = ("5.1", "5.0", "4.9")
+            else:
+                raise AssertionError(f"unexpected Focus filter: {filter_query}")
             return httpx.Response(
                 200,
                 json={
@@ -94,6 +96,8 @@ def test_macro_snapshot_parses_sgs_and_focus_data() -> None:
     assert any(
         item.key == "ipca" and item.median == Decimal("4.2") for item in snapshot.expectations
     )
+    assert any(item.key == "selic" for item in snapshot.expectations)
+    assert any(item.key == "exchange" for item in snapshot.expectations)
 
 
 def test_sgs_parser_ignores_invalid_rows_and_orders_points() -> None:
@@ -145,3 +149,53 @@ def test_macro_snapshot_fails_when_all_focus_queries_fail() -> None:
 
     assert "Focus expectations are unavailable" in message
     assert "4/4 queries failed" in message
+
+
+def test_macro_snapshot_rejects_partial_focus_family_set() -> None:
+    year = datetime.now(UTC).year
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        path = str(request.url)
+        if "bcdata.sgs." in path:
+            return httpx.Response(
+                200,
+                json=[
+                    {"data": "01/07/2026", "valor": "4.10"},
+                    {"data": "01/08/2026", "valor": "4.22"},
+                ],
+            )
+        if "ExpectativasMercadoAnuais" in path:
+            filter_query = request.url.params.get("$filter", "")
+            if "Selic" in filter_query or "Câmbio" in filter_query:
+                return httpx.Response(200, json={"value": []})
+            return httpx.Response(
+                200,
+                json={
+                    "value": [
+                        {
+                            "Indicador": "fixture",
+                            "IndicadorDetalhe": None,
+                            "Data": "2026-09-11",
+                            "DataReferencia": str(year),
+                            "Mediana": "4.0",
+                            "Minimo": "1.0",
+                            "Maximo": "20.0",
+                            "numeroRespondentes": 100,
+                        }
+                    ]
+                },
+            )
+        return httpx.Response(404)
+
+    provider = BCBMacroProvider(transport=httpx.MockTransport(handler))
+
+    try:
+        asyncio.run(provider.snapshot())
+    except RuntimeError as exc:
+        message = str(exc)
+    else:
+        raise AssertionError("snapshot should fail when Focus families are incomplete")
+
+    assert "snapshot is incomplete" in message
+    assert "exchange" in message
+    assert "selic" in message
