@@ -98,17 +98,15 @@ FOCUS: tuple[FocusSpec, ...] = (
     FocusSpec(key="gdp", indicator="PIB Total", label="PIB", unit="%"),
     FocusSpec(
         key="selic",
-        indicator="Meta para taxa over-selic",
+        indicator="Selic",
         label="Selic",
         unit="% a.a.",
-        detail="Fim do ano",
     ),
     FocusSpec(
         key="exchange",
-        indicator="Taxa de câmbio",
+        indicator="Câmbio",
         label="Câmbio",
         unit="R$/US$",
-        detail="Fim do ano",
     ),
 )
 
@@ -178,6 +176,16 @@ class BCBMacroProvider(MacroProvider):
                     f"({len(focus_errors)}/{len(FOCUS)} queries failed: {error_types})"
                 )
             raise RuntimeError("Banco Central Focus returned no annual expectations")
+
+        expected_keys = {spec.key for spec in FOCUS}
+        observed_keys = {item.key for item in expectations}
+        missing_keys = sorted(expected_keys - observed_keys)
+        if missing_keys:
+            raise RuntimeError(
+                "Banco Central Focus snapshot is incomplete; missing expectation families: "
+                + ", ".join(missing_keys)
+            )
+
         return MacroSnapshot(indicators=indicators, expectations=expectations)
 
     async def _fetch_series(self, spec: MacroSeriesSpec) -> MacroIndicator:
