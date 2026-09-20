@@ -27,7 +27,8 @@ from openmarket_api.persistence.base import Base
 from openmarket_api.persistence.models import ProviderSnapshotRecord, ProviderSyncRunRecord
 from openmarket_api.providers.bootstrap import register_builtin_providers
 from openmarket_api.providers.contracts import ConsumerInsightProvider, MacroProvider
-from openmarket_api.providers.registry import ProviderRegistry, registry as builtin_registry
+from openmarket_api.providers.registry import ProviderRegistry
+from openmarket_api.providers.registry import registry as builtin_registry
 from openmarket_api.services.data_platform import (
     DataPlatformSyncService,
     PersistedDataPlatformService,
