@@ -12,13 +12,18 @@ from openmarket_api.domain.analytics import (
     SeriesFrequency,
 )
 from openmarket_api.domain.entities import Company, FinancialStatementItem, Instrument
-from openmarket_api.domain.indicators import IndicatorHistory, IndicatorSummary
+from openmarket_api.domain.indicators import (
+    IndicatorDataPassport,
+    IndicatorHistory,
+    IndicatorSummary,
+)
 from openmarket_api.services.asset_read import AssetReadService
 from openmarket_api.services.cash_flow_series import (
     CASH_FLOW_METRICS,
     CashFlowSeriesService,
 )
 from openmarket_api.services.indicator_engine import IndicatorEngine
+from openmarket_api.services.indicator_passport import IndicatorPassportService
 from openmarket_api.services.liquidity_series import LiquidityFinancialSeriesService
 
 router = APIRouter(prefix="/api/v1/assets", tags=["assets"])
@@ -101,6 +106,28 @@ def get_asset_indicator_history(
             ticker,
             slug,
             years=years,
+            frequency=frequency,
+        )
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.get(
+    "/{ticker}/indicators/{slug}/provenance",
+    response_model=IndicatorDataPassport,
+)
+def get_asset_indicator_provenance(
+    ticker: str,
+    slug: str,
+    session: Annotated[Session, Depends(get_db_session)],
+    frequency: Annotated[SeriesFrequency, Query()] = SeriesFrequency.ANNUAL,
+) -> IndicatorDataPassport:
+    try:
+        return IndicatorPassportService(session).get_passport(
+            ticker,
+            slug,
             frequency=frequency,
         )
     except LookupError as exc:
