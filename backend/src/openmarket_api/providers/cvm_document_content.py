@@ -15,7 +15,6 @@ TRUSTED_CVM_HOSTS = frozenset(
         "rad.cvm.gov.br",
         "www.rad.cvm.gov.br",
         "sistemas.cvm.gov.br",
-        "www.gov.br",
     }
 )
 REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})
@@ -24,6 +23,9 @@ PDF_CONTENT_TYPES = frozenset(
     {
         "application/pdf",
         "application/octet-stream",
+        "application/download",
+        "application/x-download",
+        "application/force-download",
         "binary/octet-stream",
     }
 )
@@ -147,7 +149,7 @@ class CVMDocumentContentProvider(DocumentContentProvider):
 
     @staticmethod
     def _validate_pdf(content: bytes, content_type: str) -> None:
-        if not content.startswith(b"%PDF-"):
+        if b"%PDF-" not in content[:1024]:
             raise ValueError(
                 f"CVM document is not a PDF (content-type={content_type or 'unknown'})"
             )
