@@ -165,8 +165,17 @@ function metricValueLabel(value: ComparisonValue | undefined, metric: Comparison
   });
 }
 
-function metricPeriodLabel(value: ComparisonValue | undefined) {
-  return formatYear(value?.period_end, DATA_EMPTY);
+function metricPeriodLabel(
+  value: ComparisonValue | undefined,
+  frequency: SeriesFrequency,
+) {
+  if (!value?.period_end) return DATA_EMPTY;
+  if (frequency === "annual") return formatYear(value.period_end, DATA_EMPTY);
+
+  const parsed = new Date(`${value.period_end.slice(0, 10)}T12:00:00Z`);
+  if (Number.isNaN(parsed.getTime())) return value.period_end;
+  const quarter = Math.ceil((parsed.getUTCMonth() + 1) / 3);
+  return `${quarter}T ${parsed.getUTCFullYear()}`;
 }
 
 function frequencyLabel(frequency: SeriesFrequency) {
@@ -442,7 +451,7 @@ function FragmentGroup({
                       title={`Ver proveniência de ${metric.label} para ${ticker}`}
                     >
                       <strong>{metricValueLabel(value, metric)}</strong>
-                      <small>{metricPeriodLabel(value)}</small>
+                      <small>{metricPeriodLabel(value, frequency)}</small>
                     </Link>
                   ) : (
                     <>
