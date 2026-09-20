@@ -59,15 +59,15 @@ def test_screener_supports_and_or_logic_without_breaking_default(monkeypatch) ->
 
         monkeypatch.setattr(ScreenerSnapshotService, "ensure", fake_ensure)
 
-        common = dict(
-            session=session,
-            q=None,
-            filters=["roe:gte:15", "net_margin:gte:10"],
-            sort="ticker",
-            direction="asc",
-            limit=50,
-            offset=0,
-        )
+        common = {
+            "session": session,
+            "q": None,
+            "filters": ["roe:gte:15", "net_margin:gte:10"],
+            "sort": "ticker",
+            "direction": "asc",
+            "limit": 50,
+            "offset": 0,
+        }
         default_and = get_screener(**common)
         explicit_and = get_screener(**common, logic="and")
         logical_or = get_screener(**common, logic="or")
