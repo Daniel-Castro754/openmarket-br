@@ -3,6 +3,7 @@ from datetime import date
 from decimal import Decimal
 
 from openmarket_api.domain.analytics import (
+    CalculationInput,
     FinancialMetric,
     FinancialSeriesPoint,
     SeriesFrequency,
@@ -120,6 +121,10 @@ class DerivedIndicatorSeriesService:
                     derived=True,
                     derivation=definition.formula,
                     input_sources=inputs,
+                    calculation_inputs=[
+                        self._calculation_input(numerator_series, numerator_point),
+                        self._calculation_input(denominator_series, denominator_point),
+                    ],
                 )
             )
 
@@ -188,6 +193,11 @@ class DerivedIndicatorSeriesService:
                     derived=True,
                     derivation=definition.formula,
                     input_sources=inputs,
+                    calculation_inputs=[
+                        self._calculation_input(balance_series, previous_balance),
+                        self._calculation_input(balance_series, current_balance),
+                        self._calculation_input(numerator_series, numerator_point),
+                    ],
                 )
             )
 
@@ -235,10 +245,32 @@ class DerivedIndicatorSeriesService:
                     derived=True,
                     derivation=definition.formula,
                     input_sources=inputs,
+                    calculation_inputs=[
+                        self._calculation_input(base, previous),
+                        self._calculation_input(base, point),
+                    ],
                 )
             )
 
         return IndicatorSeriesResult(formula=definition.formula, points=points)
+
+    @staticmethod
+    def _calculation_input(
+        series,
+        point: FinancialSeriesPoint,
+    ) -> CalculationInput:
+        return CalculationInput(
+            metric=series.metric,
+            label=series.label,
+            unit=series.unit,
+            value=point.value,
+            period_start=point.period_start,
+            period_end=point.period_end,
+            currency=point.currency,
+            filing_reference_date=point.filing_reference_date,
+            filing_version=point.filing_version,
+            source=point.source,
+        )
 
     @staticmethod
     def _same_reporting_context(
