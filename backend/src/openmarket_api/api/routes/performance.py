@@ -41,7 +41,7 @@ def get_asset_performance(
     ticker: str,
     session: Annotated[Session, Depends(get_db_session)],
     window: Annotated[PerformanceWindow, Query()] = PerformanceWindow.ONE_YEAR,
-    risk_free_rate: Annotated[Decimal, Query(ge=Decimal("-99"), le=Decimal("1000"))] = Decimal("0"),
+    risk_free_rate: Annotated[Decimal, Query(ge=Decimal(-99), le=Decimal(1000))] = Decimal(0),
     benchmark: Annotated[str | None, Query(min_length=1, max_length=32)] = None,
 ) -> PerformanceRiskSnapshot:
     try:
