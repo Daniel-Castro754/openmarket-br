@@ -67,6 +67,22 @@ test.describe("OpenMarket BR · Screener Query Builder", () => {
       "latest_period",
     ]);
 
+    await page.getByRole("button", { name: "Colunas" }).click();
+    await page.getByRole("checkbox", { name: "Liquidez Corrente" }).uncheck();
+    await page.getByRole("checkbox", { name: "ROE" }).uncheck();
+    await page.getByRole("checkbox", { name: "Último período" }).uncheck();
+    await page.getByRole("button", { name: "Aplicar colunas" }).click();
+    await page.waitForURL((url) => url.searchParams.get("columns") === "custom");
+
+    const mandatoryOnlyUrl = new URL(page.url());
+    expect(mandatoryOnlyUrl.searchParams.getAll("column")).toEqual([]);
+    await expect(page.locator("thead th")).toHaveCount(2);
+    await expect(page.getByRole("columnheader", { name: /Ticker/ })).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: /Empresa/ })).toBeVisible();
+
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await expect(page.locator("thead th")).toHaveCount(2);
+
     await testInfo.attach("screener-query-builder", {
       body: await page.screenshot({ fullPage: true, animations: "disabled" }),
       contentType: "image/png",
