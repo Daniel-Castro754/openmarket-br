@@ -8,12 +8,15 @@ from openmarket_api.persistence.database import get_session_factory
 from openmarket_api.providers.bootstrap import register_builtin_providers
 from openmarket_api.providers.contracts import (
     CompanyProvider,
+    ConsumerInsightProvider,
     DocumentProvider,
     FinancialProvider,
     InstrumentProvider,
+    MacroProvider,
 )
 from openmarket_api.providers.registry import registry
 from openmarket_api.services.asset_sync import AssetSyncService
+from openmarket_api.services.data_platform import DataPlatformSyncService
 from openmarket_api.services.document_sync import DocumentSyncService
 from openmarket_api.services.price_history import B3CotahistImportService
 from openmarket_api.services.ticker_sync import TickerSyncService
@@ -64,6 +67,19 @@ def build_parser() -> argparse.ArgumentParser:
     import_cotahist.add_argument("ticker", help="Persisted B3 ticker, for example PETR4")
     import_cotahist.add_argument("path", type=Path, help="Path to COTAHIST .TXT or .ZIP")
     _add_date_range_arguments(import_cotahist)
+
+    subparsers.add_parser(
+        "sync-macro",
+        help="Synchronize and persist official Banco Central macroeconomic snapshots",
+    )
+    subparsers.add_parser(
+        "sync-consumer-insights",
+        help="Synchronize and persist official IBGE consumer/economic snapshots",
+    )
+    subparsers.add_parser(
+        "sync-data-platform",
+        help="Synchronize all persisted macro and consumer datasets",
+    )
     return parser
 
 
@@ -82,6 +98,60 @@ def _providers() -> tuple[InstrumentProvider, CompanyProvider, FinancialProvider
     if not isinstance(document_provider, DocumentProvider):
         raise TypeError("CVM IPE document provider has an invalid type")
     return instrument_provider, company_provider, financial_provider, document_provider
+
+
+def _data_platform_providers() -> tuple[MacroProvider, ConsumerInsightProvider]:
+    register_builtin_providers()
+    macro_provider = registry.get("bcb-macro")
+    consumer_provider = registry.get("ibge-consumer")
+    if not isinstance(macro_provider, MacroProvider):
+        raise TypeError("BCB macro provider has an invalid type")
+    if not isinstance(consumer_provider, ConsumerInsightProvider):
+        raise TypeError("IBGE consumer provider has an invalid type")
+    return macro_provider, consumer_provider
+
+
+async def _sync_macro() -> int:
+    macro_provider, _ = _data_platform_providers()
+    factory = get_session_factory()
+    with factory() as session:
+        result = await DataPlatformSyncService(session).sync_macro(macro_provider)
+    logger.info(
+        "synchronized provider=%s dataset=%s items=%s",
+        result.provider,
+        result.dataset,
+        result.item_count,
+    )
+    return 0
+
+
+async def _sync_consumer_insights() -> int:
+    _, consumer_provider = _data_platform_providers()
+    factory = get_session_factory()
+    with factory() as session:
+        result = await DataPlatformSyncService(session).sync_consumer_insights(consumer_provider)
+    logger.info(
+        "synchronized provider=%s dataset=%s items=%s",
+        result.provider,
+        result.dataset,
+        result.item_count,
+    )
+    return 0
+
+
+async def _sync_data_platform() -> int:
+    macro_provider, consumer_provider = _data_platform_providers()
+    factory = get_session_factory()
+    with factory() as session:
+        service = DataPlatformSyncService(session)
+        macro_result = await service.sync_macro(macro_provider)
+        consumer_result = await service.sync_consumer_insights(consumer_provider)
+    logger.info(
+        "synchronized data platform macro_items=%s consumer_items=%s",
+        macro_result.item_count,
+        consumer_result.item_count,
+    )
+    return 0
 
 
 async def _sync_asset(ticker: str, *, start: date | None, end: date | None) -> int:
@@ -194,6 +264,12 @@ def main() -> int:
             start=args.start,
             end=args.end,
         )
+    if args.command == "sync-macro":
+        return asyncio.run(_sync_macro())
+    if args.command == "sync-consumer-insights":
+        return asyncio.run(_sync_consumer_insights())
+    if args.command == "sync-data-platform":
+        return asyncio.run(_sync_data_platform())
     raise RuntimeError(f"unsupported command: {args.command}")
 
 

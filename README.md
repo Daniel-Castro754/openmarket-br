@@ -66,6 +66,15 @@ python -m openmarket_api.cli sync-asset PETR4 --start 2025-01-01
 python -m openmarket_api.cli sync-documents PETR4 --start 2025-01-01
 ```
 
+Os dados macroeconômicos BCB e de consumo/conjuntura IBGE também são sincronizados fora do request path:
+
+```bash
+python -m openmarket_api.cli sync-data-platform
+```
+
+Isso persiste os snapshots usados por `/api/v1/macro` e `/api/v1/insights/consumer`. O estado operacional dos providers fica disponível em `/api/v1/meta/providers`, enquanto `/ready` valida somente o PostgreSQL.
+
+
 Para adicionar histórico oficial de preços a um ticker já sincronizado, baixe um arquivo COTAHIST da B3 e importe o TXT ou ZIP localmente:
 
 ```bash

@@ -22,6 +22,7 @@ from openmarket_api.domain.insights import (
     EconomicTrend,
     InsightPoint,
 )
+from openmarket_api.providers.contracts import ConsumerInsightProvider
 
 SIDRA_BASE_URL = "https://apisidra.ibge.gov.br/values"
 IBGE_POF_URL = "https://www.ibge.gov.br/estatisticas/sociais/saude/24786-pof-2017-2018.html"
@@ -131,7 +132,7 @@ CONSUMPTION_CATEGORIES: tuple[tuple[str, str], ...] = (
 )
 
 
-class IBGEConsumerProvider:
+class IBGEConsumerProvider(ConsumerInsightProvider):
     name = "ibge-consumer"
 
     def __init__(
@@ -142,6 +143,20 @@ class IBGEConsumerProvider:
     ) -> None:
         self.settings = settings or get_settings()
         self.transport = transport
+
+    async def healthcheck(self) -> bool:
+        try:
+            async with httpx.AsyncClient(
+                timeout=self.settings.request_timeout_seconds,
+                transport=self.transport,
+                headers={"User-Agent": self.settings.user_agent},
+            ) as client:
+                response = await client.get(
+                    f"{SIDRA_BASE_URL}/t/1737/n1/1/v/63/p/last%201"
+                )
+                return response.status_code < 500
+        except httpx.HTTPError:
+            return False
 
     async def snapshot(self) -> ConsumerInsightSnapshot:
         results = await asyncio.gather(

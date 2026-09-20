@@ -95,6 +95,10 @@ jobs:
           --start "$FINANCIAL_START"
           --end "$FINANCIAL_END"
 
+      - name: Synchronize persisted macro and consumer datasets
+        working-directory: backend
+        run: python -m openmarket_api.cli sync-data-platform
+
       - name: Start API
         working-directory: backend
         run: |
@@ -126,6 +130,28 @@ jobs:
           def get(path: str):
               with urlopen(f"{base}{path}", timeout=30) as response:
                   return json.load(response)
+
+          macro = get("/api/v1/macro")
+          if not macro.get("indicators"):
+              raise SystemExit("persisted macro snapshot has no indicators")
+
+          consumer = get("/api/v1/insights/consumer")
+          if not consumer.get("trends"):
+              raise SystemExit("persisted consumer snapshot has no economic trends")
+
+          providers = get("/api/v1/meta/providers")
+          provider_rows = {
+              item["descriptor"]["name"]: item
+              for item in providers.get("providers", [])
+          }
+          for provider_name in ("bcb-macro", "ibge-consumer"):
+              row = provider_rows.get(provider_name)
+              if row is None:
+                  raise SystemExit(f"provider registry is missing {provider_name}")
+              if not row.get("latest_syncs"):
+                  raise SystemExit(f"provider {provider_name} has no persisted sync status")
+              if row["latest_syncs"][0].get("status") != "success":
+                  raise SystemExit(f"provider {provider_name} latest sync is not successful")
 
           asset = get(f"/api/v1/assets/{quote(ticker)}")
           if int(asset.get("financial_item_count", 0)) <= 0:
@@ -196,6 +222,8 @@ jobs:
               f"passport={indicator_slug} passport_inputs={len(passport.get('inputs', []))} "
               f"comparison_metrics={len(comparison.get('metrics', []))} "
               f"performance_status={performance.get('status')} "
+              f"macro_indicators={len(macro.get('indicators', []))} "
+              f"consumer_trends={len(consumer.get('trends', []))} "
               f"documents={len(documents)} viewer_document={linked['id']} "
               f"sections={len(detail.get('sections', []))}"
           )
