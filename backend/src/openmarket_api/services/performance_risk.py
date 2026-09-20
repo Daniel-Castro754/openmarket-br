@@ -160,7 +160,16 @@ class PerformanceRiskService:
 
         total_return = prices[-1] / prices[0] - 1
         elapsed_days = max((positive[-1].as_of - positive[0].as_of).days, 1)
-        cagr = (prices[-1] / prices[0]) ** (365.25 / elapsed_days) - 1
+        cagr = (
+            (prices[-1] / prices[0]) ** (365.25 / elapsed_days) - 1
+            if elapsed_days >= 30
+            else None
+        )
+        if cagr is None:
+            base.warnings.append(
+                "CAGR e Calmar exigem pelo menos 30 dias corridos de histórico para evitar "
+                "anualização distorcida."
+            )
 
         volatility = (
             stdev(daily_returns) * sqrt(TRADING_DAYS_PER_YEAR)
@@ -187,13 +196,17 @@ class PerformanceRiskService:
             )
 
         max_drawdown = min(drawdowns)
-        calmar = cagr / abs(max_drawdown) if max_drawdown < 0 else None
+        calmar = (
+            cagr / abs(max_drawdown)
+            if cagr is not None and max_drawdown < 0
+            else None
+        )
 
         return base.model_copy(
             update={
                 "status": PerformanceStatus.AVAILABLE,
                 "total_return_percent": cls._decimal(total_return * 100),
-                "cagr_percent": cls._decimal(cagr * 100),
+                "cagr_percent": cls._decimal(cagr * 100) if cagr is not None else None,
                 "annualized_volatility_percent": cls._decimal(volatility * 100),
                 "max_drawdown_percent": cls._decimal(max_drawdown * 100),
                 "sharpe_ratio": cls._decimal(sharpe) if sharpe is not None else None,
