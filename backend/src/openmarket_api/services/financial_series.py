@@ -201,7 +201,7 @@ class FinancialSeriesService:
             for record in selected.values()
         }
         if frequency == SeriesFrequency.QUARTERLY and definition.flow:
-            for point in self._derive_q4_points(records, definition):
+            for point in self._derive_q4_points(records, metric, definition):
                 points_by_period.setdefault(point.period_end, point)
 
         return FinancialSeries(
@@ -306,8 +306,8 @@ class FinancialSeriesService:
                     derivation=formula,
                     input_sources=inputs,
                     calculation_inputs=[
-                        self._calculation_input(left, left_point),
-                        self._calculation_input(right, right_point),
+                        *self._calculation_inputs(left, left_point),
+                        *self._calculation_inputs(right, right_point),
                     ],
                 )
             )
@@ -390,9 +390,9 @@ class FinancialSeriesService:
                     derivation=formula,
                     input_sources=inputs,
                     calculation_inputs=[
-                        self._calculation_input(equity, previous_equity),
-                        self._calculation_input(equity, current_equity),
-                        self._calculation_input(net_income, income_point),
+                        *self._calculation_inputs(equity, previous_equity),
+                        *self._calculation_inputs(equity, current_equity),
+                        *self._calculation_inputs(net_income, income_point),
                     ],
                 )
             )
@@ -452,8 +452,8 @@ class FinancialSeriesService:
                     derivation=definition.formula,
                     input_sources=inputs,
                     calculation_inputs=[
-                        self._calculation_input(numerator, point),
-                        self._calculation_input(revenue, denominator),
+                        *self._calculation_inputs(numerator, point),
+                        *self._calculation_inputs(revenue, denominator),
                     ],
                 )
             )
@@ -509,8 +509,8 @@ class FinancialSeriesService:
                     derivation=formula,
                     input_sources=inputs,
                     calculation_inputs=[
-                        self._calculation_input(base, previous),
-                        self._calculation_input(base, point),
+                        *self._calculation_inputs(base, previous),
+                        *self._calculation_inputs(base, point),
                     ],
                 )
             )
@@ -527,6 +527,7 @@ class FinancialSeriesService:
     def _derive_q4_points(
         self,
         records: list[FinancialStatementRecord],
+        metric: FinancialMetric,
         definition: MetricDefinition,
     ) -> list[FinancialSeriesPoint]:
         annual_by_start: dict[date, FinancialStatementRecord] = {}
@@ -571,6 +572,18 @@ class FinancialSeriesService:
                     derived=True,
                     derivation="DFP anual - ITR acumulado de 9M",
                     input_sources=inputs,
+                    calculation_inputs=[
+                        self._calculation_input_from_record(
+                            metric,
+                            definition.label,
+                            nine_month,
+                        ),
+                        self._calculation_input_from_record(
+                            metric,
+                            definition.label,
+                            annual,
+                        ),
+                    ],
                 )
             )
         return points
@@ -697,6 +710,35 @@ class FinancialSeriesService:
                     seen.add(key)
                     merged.append(source)
         return merged
+
+    @classmethod
+    def _calculation_inputs(
+        cls,
+        series: FinancialSeries,
+        point: FinancialSeriesPoint,
+    ) -> list[CalculationInput]:
+        if point.calculation_inputs:
+            return [item.model_copy(deep=True) for item in point.calculation_inputs]
+        return [cls._calculation_input(series, point)]
+
+    @staticmethod
+    def _calculation_input_from_record(
+        metric: FinancialMetric,
+        label: str,
+        record: FinancialStatementRecord,
+    ) -> CalculationInput:
+        return CalculationInput(
+            metric=metric,
+            label=label,
+            unit=SeriesUnit.CURRENCY,
+            value=record.value,
+            period_start=record.period_start,
+            period_end=record.period_end,
+            currency=record.currency,
+            filing_reference_date=record.filing_reference_date,
+            filing_version=record.filing_version,
+            source=SourceMetadata.model_validate(record.source),
+        )
 
     @staticmethod
     def _calculation_input(
