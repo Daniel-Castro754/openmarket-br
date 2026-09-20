@@ -183,6 +183,10 @@ class LiquidityFinancialSeriesService(FinancialSeriesService):
                     derived=True,
                     derivation=self.CURRENT_RATIO_FORMULA,
                     input_sources=inputs,
+                    calculation_inputs=[
+                        self._calculation_input(current_assets, asset_point),
+                        self._calculation_input(current_liabilities, liability_point),
+                    ],
                 )
             )
 
