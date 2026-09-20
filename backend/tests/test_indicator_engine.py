@@ -370,6 +370,26 @@ def test_indicator_passport_reports_unavailable_indicator_without_guessing_input
     assert passport.warnings
 
 
+def test_indicator_passport_preserves_redistributable_official_fact() -> None:
+    official_source = _source(date(2025, 12, 31))
+    calculation_input = CalculationInput(
+        metric=FinancialMetric.REVENUE,
+        label="Receita",
+        unit=SeriesUnit.CURRENCY,
+        value=Decimal(123),
+        period_end=date(2025, 12, 31),
+        currency="BRL",
+        source=official_source,
+    )
+
+    public_input = IndicatorPassportService._public_input(calculation_input)
+
+    assert public_input.value == Decimal(123)
+    assert public_input.restricted is False
+    assert public_input.source.quality == DataQuality.OFFICIAL
+    assert public_input.source.license.redistribution == RedistributionScope.ALLOWED
+
+
 def test_indicator_passport_hides_restricted_input_value() -> None:
     restricted_source = SourceMetadata(
         provider="restricted-provider",
