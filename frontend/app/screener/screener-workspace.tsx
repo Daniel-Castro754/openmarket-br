@@ -77,9 +77,9 @@ function pinnedCellStyle(
         : undefined,
     insetInlineStart: pinned === "start" ? `${column.getStart("start")}px` : undefined,
     insetInlineEnd: pinned === "end" ? `${column.getAfter("end")}px` : undefined,
-    position: pinned ? "sticky" : "relative",
+    position: pinned ? "sticky" : undefined,
     width: column.getSize(),
-    zIndex: pinned ? (header ? 4 : 2) : header ? 3 : 0,
+    zIndex: pinned && !header ? 2 : undefined,
   };
 }
 
@@ -673,7 +673,12 @@ export function ScreenerWorkspace({
         <div className={styles.tableShell}>
           <table
             className={styles.table}
-            style={{ width: Math.max(table.getTotalSize(), 920) }}
+            style={{
+              width: Math.max(
+                table.getVisibleLeafColumns().reduce((total, column) => total + column.getSize(), 0),
+                920,
+              ),
+            }}
           >
             <thead>
               {table.getHeaderGroups().map((headerGroup) => (
