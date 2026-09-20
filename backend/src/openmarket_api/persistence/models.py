@@ -52,6 +52,28 @@ class InstrumentRecord(Base):
     source: Mapped[dict[str, object] | None] = mapped_column(JSON)
 
 
+class QuoteRecord(Base):
+    __tablename__ = "quotes"
+    __table_args__ = (
+        UniqueConstraint(
+            "instrument_id",
+            "as_of",
+            "provider",
+            name="uq_quotes_instrument_date_provider",
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    instrument_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("instruments.id", ondelete="CASCADE"), index=True
+    )
+    as_of: Mapped[date] = mapped_column(Date, index=True)
+    provider: Mapped[str] = mapped_column(String(64), index=True)
+    price: Mapped[Decimal] = mapped_column(Numeric(28, 8))
+    currency: Mapped[str] = mapped_column(String(8), default="BRL")
+    source: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False)
+
+
 class ScreenerMetricSnapshotRecord(Base):
     __tablename__ = "screener_metric_snapshots"
     __table_args__ = (
