@@ -1,5 +1,5 @@
 from datetime import timedelta
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 from math import sqrt
 from statistics import fmean, stdev
 
@@ -34,7 +34,7 @@ class PerformanceRiskService:
         ticker: str,
         *,
         window: PerformanceWindow = PerformanceWindow.ONE_YEAR,
-        risk_free_rate_annual_percent: Decimal = Decimal("0"),
+        risk_free_rate_annual_percent: Decimal = Decimal(0),
         benchmark_ticker: str | None = None,
         provider: str = B3CotahistParser.provider,
     ) -> PerformanceRiskSnapshot:
