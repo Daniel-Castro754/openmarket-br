@@ -60,25 +60,38 @@ export function ThemeSwitcher() {
   const [navigation, setNavigation] = useState<NavigationPreference>("topbar");
 
   useEffect(() => {
-    const nextMode = readMode();
-    const nextColorTheme = readColorTheme();
-    const nextNavigation = readNavigation();
-
-    setMode(nextMode);
-    setColorTheme(nextColorTheme);
-    setNavigation(nextNavigation);
-    applyAppearance(nextMode, nextColorTheme, nextNavigation);
-
     const syncFromDocument = () => {
       const root = document.documentElement;
-      const nextNav = root.dataset.navigation;
-      if (nextNav === "sidebar" || nextNav === "rail" || nextNav === "topbar") {
-        setNavigation(nextNav);
+      const nextMode = root.dataset.mode;
+      const nextColorTheme = root.dataset.colorTheme;
+      const nextNavigation = root.dataset.navigation;
+
+      if (nextMode === "light" || nextMode === "dark") {
+        setMode(nextMode);
+      }
+      if (
+        nextColorTheme === "openmarket"
+        || nextColorTheme === "ocean"
+        || nextColorTheme === "terminal"
+      ) {
+        setColorTheme(nextColorTheme);
+      }
+      if (
+        nextNavigation === "sidebar"
+        || nextNavigation === "rail"
+        || nextNavigation === "topbar"
+      ) {
+        setNavigation(nextNavigation);
       }
     };
 
+    const frame = window.requestAnimationFrame(syncFromDocument);
     window.addEventListener("openmarket-appearance-change", syncFromDocument);
-    return () => window.removeEventListener("openmarket-appearance-change", syncFromDocument);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("openmarket-appearance-change", syncFromDocument);
+    };
   }, []);
 
   function chooseMode(nextMode: ModePreference) {
