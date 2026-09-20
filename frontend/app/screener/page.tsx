@@ -26,6 +26,8 @@ export default async function ScreenerPage({
     filter?: string | string[];
     sort?: string | string[];
     direction?: string | string[];
+    logic?: string | string[];
+    column?: string | string[];
     offset?: string | string[];
   }>;
 }) {
@@ -34,11 +36,13 @@ export default async function ScreenerPage({
   const filters = allValues(query.filter);
   const sort = firstValue(query.sort) || "ticker";
   const direction = firstValue(query.direction) === "desc" ? "desc" : "asc";
+  const logic = firstValue(query.logic) === "or" ? "or" : "and";
+  const columns = allValues(query.column);
   const offset = parseOffset(firstValue(query.offset));
   const limit = 50;
 
   const [screener, indicatorCatalog] = await Promise.all([
-    getScreener({ q, filters, sort, direction, offset, limit }),
+    getScreener({ q, filters, sort, direction, logic, offset, limit }),
     getIndicatorCatalog(),
   ]);
 
@@ -59,10 +63,13 @@ export default async function ScreenerPage({
       </header>
 
       <ScreenerWorkspace
+        key={JSON.stringify({ q: q ?? "", filters, sort, direction, logic, columns, offset })}
         response={screener}
         indicatorCatalog={indicatorCatalog}
         initialQuery={q ?? ""}
         initialFilters={filters}
+        initialLogic={logic}
+        initialColumns={columns}
       />
     </main>
   );
