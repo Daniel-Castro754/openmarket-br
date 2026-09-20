@@ -74,13 +74,7 @@ export type FinancialMetric =
   | "revenue_growth_yoy"
   | "roe";
 
-export type ScreenerMetric =
-  | FinancialMetric
-  | "roa"
-  | "net-debt-to-equity"
-  | "gross-debt-to-equity"
-  | "equity-to-assets"
-  | "net-income-growth-yoy";
+export type ScreenerMetric = string;
 
 export type SeriesFrequency = "annual" | "quarterly";
 export type SeriesUnit = "currency" | "percent" | "multiple";
