@@ -21,6 +21,7 @@ from openmarket_api.domain.macro import (
     MacroSeriesPoint,
     MacroSnapshot,
 )
+from openmarket_api.providers.contracts import MacroProvider
 
 BCB_SGS_BASE_URL = "https://api.bcb.gov.br/dados/serie/bcdata.sgs"
 BCB_SGS_PORTAL_URL = "https://dadosabertos.bcb.gov.br/"
@@ -111,7 +112,7 @@ FOCUS: tuple[FocusSpec, ...] = (
 )
 
 
-class BCBMacroProvider:
+class BCBMacroProvider(MacroProvider):
     """Macroeconomic snapshot backed only by official BCB open-data endpoints."""
 
     name = "bcb-macro"
@@ -124,6 +125,21 @@ class BCBMacroProvider:
     ) -> None:
         self.settings = settings or get_settings()
         self.transport = transport
+
+    async def healthcheck(self) -> bool:
+        try:
+            async with httpx.AsyncClient(
+                timeout=self.settings.request_timeout_seconds,
+                transport=self.transport,
+                headers={"User-Agent": self.settings.user_agent},
+            ) as client:
+                response = await client.get(
+                    f"{BCB_SGS_BASE_URL}.432/dados/ultimos/1",
+                    params={"formato": "json"},
+                )
+                return response.status_code < 500
+        except httpx.HTTPError:
+            return False
 
     async def snapshot(self) -> MacroSnapshot:
         indicator_results = await asyncio.gather(
