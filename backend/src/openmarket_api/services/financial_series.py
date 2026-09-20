@@ -5,6 +5,7 @@ from decimal import Decimal
 from sqlalchemy.orm import Session
 
 from openmarket_api.domain.analytics import (
+    CalculationInput,
     FinancialMetric,
     FinancialSeries,
     FinancialSeriesPoint,
@@ -304,6 +305,10 @@ class FinancialSeriesService:
                     derived=True,
                     derivation=formula,
                     input_sources=inputs,
+                    calculation_inputs=[
+                        self._calculation_input(left, left_point),
+                        self._calculation_input(right, right_point),
+                    ],
                 )
             )
 
@@ -384,6 +389,11 @@ class FinancialSeriesService:
                     derived=True,
                     derivation=formula,
                     input_sources=inputs,
+                    calculation_inputs=[
+                        self._calculation_input(equity, previous_equity),
+                        self._calculation_input(equity, current_equity),
+                        self._calculation_input(net_income, income_point),
+                    ],
                 )
             )
 
@@ -441,6 +451,10 @@ class FinancialSeriesService:
                     derived=True,
                     derivation=definition.formula,
                     input_sources=inputs,
+                    calculation_inputs=[
+                        self._calculation_input(numerator, point),
+                        self._calculation_input(revenue, denominator),
+                    ],
                 )
             )
 
@@ -494,6 +508,10 @@ class FinancialSeriesService:
                     derived=True,
                     derivation=formula,
                     input_sources=inputs,
+                    calculation_inputs=[
+                        self._calculation_input(base, previous),
+                        self._calculation_input(base, point),
+                    ],
                 )
             )
 
@@ -679,6 +697,24 @@ class FinancialSeriesService:
                     seen.add(key)
                     merged.append(source)
         return merged
+
+    @staticmethod
+    def _calculation_input(
+        series: FinancialSeries,
+        point: FinancialSeriesPoint,
+    ) -> CalculationInput:
+        return CalculationInput(
+            metric=series.metric,
+            label=series.label,
+            unit=series.unit,
+            value=point.value,
+            period_start=point.period_start,
+            period_end=point.period_end,
+            currency=point.currency,
+            filing_reference_date=point.filing_reference_date,
+            filing_version=point.filing_version,
+            source=point.source,
+        )
 
     @staticmethod
     def _calculation_source(
