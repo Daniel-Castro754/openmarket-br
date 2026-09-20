@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import logging
 from datetime import date
+from pathlib import Path
 
 from openmarket_api.persistence.database import get_session_factory
 from openmarket_api.providers.bootstrap import register_builtin_providers
@@ -14,6 +15,7 @@ from openmarket_api.providers.contracts import (
 from openmarket_api.providers.registry import registry
 from openmarket_api.services.asset_sync import AssetSyncService
 from openmarket_api.services.document_sync import DocumentSyncService
+from openmarket_api.services.price_history import B3CotahistImportService
 from openmarket_api.services.ticker_sync import TickerSyncService
 
 logger = logging.getLogger("openmarket.cli")
@@ -54,6 +56,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     sync_ticker.add_argument("ticker", help="B3 ticker, for example PETR4")
     _add_date_range_arguments(sync_ticker)
+
+    import_cotahist = subparsers.add_parser(
+        "import-cotahist",
+        help="Import persisted daily prices from an official B3 COTAHIST .TXT or .ZIP file",
+    )
+    import_cotahist.add_argument("ticker", help="Persisted B3 ticker, for example PETR4")
+    import_cotahist.add_argument("path", type=Path, help="Path to COTAHIST .TXT or .ZIP")
+    _add_date_range_arguments(import_cotahist)
     return parser
 
 
@@ -115,6 +125,36 @@ async def _sync_documents(ticker: str, *, start: date | None, end: date | None) 
     return 0
 
 
+def _import_cotahist(
+    ticker: str,
+    path: Path,
+    *,
+    start: date | None,
+    end: date | None,
+) -> int:
+    if start is not None and end is not None and start > end:
+        raise ValueError("start must be on or before end")
+
+    factory = get_session_factory()
+    with factory() as session:
+        result = B3CotahistImportService(session).import_file(
+            ticker,
+            path,
+            start=start,
+            end=end,
+        )
+
+    logger.info(
+        "imported COTAHIST ticker=%s provider=%s rows=%s period=%s..%s",
+        result.ticker,
+        result.provider,
+        result.persisted_rows,
+        result.start,
+        result.end,
+    )
+    return 0
+
+
 async def _sync_ticker(ticker: str, *, start: date | None, end: date | None) -> int:
     instrument_provider, company_provider, financial_provider, document_provider = _providers()
     factory = get_session_factory()
@@ -147,6 +187,13 @@ def main() -> int:
         return asyncio.run(_sync_documents(args.ticker, start=args.start, end=args.end))
     if args.command == "sync-ticker":
         return asyncio.run(_sync_ticker(args.ticker, start=args.start, end=args.end))
+    if args.command == "import-cotahist":
+        return _import_cotahist(
+            args.ticker,
+            args.path,
+            start=args.start,
+            end=args.end,
+        )
     raise RuntimeError(f"unsupported command: {args.command}")
 
 

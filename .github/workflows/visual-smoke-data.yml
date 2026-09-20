@@ -153,6 +153,16 @@ jobs:
           if passport.get("derived") and not passport.get("inputs"):
               raise SystemExit("derived Data Passport has no auditable calculation inputs")
 
+          performance = get(
+              f"/api/v1/assets/{quote(ticker)}/performance?window=1y"
+          )
+          if performance.get("status") not in {"available", "insufficient_data"}:
+              raise SystemExit("performance endpoint returned an invalid status")
+          if performance.get("price_basis") != "unadjusted_close":
+              raise SystemExit("performance endpoint did not expose the price basis")
+          if not performance.get("warnings"):
+              raise SystemExit("performance endpoint did not expose COTAHIST methodology warnings")
+
           comparison = get(
               f"/api/v1/comparison?ticker={quote(ticker)}"
               "&metric=revenue&metric=net-margin&frequency=annual"
@@ -185,6 +195,7 @@ jobs:
               f"indicators_with_value={sum(item.get('value') is not None for item in indicators)} "
               f"passport={indicator_slug} passport_inputs={len(passport.get('inputs', []))} "
               f"comparison_metrics={len(comparison.get('metrics', []))} "
+              f"performance_status={performance.get('status')} "
               f"documents={len(documents)} viewer_document={linked['id']} "
               f"sections={len(detail.get('sections', []))}"
           )
