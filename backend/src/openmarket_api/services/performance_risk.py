@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import timedelta
 from decimal import Decimal, ROUND_HALF_UP
 from math import sqrt
 from statistics import fmean, stdev
@@ -52,7 +52,14 @@ class PerformanceRiskService:
         if benchmark_ticker:
             benchmark_normalized = benchmark_ticker.strip().upper()
             benchmark_records = self._records(benchmark_normalized, provider=provider)
-            benchmark_selected = self._select_window(benchmark_records, window)
+            if snapshot.start is not None and snapshot.end is not None:
+                benchmark_selected = [
+                    record
+                    for record in benchmark_records
+                    if snapshot.start <= record.as_of <= snapshot.end
+                ]
+            else:
+                benchmark_selected = self._select_window(benchmark_records, window)
             benchmark_snapshot = self._calculate(
                 benchmark_normalized,
                 benchmark_selected,
