@@ -3,12 +3,14 @@ import asyncio
 import logging
 from datetime import date
 from pathlib import Path
+from uuid import UUID
 
 from openmarket_api.persistence.database import get_session_factory
 from openmarket_api.providers.bootstrap import register_builtin_providers
 from openmarket_api.providers.contracts import (
     CompanyProvider,
     ConsumerInsightProvider,
+    DocumentContentProvider,
     DocumentProvider,
     FinancialProvider,
     InstrumentProvider,
@@ -17,6 +19,7 @@ from openmarket_api.providers.contracts import (
 from openmarket_api.providers.registry import registry
 from openmarket_api.services.asset_sync import AssetSyncService
 from openmarket_api.services.data_platform import DataPlatformSyncService
+from openmarket_api.services.document_processing import DocumentProcessingService
 from openmarket_api.services.document_sync import DocumentSyncService
 from openmarket_api.services.price_history import B3CotahistImportService
 from openmarket_api.services.ticker_sync import TickerSyncService
@@ -80,6 +83,29 @@ def build_parser() -> argparse.ArgumentParser:
         "sync-data-platform",
         help="Synchronize all persisted macro and consumer datasets",
     )
+
+    process_document = subparsers.add_parser(
+        "process-document",
+        help="Download and extract one persisted CVM PDF outside the request path",
+    )
+    process_document.add_argument("document_id", type=UUID, help="Persisted document UUID")
+    process_document.add_argument(
+        "--force",
+        action="store_true",
+        help="Reprocess even when the document is already ready",
+    )
+
+    process_documents = subparsers.add_parser(
+        "process-documents",
+        help="Process pending/failed CVM PDFs for one persisted ticker",
+    )
+    process_documents.add_argument("--ticker", required=True, help="B3 ticker, for example PETR4")
+    process_documents.add_argument("--limit", type=int, default=10, help="Maximum documents to attempt")
+    process_documents.add_argument(
+        "--pending-only",
+        action="store_true",
+        help="Do not retry documents already marked failed",
+    )
     return parser
 
 
@@ -98,6 +124,14 @@ def _providers() -> tuple[InstrumentProvider, CompanyProvider, FinancialProvider
     if not isinstance(document_provider, DocumentProvider):
         raise TypeError("CVM IPE document provider has an invalid type")
     return instrument_provider, company_provider, financial_provider, document_provider
+
+
+def _document_content_provider() -> DocumentContentProvider:
+    register_builtin_providers()
+    provider = registry.get("cvm-document-content")
+    if not isinstance(provider, DocumentContentProvider):
+        raise TypeError("CVM document content provider has an invalid type")
+    return provider
 
 
 def _data_platform_providers() -> tuple[MacroProvider, ConsumerInsightProvider]:
@@ -151,6 +185,58 @@ async def _sync_data_platform() -> int:
         macro_result.item_count,
         consumer_result.item_count,
     )
+    return 0
+
+
+async def _process_document(document_id: UUID, *, force: bool) -> int:
+    factory = get_session_factory()
+    with factory() as session:
+        result = await DocumentProcessingService(
+            session=session,
+            content_provider=_document_content_provider(),
+        ).process_document(document_id, force=force)
+
+    logger.info(
+        "processed document=%s status=%s pages=%s sections=%s skipped=%s",
+        result.document_id,
+        result.status.value,
+        result.page_count,
+        result.sections,
+        result.skipped,
+    )
+    return 0
+
+
+async def _process_documents(
+    ticker: str,
+    *,
+    limit: int,
+    include_failed: bool,
+) -> int:
+    factory = get_session_factory()
+    with factory() as session:
+        result = await DocumentProcessingService(
+            session=session,
+            content_provider=_document_content_provider(),
+        ).process_for_ticker(
+            ticker,
+            limit=limit,
+            include_failed=include_failed,
+        )
+
+    logger.info(
+        "processed documents ticker=%s attempted=%s ready=%s failed=%s skipped=%s",
+        result.ticker,
+        result.attempted,
+        result.ready,
+        result.failed,
+        result.skipped,
+    )
+    for error in result.errors:
+        logger.warning("processing error: %s", error)
+
+    if result.attempted > 0 and result.ready == 0 and result.skipped == 0:
+        return 2
     return 0
 
 
@@ -270,6 +356,16 @@ def main() -> int:
         return asyncio.run(_sync_consumer_insights())
     if args.command == "sync-data-platform":
         return asyncio.run(_sync_data_platform())
+    if args.command == "process-document":
+        return asyncio.run(_process_document(args.document_id, force=args.force))
+    if args.command == "process-documents":
+        return asyncio.run(
+            _process_documents(
+                args.ticker,
+                limit=args.limit,
+                include_failed=not args.pending_only,
+            )
+        )
     raise RuntimeError(f"unsupported command: {args.command}")
 
 
