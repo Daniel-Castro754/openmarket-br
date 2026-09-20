@@ -91,7 +91,7 @@ export function FinancialBarChart({ series }: { series: FinancialSeries }) {
         </div>
       ) : (
         <FinancialSeriesChart series={series} />
-      )
+      )}
 
       <footer className="series-footer">
         <span>{provenance} · {series.frequency === "annual" ? "DFP consolidada" : "ITR/DFP consolidada"}</span>
