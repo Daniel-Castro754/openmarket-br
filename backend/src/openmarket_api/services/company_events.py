@@ -4,6 +4,7 @@ import re
 import unicodedata
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
