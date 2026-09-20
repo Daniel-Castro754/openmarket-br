@@ -43,7 +43,7 @@ test.describe("OpenMarket BR · company comparison data-backed behavior", () => 
     expect(currentUrl.searchParams.getAll("metrics")).toEqual(["revenue", "net-margin", "roa"]);
 
     await page.getByLabel("Frequência").selectOption("quarterly");
-    await page.getByRole("button", { name: "Aplicar" }).click();
+    await page.getByRole("button", { name: "Aplicar", exact: true }).click();
     await page.waitForURL((url) => url.searchParams.get("frequency") === "quarterly");
 
     const roaRow = page.locator("tbody tr").filter({ hasText: "ROA" }).first();
