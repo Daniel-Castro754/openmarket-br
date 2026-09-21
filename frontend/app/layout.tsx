@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 
 import { MacroTickerBar } from "../components/macro-ticker-bar";
 import { SiteFooter } from "../components/site-footer";
@@ -83,10 +84,12 @@ const appearanceInitScript = `
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: appearanceInitScript }} />
-      </head>
       <body>
+        <Script
+          id="openmarket-appearance-init"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: appearanceInitScript }}
+        />
         <SiteSideNavigation />
         <SiteHeader />
         <MacroTickerBar />
