@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect } from "react";
 
 import styles from "./error-state.module.css";
@@ -54,7 +55,7 @@ export default function AppError({
           <button type="button" onClick={() => reset()}>
             Tentar novamente
           </button>
-          <a href="/">Voltar ao início</a>
+          <Link href="/">Voltar ao início</Link>
         </div>
       </section>
     </main>
