@@ -17,7 +17,7 @@ The frontend baseline before this pilot is intentionally small: Next.js 16, Reac
 | Screener / assets / documents tables | TanStack Table | Pilot | Headless; preserves OpenMarket styling and server-driven query state |
 | Large table virtualization | TanStack Virtual | Later | Useful when row counts justify it |
 | Tooltips / popovers / selects | Radix Primitives | Pilot | Accessible behavior without imposing visual design |
-| Market price / OHLC / volume | TradingView Lightweight Charts | Later | Purpose-built financial time-series renderer |
+| Market price / OHLC / volume | TradingView Lightweight Charts | Pilot | Purpose-built financial time-series renderer |
 | Resizable research workspace | react-resizable-panels | Later | Good fit for a future terminal/workstation mode |
 | Dashboard patterns | Tremor Raw | Reference only | Strong examples, but Tailwind should not be introduced only for Tremor |
 | Financial UI patterns | OpenBB Design System | Reference only | Useful domain patterns; do not inherit its whole stack |
@@ -132,6 +132,11 @@ OpenMarket use:
 - volume
 - event markers on price charts
 - crosshair-centric market analysis
+
+Pilot status:
+- Desempenho & Risco now includes an interactive closing-price chart backed by persisted COTAHIST points
+- the v5 API is loaded client-side only and the chart reacts to OpenMarket theme changes
+- TradingView attribution is kept visible on the chart page
 
 Do not use it for ordinary annual fundamentals where Recharts is simpler.
 
@@ -254,8 +259,8 @@ Target primitives:
 4. Indicator history migration.
 5. TanStack Table pilot in Screener, preserving backend/URL semantics. **Implemented in the stacked Screener branch.**
 6. Radix primitives for column picker and provenance help. **Implemented in the stacked Radix branch.**
-7. Recharts small multiples in Compare.
-8. Lightweight Charts for persisted market-price history.
+7. Recharts small multiples in Compare. **Implemented in the stacked Compare branch.**
+8. Lightweight Charts for persisted market-price history. **Implemented as a closing-price pilot in the stacked Performance branch.**
 9. Only then evaluate resizable workstation layout.
 
 ## Guardrails
