@@ -720,3 +720,21 @@
     gap: 5px;
   }
 }
+
+
+.financial-workspace .series-chart-interactive {
+  display: block;
+  height: 132px;
+  padding: 6px 7px 2px;
+}
+
+.financial-workspace.financial-view-quarterly .series-chart-interactive {
+  height: 142px;
+}
+
+@media (max-width: 720px) {
+  .financial-workspace .series-chart-interactive,
+  .financial-workspace.financial-view-quarterly .series-chart-interactive {
+    height: 150px;
+  }
+}

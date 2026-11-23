@@ -1,6 +1,7 @@
 import type { FinancialSeries, FinancialSeriesPoint } from "../lib/api";
 import { provenanceKind, provenanceLabel, sourceFreshnessLabel } from "../lib/data-semantics";
 import { formatFinancialValue, formatPeriod } from "../lib/format";
+import { FinancialSeriesChart } from "./charts/financial-series-chart";
 
 function derivationTitle(point: FinancialSeriesPoint) {
   const sources = point.input_sources.map((source) => source.source_name).join(" + ");
@@ -37,7 +38,6 @@ function pointInspectionLabel(series: FinancialSeries, point: FinancialSeriesPoi
 export function FinancialBarChart({ series }: { series: FinancialSeries }) {
   const limit = series.frequency === "annual" ? 6 : 8;
   const points = series.points.slice(-limit);
-  const maxValue = Math.max(...points.map((point) => Math.abs(Number(point.value))), 1);
   const frequencyLabel = series.frequency === "annual" ? "HISTÓRICO ANUAL" : "HISTÓRICO TRIMESTRAL";
   const accountLabel = series.statement && series.account_code
     ? `${series.statement} · ${series.account_code}`
@@ -90,33 +90,7 @@ export function FinancialBarChart({ series }: { series: FinancialSeries }) {
           <strong>{pointValueLabel(series, singlePoint)}</strong>
         </div>
       ) : (
-        <div className="series-chart" aria-label={`Série ${series.frequency} de ${series.label}`}>
-          {points.map((point) => {
-            const numeric = Number(point.value);
-            const width = Math.max((Math.abs(numeric) / maxValue) * 100, 2);
-            const inspectionLabel = pointInspectionLabel(series, point);
-            return (
-              <div
-                className="series-row"
-                key={`${point.period_end}-${point.filing_version ?? 0}-${point.derived}`}
-                aria-label={inspectionLabel}
-                title={inspectionLabel}
-              >
-                <span className="series-year">
-                  {formatPeriod(point.period_end, series.frequency)}
-                  <DerivedMark point={point} />
-                </span>
-                <div className="series-track" aria-hidden="true">
-                  <span
-                    className={`series-bar ${numeric < 0 ? "series-bar-negative" : ""}`}
-                    style={{ width: `${width}%` }}
-                  />
-                </div>
-                <strong>{pointValueLabel(series, point)}</strong>
-              </div>
-            );
-          })}
-        </div>
+        <FinancialSeriesChart series={series} />
       )}
 
       <footer className="series-footer">
