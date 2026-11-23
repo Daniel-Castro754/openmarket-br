@@ -16,7 +16,7 @@ The frontend baseline before this pilot is intentionally small: Next.js 16, Reac
 | Fundamental and macro charts | Recharts | Adopt | React-native, composable, MIT, supports React 19 |
 | Screener / assets / documents tables | TanStack Table | Pilot | Headless; preserves OpenMarket styling and server-driven query state |
 | Large table virtualization | TanStack Virtual | Later | Useful when row counts justify it |
-| Tooltips / popovers / selects | Radix Primitives | Next | Accessible behavior without imposing visual design |
+| Tooltips / popovers / selects | Radix Primitives | Pilot | Accessible behavior without imposing visual design |
 | Market price / OHLC / volume | TradingView Lightweight Charts | Later | Purpose-built financial time-series renderer |
 | Resizable research workspace | react-resizable-panels | Later | Good fit for a future terminal/workstation mode |
 | Dashboard patterns | Tremor Raw | Reference only | Strong examples, but Tailwind should not be introduced only for Tremor |
@@ -95,6 +95,11 @@ OpenMarket use:
 - column chooser popover
 - Data Passport explanatory popovers
 - accessible selects and dialogs
+
+Pilot status:
+- Screener column chooser moved into a Radix Popover, avoiding vertical layout shifts
+- Data Passport links in the Screener use Radix Tooltip for accessible provenance hints
+- OpenMarket keeps its own CSS/tokens; Radix supplies behavior only
 
 Decision:
 Use Radix directly. OpenBB remains a design reference rather than a dependency.
@@ -184,8 +189,8 @@ Status: pilot implemented in this branch.
 
 ### 3. Indicator history
 
-Current:
-- custom chart rendering in the indicator workspace
+Previous:
+- custom SVG chart rendering in the indicator workspace
 
 Target:
 - reusable OpenMarket chart shell backed by Recharts
@@ -194,15 +199,19 @@ Target:
 - methodology/source adjacent to chart
 - no decorative chart cards
 
+Status: migrated to Recharts in the stacked Indicator branch.
+
 ### 4. Financial statements
 
-Current:
+Previous:
 - custom horizontal bars in `components/financial-bar-chart.tsx`
 
 Target:
 - keep the useful provenance and filing metadata
 - migrate rendering to a shared Recharts primitive only when negative/positive baselines, comparison and tooltip inspection add value
 - do not remove provenance for a prettier graph
+
+Status: multi-period histories migrated to Recharts in the stacked Financial branch; single-point and provenance treatments remain unchanged.
 
 ### 5. Screener
 
@@ -244,7 +253,7 @@ Target primitives:
 3. Shared chart primitives: tooltip, axis formatting, empty/loading states.
 4. Indicator history migration.
 5. TanStack Table pilot in Screener, preserving backend/URL semantics. **Implemented in the stacked Screener branch.**
-6. Radix primitives for column picker and provenance help.
+6. Radix primitives for column picker and provenance help. **Implemented in the stacked Radix branch.**
 7. Recharts small multiples in Compare.
 8. Lightweight Charts for persisted market-price history.
 9. Only then evaluate resizable workstation layout.

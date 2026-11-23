@@ -9,6 +9,8 @@ import {
   useTable,
 } from "@tanstack/react-table";
 import type { Column, ColumnDef } from "@tanstack/react-table";
+import * as Popover from "@radix-ui/react-popover";
+import * as Tooltip from "@radix-ui/react-tooltip";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { CSSProperties } from "react";
@@ -377,13 +379,26 @@ export function ScreenerWorkspace({
           : undefined;
         const renderedValue = formatMetric(source, column);
         return passportSlug ? (
-          <Link
-            className={styles.metricPassportLink}
-            href={`/ativos/${source.ticker}/indicadores?passport=${encodeURIComponent(passportSlug)}#data-passport`}
-            title={`Ver proveniência de ${column.label} para ${source.ticker}`}
-          >
-            {renderedValue}
-          </Link>
+          <Tooltip.Root>
+            <Tooltip.Trigger asChild>
+              <Link
+                className={styles.metricPassportLink}
+                href={`/ativos/${source.ticker}/indicadores?passport=${encodeURIComponent(passportSlug)}#data-passport`}
+              >
+                {renderedValue}
+              </Link>
+            </Tooltip.Trigger>
+            <Tooltip.Portal>
+              <Tooltip.Content
+                className={styles.researchTooltip}
+                side="top"
+                sideOffset={6}
+              >
+                Ver proveniência de {column.label} para {source.ticker}
+                <Tooltip.Arrow className={styles.researchTooltipArrow} />
+              </Tooltip.Content>
+            </Tooltip.Portal>
+          </Tooltip.Root>
         ) : renderedValue;
       },
     })),
@@ -517,7 +532,8 @@ export function ScreenerWorkspace({
   const columnByKey = new Map(columns.map((column) => [String(column.key), column]));
 
   return (
-    <section className={styles.workspace} aria-busy={isPending}>
+    <Tooltip.Provider delayDuration={240} skipDelayDuration={120}>
+      <section className={styles.workspace} aria-busy={isPending}>
       <aside className={styles.filterPanel}>
         <div className={styles.panelHeading}>
           <div>
@@ -634,36 +650,58 @@ export function ScreenerWorkspace({
           <div><span>Lógica</span><strong>{response.logic === "and" ? "E" : "OU"}</strong></div>
           <div><span>Página</span><strong>{pageStart}-{pageEnd}</strong></div>
           <div><span>Universo</span><strong>{response.universe_total.toLocaleString("pt-BR")}</strong></div>
-          <button type="button" onClick={() => setShowColumns((current) => !current)}>Colunas</button>
-        </div>
-
-        {showColumns ? (
-          <div className={styles.columnPicker}>
-            <div>
-              <strong>Escolha as colunas</strong>
-              <span>Ticker e empresa permanecem fixos.</span>
-            </div>
-            <div className={styles.columnOptions}>
-              {table.getAllLeafColumns().map((column) => (
-                <label key={column.id}>
-                  <input
-                    type="checkbox"
-                    checked={column.getIsVisible()}
-                    disabled={!column.getCanHide()}
-                    onChange={column.getToggleVisibilityHandler()}
-                  />
-                  <span>{columnByKey.get(column.id)?.label ?? column.id}</span>
-                </label>
-              ))}
-            </div>
-            <div className={styles.columnPickerActions}>
-              <span>{visibleColumns.length} colunas selecionadas</span>
-              <button type="button" onClick={applyColumns} disabled={isPending}>
-                Aplicar colunas
+          <Popover.Root open={showColumns} onOpenChange={setShowColumns}>
+            <Popover.Trigger asChild>
+              <button
+                type="button"
+                aria-label="Escolher colunas visíveis"
+              >
+                Colunas
               </button>
-            </div>
-          </div>
-        ) : null}
+            </Popover.Trigger>
+            <Popover.Portal>
+              <Popover.Content
+                className={styles.columnPicker}
+                align="end"
+                side="bottom"
+                sideOffset={6}
+                collisionPadding={12}
+              >
+                <div>
+                  <strong>Escolha as colunas</strong>
+                  <span>Ticker e empresa permanecem fixos.</span>
+                </div>
+                <div className={styles.columnOptions}>
+                  {table.getAllLeafColumns().map((column) => (
+                    <label key={column.id}>
+                      <input
+                        type="checkbox"
+                        checked={column.getIsVisible()}
+                        disabled={!column.getCanHide()}
+                        onChange={column.getToggleVisibilityHandler()}
+                      />
+                      <span>{columnByKey.get(column.id)?.label ?? column.id}</span>
+                    </label>
+                  ))}
+                </div>
+                <div className={styles.columnPickerActions}>
+                  <span>{visibleColumns.length} colunas selecionadas</span>
+                  <div>
+                    <Popover.Close asChild>
+                      <button type="button" className={styles.columnPickerCancel}>
+                        Fechar
+                      </button>
+                    </Popover.Close>
+                    <button type="button" onClick={applyColumns} disabled={isPending}>
+                      Aplicar colunas
+                    </button>
+                  </div>
+                </div>
+                <Popover.Arrow className={styles.columnPickerArrow} />
+              </Popover.Content>
+            </Popover.Portal>
+          </Popover.Root>
+        </div>
 
         <div className={styles.tableShell}>
           <table
@@ -769,6 +807,7 @@ export function ScreenerWorkspace({
           <span>Filtragem, ordenação por indicadores e paginação são processadas no backend sobre o universo pesquisado.</span>
         </footer>
       </div>
-    </section>
+      </section>
+    </Tooltip.Provider>
   );
 }
