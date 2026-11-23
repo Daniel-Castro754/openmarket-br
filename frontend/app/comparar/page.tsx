@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { CompareVisualGrid, type CompareVisualMetric } from "../../components/charts/compare-visual-grid";
+
 import {
   getCompanyComparison,
   getIndicatorCatalog,
@@ -218,6 +220,33 @@ export default async function ComparePage({
   const assetByTicker = new Map(comparison.assets.map((asset) => [asset.ticker, asset]));
   const metricGroups = [...new Set(selectedMetrics.map((metric) => metric.group))];
   const synchronizedCount = comparison.assets.filter((asset) => asset.synchronized).length;
+  const visualMetrics: CompareVisualMetric[] = selectedMetrics
+    .map((metric) => {
+      const result = metricResults.get(metric.key);
+      const values = comparison.tickers
+        .map((ticker) => {
+          const value = result?.values[ticker];
+          const numeric = value?.value == null ? Number.NaN : Number(value.value);
+          if (!Number.isFinite(numeric)) return null;
+          return {
+            ticker,
+            value: numeric,
+            currency: value?.currency,
+            period: value?.period_end,
+          };
+        })
+        .filter((value): value is NonNullable<typeof value> => Boolean(value));
+
+      return {
+        key: metric.key,
+        label: metric.shortLabel ?? metric.label,
+        unit: metric.unit,
+        frequency,
+        values,
+      };
+    })
+    .filter((metric) => metric.values.length >= 2)
+    .slice(0, 4);
 
   return (
     <main className={styles.page}>
@@ -333,6 +362,8 @@ export default async function ComparePage({
           </div>
         </form>
       </details>
+
+      <CompareVisualGrid metrics={visualMetrics} />
 
       <section className={styles.tableWrap} aria-label="Tabela comparativa de fundamentos">
         <table className={styles.table}>
