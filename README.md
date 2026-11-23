@@ -113,6 +113,35 @@ GET /api/v1/documents?ticker=PETR4
 
 As rotas públicas são read-models do PostgreSQL e não consultam provedores externos durante a requisição.
 
+## Desenvolvimento local completo
+
+As páginas de ativos, listas, Screener, relatórios, indicadores e desempenho dependem da API em `http://localhost:8000`. Rodar apenas `npm run dev` sobe o frontend, mas não sobe PostgreSQL nem FastAPI.
+
+No primeiro terminal, a partir da raiz do repositório:
+
+```bash
+docker compose up --build -d
+docker compose run --rm api alembic upgrade head
+```
+
+Confirme a API antes de abrir as telas de dados:
+
+```text
+http://localhost:8000/health
+```
+
+No segundo terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Frontend: `http://localhost:3000`
+
+Se a API estiver parada, o frontend exibe uma tela de recuperação em vez de depender do overlay de erro do Next.js.
+
 ## Docker
 
 Suba PostgreSQL e API:
