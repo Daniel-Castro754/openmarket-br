@@ -535,7 +535,7 @@
 .chart {
   display: block;
   width: 100%;
-  height: auto;
+  height: 260px;
   overflow: visible;
 }
 
