@@ -303,10 +303,25 @@
 
 
 .tableShell { overflow: auto; max-height: calc(100vh - 174px); background: var(--surface); }
-.table { width: 100%; min-width: 920px; border-collapse: collapse; font-size: var(--tool-table-font-size); font-variant-numeric: tabular-nums; }
+.table { width: 100%; min-width: 920px; border-collapse: collapse; table-layout: fixed; font-size: var(--tool-table-font-size); font-variant-numeric: tabular-nums; }
 .table th,
 .table td { height: var(--tool-row-height-compact); padding: var(--tool-cell-padding-y) var(--tool-cell-padding-x); border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap; vertical-align: middle; }
-.table thead th { position: sticky; top: 0; z-index: var(--z-sticky); height: var(--tool-header-height); background: var(--table-header); }
+.table thead th {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  height: var(--tool-header-height);
+  background: var(--table-header);
+  color: var(--muted);
+  font-size: var(--tool-header-font-size);
+  font-weight: 760;
+  letter-spacing: .035em;
+  text-transform: uppercase;
+}
+.table thead th.pinnedCell { z-index: calc(var(--z-sticky) + 1); }
+.table td.pinnedCell { background: var(--surface); }
+.table tbody tr:nth-child(even) td.pinnedCell { background: color-mix(in srgb, var(--surface-strong) 22%, var(--surface)); }
+.table tbody tr:hover td.pinnedCell { background: var(--surface-hover); }
 .table th button {
   display: inline-flex;
   align-items: center;
